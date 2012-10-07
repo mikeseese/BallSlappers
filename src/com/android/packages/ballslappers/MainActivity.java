@@ -1,3 +1,8 @@
+/* Proof of concept for a moving ball with off angle lines
+ * Must have AndEngine extensions installed
+ * Need to change name of class if you want to run this
+ */
+
 package com.example.andengine.sample;
 
 import static org.andengine.extension.physics.box2d.util.constants.PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT;
