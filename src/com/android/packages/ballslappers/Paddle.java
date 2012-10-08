@@ -51,8 +51,8 @@ public class Paddle{
 	public float width;
 	public float height;
 	public static float speed = 25;
-	public float orientation = 0; //(float) (Math.PI/2) in rad
-	private Vector2 tempVelocity;
+	public float orientation = 0; //in degrees
+	private Vector2 paddle_velocity;
 	
 	//need to get the vertexbufferobjectmanager
 	
@@ -60,7 +60,7 @@ public class Paddle{
 	Rectangle padShape;
 	final FixtureDef paddlefix = PhysicsFactory.createFixtureDef(0,1.0f,0.0f);
 		
-	public Paddle(float pX, float pY, float pWidth, float pHeight, VertexBufferObjectManager vertexBufferObjectManager,PhysicsWorld mPhysicsWorld, Scene mScene, float orientation) {
+	public Paddle(float pX, float pY, float pWidth, float pHeight, VertexBufferObjectManager vertexBufferObjectManager,PhysicsWorld mPhysicsWorld, Scene mScene) {
 		//x,y,xwidth,xheight,objectmanager	
 		padShape = new Rectangle(pX, pY, pWidth, pHeight, vertexBufferObjectManager);
 		paddleBody = PhysicsFactory.createBoxBody(mPhysicsWorld, padShape, BodyType.StaticBody, paddlefix);
@@ -71,45 +71,42 @@ public class Paddle{
 		mScene.registerUpdateHandler(mPhysicsWorld);
 		x=pX;
 		y=pY;
-		this.orientation = orientation;
+		orientation=(float) Math.atan(y/x);
 		width=pWidth;
 		height=pHeight;
 	}
 		
-	public void update(Body ball) {
-		tempVelocity = ball.getPosition();
-		int ballx = Math.round(PIXEL_TO_METER_RATIO_DEFAULT*tempVelocity.x);
-		int bally = Math.round(PIXEL_TO_METER_RATIO_DEFAULT*tempVelocity.y);
+	public void update(Body ball, boolean outOfBounds) {
+		paddle_velocity = ball.getPosition();
+		float ballx = PIXEL_TO_METER_RATIO_DEFAULT*paddle_velocity.x;
+		//float bally = PIXEL_TO_METER_RATIO_DEFAULT*paddle_velocity.y;
 		
-		int paddleconv = (int)Math.sqrt(this.x*this.x+this.y*this.y);
-		//float angle1 = (float) (orientation - Math.atan(bally/ballx));
-		int ballconv = (int) Math.sqrt(ballx*ballx+bally*bally);
-		
-		if(paddleconv > ballconv + speed + height) {
-			paddleconv -= speed;
+		if(this.x > ballx + speed + height) {
+			this.x = this.x - speed;
+			this.x = bound(this.x);
+			paddle_velocity.x = this.x/PIXEL_TO_METER_RATIO_DEFAULT;
+			paddle_velocity.y = this.y/PIXEL_TO_METER_RATIO_DEFAULT;
+
+			paddleBody.setTransform(paddle_velocity,0);
 		} else if(this.x < ballx - speed) {
-			paddleconv += speed;
-		} 
-		
-		// 800 is camera_width, note that bound might not work as you
-		// want it to, these low, high parameters might not be appropriate 
-		// for y orientation
-		this.x = bound(this.width/2, 800 - this.width/2, (float) (paddleconv*Math.cos(orientation)));
-		this.y = bound(this.height, 480 - this.height/2, (float) (paddleconv*Math.sin(orientation)));
-		
-		tempVelocity.x = this.x/PIXEL_TO_METER_RATIO_DEFAULT;
-		tempVelocity.y = this.y/PIXEL_TO_METER_RATIO_DEFAULT;
-		paddleBody.setTransform(tempVelocity,0);
+			this.x = this.x + speed;
+			this.x = bound(this.x);
+			paddle_velocity.x = this.x/PIXEL_TO_METER_RATIO_DEFAULT;
+			paddle_velocity.y = this.y/PIXEL_TO_METER_RATIO_DEFAULT;
+
+			paddleBody.setTransform(paddle_velocity,0);
+		} else if (outOfBounds) {
+			//this.x = 800/2; //puts paddle in middle
+		}	
 	}
 	
 	// eventually this needs to be a common function between multiple classes
-	// keeps the paddle from going into and past the wall
-	public float bound(float low, float high, float number) {
-		if(number < low)
-			number = low;
+	public float bound(float number) {
+		if(number < this.width/2)
+			number = this.width/2;
 		// 800 is the CAMERA_WIDTH from MainActivity
-		if(number > high)
-			number = high;
+		if(number > 800 - this.width/2)
+			number = 800 - this.width/2;
 		return number;
 	}
 } 
