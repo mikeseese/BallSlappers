@@ -62,6 +62,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
 	public static final int CAMERA_WIDTH = 800;
 	public static final int CAMERA_HEIGHT = 480;
+	public static final int PADDLE_WIDTH = 100;
+	public static final int PADDLE_HEIGHT = 20;
 	public static final Vector2 start_position = new Vector2(CAMERA_WIDTH/64, CAMERA_HEIGHT/64);
 
 	// ===========================================================
@@ -126,7 +128,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		final Rectangle roof = new Rectangle(0, 0, CAMERA_WIDTH, 2, vertexBufferObjectManager);
 		final Rectangle left = new Rectangle(0, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
 		final Rectangle right = new Rectangle(CAMERA_WIDTH - 2, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
-		final Rectangle paddleShape = new Rectangle(CAMERA_WIDTH / 2, 5, 50, 20, vertexBufferObjectManager);
+		final Rectangle paddleShape = new Rectangle(CAMERA_WIDTH / 2, 5, PADDLE_WIDTH, PADDLE_HEIGHT, vertexBufferObjectManager);
 		
 
 		final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
@@ -146,6 +148,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		
 		final FixtureDef ballDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 		paddleBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, paddleShape, BodyType.StaticBody, paddleDef);
+		paddleBody.setUserData("paddleBody");
 		ballBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ballShape, BodyType.DynamicBody, ballDef);
 		ballBody.setUserData("ballBody");		
 		
@@ -158,14 +161,13 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		mPhysicsWorld.registerPhysicsConnector(physics_conn);
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(paddleShape, paddleBody));
 		
-		final PhysicsHandler physicsHandler = new PhysicsHandler(paddleShape);
 		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
 		this.mScene.registerUpdateHandler(this);
-		paddleShape.registerUpdateHandler(physicsHandler); 
 		
-		paddleAI = new Paddle(20, 400, 50, 20, vertexBufferObjectManager, mPhysicsWorld, mScene);
+		paddleAI = new Paddle(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, vertexBufferObjectManager, mPhysicsWorld, mScene);
 
-		ballBody.setLinearVelocity(getBallVelocity(), getBallVelocity());
+		Vector2 unit = getUnitVector();
+		ballBody.setLinearVelocity(getBallVelocity() * unit.x, getBallVelocity() * unit.y);
 		return this.mScene;
 	}
 
@@ -173,16 +175,17 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		if(this.mPhysicsWorld != null) {
 			if(fingerDown) {
 				float nextX = pSceneTouchEvent.getX() - diffX;
-				//float touchY = pSceneTouchEvent.getY();
 				if(nextX < 25)
 					nextX = 25;
-				Vector2 v = new Vector2(nextX/32, paddleBody.getPosition().y/32);
+				if(nextX > 800 - 25)
+					nextX = 800 - 25;
+				Vector2 v = new Vector2(nextX/32, 13f/32f);
 				paddleBody.setTransform(v, 0);
 			}
 			
 			if(pSceneTouchEvent.isActionDown()) {
 				Vector2 current = paddleBody.getWorldPoint(new Vector2(0,0));
-				diffX = pSceneTouchEvent.getX() - current.x;
+				diffX = pSceneTouchEvent.getX() - current.x*32;
 				fingerDown = true;
 				return true;
 			}

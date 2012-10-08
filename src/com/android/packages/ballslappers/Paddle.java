@@ -52,8 +52,9 @@ public class Paddle{
 	public float y;
 	public float width;
 	public float height;
-	public static float speed = 10;
+	public static float speed = 20;
 	public float orientation = 0; //in degrees
+	private Vector2 paddle_velocity;
 	
 	//need to get the vertexbufferobjectmanager
 	
@@ -65,6 +66,7 @@ public class Paddle{
 		//x,y,xwidth,xheight,objectmanager		//
 		padShape = new Rectangle(pX, pY, pWidth, pHeight, vertexBufferObjectManager);
 		paddleBody = PhysicsFactory.createBoxBody(mPhysicsWorld, padShape, BodyType.StaticBody, paddlefix);
+		paddleBody.setUserData("paddleBody");
 		//dy(this.mPhysicsWorld, ballShape, BodyType.DynamicBody, ballDef);
 		mScene.attachChild(padShape);
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(padShape, paddleBody));
@@ -77,18 +79,22 @@ public class Paddle{
 	}
 		
 	public void update(Body ball) {
-		Vector2 temp = ball.getPosition();
-		float ballx = 32*temp.x;
-		float bally = 32*temp.y;
+		paddle_velocity = ball.getPosition();
+		float ballx = 32*paddle_velocity.x;
+		//float bally = 32*paddle_velocity.y;
 		
 		if(this.x>ballx+speed+height) { //ensures that tip of
 			this.x = this.x - speed;
-			Vector2 temp2 = new Vector2(this.x/32,this.y/32);
-			paddleBody.setTransform(temp2,0);
-		} else if(this.x<bally-speed) {
+			paddle_velocity.x = this.x/32;
+			paddle_velocity.y = this.y/32;
+			//Vector2 temp2 = new Vector2(this.x/32,this.y/32);
+			paddleBody.setTransform(paddle_velocity,0);
+		} else if(this.x<ballx-speed) {
 			this.x = this.x + speed;
-			Vector2 temp2 = new Vector2(this.x/32,this.y/32);
-			paddleBody.setTransform(temp2,0);
+			paddle_velocity.x = this.x/32;
+			paddle_velocity.y = this.y/32;
+			//Vector2 temp2 = new Vector2(this.x/32,this.y/32);
+			paddleBody.setTransform(paddle_velocity,0);
 		} else {
 			//this.y=bally+height/2; //puts paddle in middle
 			
