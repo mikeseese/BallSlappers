@@ -1,10 +1,11 @@
-package com.example.andengine.sample;
+package com.android.packages.ballslappers;
 
 import static org.andengine.extension.physics.box2d.util.constants.PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT;
 
 import java.util.Random;
 
 import org.andengine.engine.camera.Camera;
+import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.engine.handler.physics.PhysicsHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.EngineOptions.ScreenOrientation;
@@ -76,7 +77,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	// Methods for/from SuperClass/Interfaces
 	// ===========================================================
 
-	@Override
 	public EngineOptions onCreateEngineOptions() {
 		Toast.makeText(this, "Here we go...", Toast.LENGTH_LONG).show();
 
@@ -99,6 +99,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		this.mScene.setOnSceneTouchListener(this);
 
 		this.mPhysicsWorld = new PhysicsWorld(new Vector2(0, 0), false);
+		mPhysicsWorld.setContactListener(new BallCollisionUpdate());
 
 		final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
 		final Rectangle ground = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, vertexBufferObjectManager);
@@ -110,14 +111,24 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		final Rectangle ballShape = new Rectangle(CAMERA_WIDTH / 2, CAMERA_HEIGHT / 2, 10, 10, vertexBufferObjectManager);
 		
 		final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		PhysicsFactory.createBoxBody(this.mPhysicsWorld, ground, BodyType.StaticBody, wallFixtureDef);
-		PhysicsFactory.createBoxBody(this.mPhysicsWorld, roof, BodyType.StaticBody, wallFixtureDef);
-		PhysicsFactory.createBoxBody(this.mPhysicsWorld, left, BodyType.StaticBody, wallFixtureDef);
-		PhysicsFactory.createBoxBody(this.mPhysicsWorld, right, BodyType.StaticBody, wallFixtureDef);
-		PhysicsFactory.createLineBody(this.mPhysicsWorld, randomLine, wallFixtureDef);
+		Body groundBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ground, BodyType.StaticBody, wallFixtureDef);
+		groundBody.setUserData("groundBody");
+		Body roofBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, roof, BodyType.StaticBody, wallFixtureDef);
+		roofBody.setUserData("roofBody");
+		Body leftBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, left, BodyType.StaticBody, wallFixtureDef);
+		leftBody.setUserData("leftBody");
+		Body rightBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, right, BodyType.StaticBody, wallFixtureDef);
+		rightBody.setUserData("rightBody");
+		
+		final FixtureDef outOfBoundsFixDef = PhysicsFactory.createFixtureDef(0, 0, 0);
+		outOfBoundsFixDef.isSensor = true;
+		Body randomLineBody = PhysicsFactory.createLineBody(this.mPhysicsWorld, randomLine, outOfBoundsFixDef);
+		randomLineBody.setUserData("randomLineBody");
+		
 		
 		final FixtureDef ballDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		ballBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ballShape, BodyType.DynamicBody, ballDef);		
+		ballBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ballShape, BodyType.DynamicBody, ballDef);
+		ballBody.setUserData("ballBody");		
 		
 		this.mScene.attachChild(ground);
 		this.mScene.attachChild(roof);
@@ -135,7 +146,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		return this.mScene;
 	}
 
-	@Override
 	public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
 		if(this.mPhysicsWorld != null) {
 			if(pSceneTouchEvent.isActionDown()) {
