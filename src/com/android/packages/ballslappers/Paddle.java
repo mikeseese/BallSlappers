@@ -45,14 +45,12 @@ import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 
 
-
-
 public class Paddle{
 	public float x; //position of bottom of paddle
 	public float y;
 	public float width;
 	public float height;
-	public static float speed = 20;
+	public static float speed = 25;
 	public float orientation = 0; //in degrees
 	private Vector2 paddle_velocity;
 	
@@ -63,7 +61,7 @@ public class Paddle{
 	final FixtureDef paddlefix = PhysicsFactory.createFixtureDef(0,1.0f,0.0f);
 		
 	public Paddle(float pX, float pY, float pWidth, float pHeight, VertexBufferObjectManager vertexBufferObjectManager,PhysicsWorld mPhysicsWorld, Scene mScene) {
-		//x,y,xwidth,xheight,objectmanager		//
+		//x,y,xwidth,xheight,objectmanager	
 		padShape = new Rectangle(pX, pY, pWidth, pHeight, vertexBufferObjectManager);
 		paddleBody = PhysicsFactory.createBoxBody(mPhysicsWorld, padShape, BodyType.StaticBody, paddlefix);
 		paddleBody.setUserData("paddleBody");
@@ -78,26 +76,37 @@ public class Paddle{
 		height=pHeight;
 	}
 		
-	public void update(Body ball) {
+	public void update(Body ball, boolean outOfBounds) {
 		paddle_velocity = ball.getPosition();
-		float ballx = 32*paddle_velocity.x;
-		//float bally = 32*paddle_velocity.y;
+		float ballx = PIXEL_TO_METER_RATIO_DEFAULT*paddle_velocity.x;
+		//float bally = PIXEL_TO_METER_RATIO_DEFAULT*paddle_velocity.y;
 		
-		if(this.x>ballx+speed+height) { //ensures that tip of
+		if(this.x > ballx + speed + height) {
 			this.x = this.x - speed;
-			paddle_velocity.x = this.x/32;
-			paddle_velocity.y = this.y/32;
-			//Vector2 temp2 = new Vector2(this.x/32,this.y/32);
+			this.x = bound(this.x);
+			paddle_velocity.x = this.x/PIXEL_TO_METER_RATIO_DEFAULT;
+			paddle_velocity.y = this.y/PIXEL_TO_METER_RATIO_DEFAULT;
+
 			paddleBody.setTransform(paddle_velocity,0);
-		} else if(this.x<ballx-speed) {
+		} else if(this.x < ballx - speed) {
 			this.x = this.x + speed;
-			paddle_velocity.x = this.x/32;
-			paddle_velocity.y = this.y/32;
-			//Vector2 temp2 = new Vector2(this.x/32,this.y/32);
+			this.x = bound(this.x);
+			paddle_velocity.x = this.x/PIXEL_TO_METER_RATIO_DEFAULT;
+			paddle_velocity.y = this.y/PIXEL_TO_METER_RATIO_DEFAULT;
+
 			paddleBody.setTransform(paddle_velocity,0);
-		} else {
-			//this.y=bally+height/2; //puts paddle in middle
-			
+		} else if (outOfBounds) {
+			//this.x = 800/2; //puts paddle in middle
 		}	
+	}
+	
+	// eventually this needs to be a common function between multiple classes
+	public float bound(float number) {
+		if(number < this.width/2)
+			number = this.width/2;
+		// 800 is the CAMERA_WIDTH from MainActivity
+		if(number > 800 - this.width/2)
+			number = 800 - this.width/2;
+		return number;
 	}
 } 
