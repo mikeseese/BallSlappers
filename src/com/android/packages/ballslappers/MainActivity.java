@@ -1,8 +1,4 @@
 package com.android.packages.ballslappers;
-/* Proof of concept for a moving ball with off angle lines
- * Must have AndEngine extensions installed
- * Need to change name of class if you want to run this
- */
 
 import static org.andengine.extension.physics.box2d.util.constants.PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT;
 
@@ -77,16 +73,16 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	private Scene mScene;
 
 	private PhysicsWorld mPhysicsWorld;
-	
+
 	private Body ballBody;
 	private Rectangle ballShape;
-	
+
 	private Body paddleBody;
 	private float diffX;
 	private boolean fingerDown;
-	
+
 	private Paddle paddleAI;
-	
+
 	private Random randomNumGen = new Random();
 	public static PhysicsConnector physics_conn;
 	public boolean outOfBounds = false;
@@ -132,14 +128,14 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		final Rectangle roof = new Rectangle(0, 0, CAMERA_WIDTH, 2, vertexBufferObjectManager);
 		final Rectangle left = new Rectangle(0, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
 		final Rectangle right = new Rectangle(CAMERA_WIDTH - 2, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
-		final Rectangle paddleShape = new Rectangle(CAMERA_WIDTH / 2, 5, PADDLE_WIDTH, PADDLE_HEIGHT, vertexBufferObjectManager);
-		
+		final Rectangle paddleShape = new Rectangle(CAMERA_WIDTH / 2, 455, PADDLE_WIDTH, PADDLE_HEIGHT, vertexBufferObjectManager);
+
 
 		final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 		final FixtureDef paddleDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 		final FixtureDef outOfBoundsFixDef = PhysicsFactory.createFixtureDef(0, 0, 0);
 		outOfBoundsFixDef.isSensor = true;
-		
+
 
 		Body groundBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ground, BodyType.StaticBody, outOfBoundsFixDef);
 		groundBody.setUserData("groundBody");
@@ -149,26 +145,26 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		leftBody.setUserData("leftBody");
 		Body rightBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, right, BodyType.StaticBody, wallFixtureDef);
 		rightBody.setUserData("rightBody");
-		
+
 		final FixtureDef ballDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 		paddleBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, paddleShape, BodyType.StaticBody, paddleDef);
 		paddleBody.setUserData("paddleBody");
 		ballBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ballShape, BodyType.DynamicBody, ballDef);
 		ballBody.setUserData("ballBody");		
-		
+
 		this.mScene.attachChild(left);
 		this.mScene.attachChild(right);
 		this.mScene.attachChild(ballShape);
 		this.mScene.attachChild(paddleShape);
-		
+
 		physics_conn = new PhysicsConnector(ballShape, ballBody);
 		mPhysicsWorld.registerPhysicsConnector(physics_conn);
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(paddleShape, paddleBody));
-		
+
 		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
 		this.mScene.registerUpdateHandler(this);
-		
-		paddleAI = new Paddle(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, vertexBufferObjectManager, mPhysicsWorld, mScene);
+
+		paddleAI = new Paddle(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, vertexBufferObjectManager, mPhysicsWorld, mScene, 0);
 
 		Vector2 unit = getUnitVector();
 		ballBody.setLinearVelocity(getBallVelocity() * unit.x, getBallVelocity() * unit.y);
@@ -184,10 +180,10 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 					nextX = PADDLE_WIDTH/2;
 				if(nextX > CAMERA_WIDTH - PADDLE_WIDTH/2)
 					nextX = CAMERA_WIDTH - PADDLE_WIDTH/2;
-				Vector2 v = new Vector2(nextX/PIXEL_TO_METER_RATIO_DEFAULT, 13/PIXEL_TO_METER_RATIO_DEFAULT);
+				Vector2 v = new Vector2(nextX/PIXEL_TO_METER_RATIO_DEFAULT, 465/PIXEL_TO_METER_RATIO_DEFAULT);
 				paddleBody.setTransform(v, 0);
 			}
-			
+
 			if(pSceneTouchEvent.isActionDown()) {
 				Vector2 current = paddleBody.getWorldPoint(new Vector2(0,0));
 				diffX = pSceneTouchEvent.getX() - current.x*PIXEL_TO_METER_RATIO_DEFAULT;
@@ -201,7 +197,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		}
 		return false;
 	}
-	
+
 	@Override
 	public void onResumeGame() {
 		super.onResumeGame();
@@ -221,15 +217,15 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		ballBody.setLinearVelocity(getBallVelocity() * unit.x, getBallVelocity() * unit.y);
 		Log.i("ballBodyVelocity", ballBody.getLinearVelocity().toString());
 	}
-	
+
 	public void onUpdate(final float pSecondsElapsed) {
 		Log.i("Ball Position", ballShape.getX() + ", " + ballShape.getY());
-		
-		paddleAI.update(ballBody, outOfBounds);
-		
+
+		paddleAI.update(ballBody);
+
 		if(outOfBounds) {
 			outOfBounds = false;
-			
+
 			// delays the reset of the ball by BALL_RESET_DELAY seconds
 			TimerHandler timerHandler;
 	        this.getEngine().registerUpdateHandler(timerHandler = new TimerHandler(BALL_RESET_DELAY, new ITimerCallback()
@@ -245,13 +241,13 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
 	public void reset() {
 		// TODO Auto-generated method stub
-		
+
 	}
-	
+
 	public Body getBallBody() {
 		return ballBody;
 	}
-	
+
 	public int getBallVelocity() {
 		int velocity = 0;
 		while(Math.abs(velocity) < 10 || Math.abs(velocity) > 15)
@@ -259,16 +255,16 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
 		return velocity;
 	}
-	
+
 	private Vector2 getUnitVector() {
 		Vector2 unitVector = new Vector2(randomNumGen.nextFloat(), randomNumGen.nextFloat());
 		return unitVector.nor();
 	}
-	
+
 	// ===========================================================
 	// Inner and Anonymous Classes
 	// ===================== ======================================
-	
+
 	class BallCollisionUpdate implements ContactListener {
 
 		public void beginContact(Contact contact) {
@@ -278,31 +274,31 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			Object userBData = bodyB.getUserData();
 			if(userAData.equals("ballBody") && userBData.equals("groundBody")
 					|| userAData.equals("groundBody") && userBData.equals("ballBody")) {
-				Log.i("Contact Made", "Ball contacted the ground sensor");
+				Log.i("Contact Made", "Ball contacted the ground");
 				outOfBounds = true;
 			}
 			else if(userAData.equals("ballBody") && userBData.equals("roofBody")
 					|| userAData.equals("roofBody") && userBData.equals("ballBody")) {
-				Log.i("Contact Made", "Ball contacted the roof sensor");
+				Log.i("Contact Made", "Ball contacted the roof");
 				outOfBounds = true;
 			}
 		}
 
 		public void endContact(Contact contact) {
 			// TODO Auto-generated method stub
-			
+
 		}
 
 		public void preSolve(Contact contact, Manifold oldManifold) {
 			// TODO Auto-generated method stub
-			
+
 		}
 
 		public void postSolve(Contact contact, ContactImpulse impulse) {
 			// TODO Auto-generated method stub
-			
+
 		}
 
 	}
-	
+
 }
