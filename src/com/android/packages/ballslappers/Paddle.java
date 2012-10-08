@@ -61,7 +61,7 @@ public class Paddle{
 	public Paddle(float pX, float pY, float pWidth, float pHeight, VertexBufferObjectManager vertexBufferObjectManager,PhysicsWorld mPhysicsWorld, Scene mScene, float orientation) {
 		//x,y,xwidth,xheight,objectmanager	
 		padShape = new Rectangle(pX, pY, pWidth, pHeight, vertexBufferObjectManager);
-		paddleBody = PhysicsFactory.createBoxBody(mPhysicsWorld, padShape, BodyType.StaticBody, paddlefix);
+		paddleBody = PhysicsFactory.createBoxBody(mPhysicsWorld, padShape, BodyType.KinematicBody, paddlefix);
 		paddleBody.setUserData("paddleBody");
 		//dy(this.mPhysicsWorld, ballShape, BodyType.DynamicBody, ballDef);
 		mScene.attachChild(padShape);

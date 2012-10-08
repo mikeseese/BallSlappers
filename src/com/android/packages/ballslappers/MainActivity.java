@@ -97,7 +97,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	// ===========================================================
 
 	public EngineOptions onCreateEngineOptions() {
-		Toast.makeText(this, "Here we go...", Toast.LENGTH_LONG).show();
+		Toast.makeText(this, "Here we go...", Toast.LENGTH_SHORT).show();
 
 		final Camera camera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
 
@@ -152,7 +152,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		
 		// create paddle body
 		final FixtureDef paddleDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		paddleBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, paddleShape, BodyType.StaticBody, paddleDef);
+		paddleBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, paddleShape, BodyType.KinematicBody, paddleDef);
 		paddleBody.setUserData("paddleBody");	
 
 		// paint the shapes we want to paint on the scene
