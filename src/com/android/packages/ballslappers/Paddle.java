@@ -50,7 +50,7 @@ public class Paddle{
 	public float y;
 	public float width;
 	public float height;
-	public static float speed = 25;
+	public static float speed = 15;
 	public float orientation = 0; //(float) (Math.PI/2) in rad
 	private Vector2 tempVelocity;
 

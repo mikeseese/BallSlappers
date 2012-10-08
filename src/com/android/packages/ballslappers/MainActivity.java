@@ -13,8 +13,6 @@ import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.EngineOptions.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.FillResolutionPolicy;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
-import org.andengine.entity.modifier.DelayModifier;
-import org.andengine.entity.primitive.Ellipse;
 import org.andengine.entity.primitive.Line;
 import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.scene.Scene;
@@ -28,8 +26,6 @@ import org.andengine.extension.physics.box2d.PhysicsConnector;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
 import org.andengine.extension.physics.box2d.PhysicsWorld;
 import org.andengine.extension.physics.box2d.util.Vector2Pool;
-import org.andengine.input.sensor.acceleration.AccelerationData;
-import org.andengine.input.sensor.acceleration.IAccelerationListener;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
@@ -63,6 +59,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public static final int CAMERA_HEIGHT = 480;
 	public static final int PADDLE_WIDTH = 200;
 	public static final int PADDLE_HEIGHT = 20;
+	public static final int BALL_SIZE = 15;
 	public static final int BALL_RESET_DELAY = 3;
 	public static final Vector2 start_position = new Vector2(CAMERA_WIDTH/(2*PIXEL_TO_METER_RATIO_DEFAULT), CAMERA_HEIGHT/(2*PIXEL_TO_METER_RATIO_DEFAULT));
 
@@ -119,55 +116,68 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		this.mScene = new Scene();
 		this.mScene.setBackground(new Background(0, 0, 0));
 		this.mScene.setOnSceneTouchListener(this);
-
+		
+		// initialize the physics world with no gravity
 		this.mPhysicsWorld = new PhysicsWorld(new Vector2(0, 0), false);
-		mPhysicsWorld.setContactListener(new BallCollisionUpdate());
+		
+		// create all shapes to be painted on the scene
 		final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
-		ballShape = new Rectangle(CAMERA_WIDTH / 2, CAMERA_HEIGHT / 2, 10, 10, vertexBufferObjectManager);
+		ballShape = new Rectangle(CAMERA_WIDTH / 2, CAMERA_HEIGHT / 2, BALL_SIZE, BALL_SIZE, vertexBufferObjectManager);
+		ballShape.setColor(1, 0, 0);
 		final Rectangle ground = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, vertexBufferObjectManager);
 		final Rectangle roof = new Rectangle(0, 0, CAMERA_WIDTH, 2, vertexBufferObjectManager);
 		final Rectangle left = new Rectangle(0, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
 		final Rectangle right = new Rectangle(CAMERA_WIDTH - 2, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
 		final Rectangle paddleShape = new Rectangle(CAMERA_WIDTH / 2, 455, PADDLE_WIDTH, PADDLE_HEIGHT, vertexBufferObjectManager);
 
-
+		// create wall bodies (left and right)
 		final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		final FixtureDef paddleDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		final FixtureDef outOfBoundsFixDef = PhysicsFactory.createFixtureDef(0, 0, 0);
-		outOfBoundsFixDef.isSensor = true;
-
-
-		Body groundBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ground, BodyType.StaticBody, outOfBoundsFixDef);
-		groundBody.setUserData("groundBody");
-		Body roofBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, roof, BodyType.StaticBody, outOfBoundsFixDef);
-		roofBody.setUserData("roofBody");
 		Body leftBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, left, BodyType.StaticBody, wallFixtureDef);
 		leftBody.setUserData("leftBody");
 		Body rightBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, right, BodyType.StaticBody, wallFixtureDef);
 		rightBody.setUserData("rightBody");
+		
+		// create bodies for goals (ground and roof)
+		final FixtureDef outOfBoundsFixDef = PhysicsFactory.createFixtureDef(0, 0, 0);
+		outOfBoundsFixDef.isSensor = true;
+		Body groundBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ground, BodyType.StaticBody, outOfBoundsFixDef);
+		groundBody.setUserData("groundBody");
+		Body roofBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, roof, BodyType.StaticBody, outOfBoundsFixDef);
+		roofBody.setUserData("roofBody");
 
+		// create ball body
 		final FixtureDef ballDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		paddleBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, paddleShape, BodyType.StaticBody, paddleDef);
-		paddleBody.setUserData("paddleBody");
 		ballBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ballShape, BodyType.DynamicBody, ballDef);
-		ballBody.setUserData("ballBody");		
+		ballBody.setUserData("ballBody");	
+		
+		// create paddle body
+		final FixtureDef paddleDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
+		paddleBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, paddleShape, BodyType.StaticBody, paddleDef);
+		paddleBody.setUserData("paddleBody");	
 
+		// paint the shapes we want to paint on the scene
 		this.mScene.attachChild(left);
 		this.mScene.attachChild(right);
 		this.mScene.attachChild(ballShape);
 		this.mScene.attachChild(paddleShape);
 
-		physics_conn = new PhysicsConnector(ballShape, ballBody);
-		mPhysicsWorld.registerPhysicsConnector(physics_conn);
+		// initialize the paddle for the AI
+		paddleAI = new Paddle(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, vertexBufferObjectManager, mPhysicsWorld, mScene, 0);
+
+		// initialize the ball with a starting random velocity
+		Vector2 unit = getUnitVector();
+		ballBody.setLinearVelocity(getRandomVelocity() * unit.x, getRandomVelocity() * unit.y);
+		
+		// set a listener to determine if the ball is out of bounds
+		mPhysicsWorld.setContactListener(new BallCollisionUpdate());
+		
+		// connect the shapes with the bodies for the physics engine
+		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(ballShape, ballBody));
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(paddleShape, paddleBody));
 
 		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
 		this.mScene.registerUpdateHandler(this);
-
-		paddleAI = new Paddle(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, vertexBufferObjectManager, mPhysicsWorld, mScene, 0);
-
-		Vector2 unit = getUnitVector();
-		ballBody.setLinearVelocity(getBallVelocity() * unit.x, getBallVelocity() * unit.y);
+		
 		return this.mScene;
 	}
 
@@ -214,7 +224,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
 	private void ballReset() {
 		Vector2 unit = getUnitVector();
-		ballBody.setLinearVelocity(getBallVelocity() * unit.x, getBallVelocity() * unit.y);
+		ballBody.setLinearVelocity(getRandomVelocity() * unit.x, getRandomVelocity() * unit.y);
 		Log.i("ballBodyVelocity", ballBody.getLinearVelocity().toString());
 	}
 
@@ -248,9 +258,9 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		return ballBody;
 	}
 
-	public int getBallVelocity() {
+	public int getRandomVelocity() {
 		int velocity = 0;
-		while(Math.abs(velocity) < 10 || Math.abs(velocity) > 15)
+		while(Math.abs(velocity) < 5 || Math.abs(velocity) > 10)
 			velocity = randomNumGen.nextInt() % 15;
 
 		return velocity;
