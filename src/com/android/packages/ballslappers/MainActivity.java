@@ -178,7 +178,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
 		if(this.mPhysicsWorld != null) {
 			if(fingerDown) {
-				Log.v("paddle.x", Float.toString(paddleBody.getPosition().x));
+				Log.i("paddle.x", Float.toString(paddleBody.getPosition().x));
 				float nextX = pSceneTouchEvent.getX() - diffX;
 				if(nextX < PADDLE_WIDTH/2)
 					nextX = PADDLE_WIDTH/2;
@@ -219,11 +219,11 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	private void ballReset() {
 		Vector2 unit = getUnitVector();
 		ballBody.setLinearVelocity(getBallVelocity() * unit.x, getBallVelocity() * unit.y);
-		Log.v("ballBodyVelocity", ballBody.getLinearVelocity().toString());
+		Log.i("ballBodyVelocity", ballBody.getLinearVelocity().toString());
 	}
 	
 	public void onUpdate(final float pSecondsElapsed) {
-		Log.v("Ball Position", ballShape.getX() + ", " + ballShape.getY());
+		Log.i("Ball Position", ballShape.getX() + ", " + ballShape.getY());
 		
 		paddleAI.update(ballBody, outOfBounds);
 		
@@ -278,12 +278,12 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			Object userBData = bodyB.getUserData();
 			if(userAData.equals("ballBody") && userBData.equals("groundBody")
 					|| userAData.equals("groundBody") && userBData.equals("ballBody")) {
-				Log.v("Contact Made", "Ball contacted the left side");
+				Log.i("Contact Made", "Ball contacted the ground sensor");
 				outOfBounds = true;
 			}
 			else if(userAData.equals("ballBody") && userBData.equals("roofBody")
 					|| userAData.equals("roofBody") && userBData.equals("ballBody")) {
-				Log.v("Contact Made", "Ball contacted the right side");
+				Log.i("Contact Made", "Ball contacted the roof sensor");
 				outOfBounds = true;
 			}
 		}
