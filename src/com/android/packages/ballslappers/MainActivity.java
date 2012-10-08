@@ -22,6 +22,7 @@ import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.Scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.shape.IAreaShape;
+import org.andengine.entity.shape.IShape;
 import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.util.FPSLogger;
 import org.andengine.extension.physics.box2d.PhysicsConnector;
@@ -47,16 +48,21 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.CircleShape;
+import com.badlogic.gdx.physics.box2d.Contact;
+import com.badlogic.gdx.physics.box2d.ContactImpulse;
+import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
+import com.badlogic.gdx.physics.box2d.Manifold;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 
-public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouchListener {
+public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouchListener, IUpdateHandler {
 	// ===========================================================
 	// Constants
 	// ===========================================================
 
-	private static final int CAMERA_WIDTH = 800;
-	private static final int CAMERA_HEIGHT = 480;
+	public static final int CAMERA_WIDTH = 800;
+	public static final int CAMERA_HEIGHT = 480;
+	public static final Vector2 start_position = new Vector2(200, 100);
 
 	// ===========================================================
 	// Fields
@@ -67,7 +73,9 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	private PhysicsWorld mPhysicsWorld;
 	
 	private Body ballBody;
+	private Rectangle ballShape;
 	private Random randomNumGen = new Random();
+	public static PhysicsConnector physics_conn;
 
 	// ===========================================================
 	// Constructors
@@ -103,29 +111,37 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		this.mScene.setOnSceneTouchListener(this);
 
 		this.mPhysicsWorld = new PhysicsWorld(new Vector2(0, 0), false);
-		mPhysicsWorld.setContactListener(new BallCollisionUpdate());
-
+		//mPhysicsWorld.setContactListener(new BallCollisionUpdate());
 		final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
+		ballShape = new Rectangle(CAMERA_WIDTH / 2, CAMERA_HEIGHT / 2, 10, 10, vertexBufferObjectManager);
 		final Rectangle ground = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, vertexBufferObjectManager);
 		final Rectangle roof = new Rectangle(0, 0, CAMERA_WIDTH, 2, vertexBufferObjectManager);
 		final Rectangle left = new Rectangle(0, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
 		final Rectangle right = new Rectangle(CAMERA_WIDTH - 2, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
 		final Line randomLine = new Line(0, 0, 400, 300, vertexBufferObjectManager);
 		
-		final Rectangle ballShape = new Rectangle(CAMERA_WIDTH / 2, CAMERA_HEIGHT / 2, 10, 10, vertexBufferObjectManager);
+		
+		
+		/*
+		 * Walls for the top and bottom
+		 */
 		
 		final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 		Body groundBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ground, BodyType.StaticBody, wallFixtureDef);
 		groundBody.setUserData("groundBody");
 		Body roofBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, roof, BodyType.StaticBody, wallFixtureDef);
 		roofBody.setUserData("roofBody");
-		Body leftBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, left, BodyType.StaticBody, wallFixtureDef);
-		leftBody.setUserData("leftBody");
-		Body rightBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, right, BodyType.StaticBody, wallFixtureDef);
-		rightBody.setUserData("rightBody");
+
 		
+		/*
+		 * Sensors for detecting out of bounds
+		 */		
 		final FixtureDef outOfBoundsFixDef = PhysicsFactory.createFixtureDef(0, 0, 0);
 		outOfBoundsFixDef.isSensor = true;
+		Body leftBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, left, BodyType.StaticBody, outOfBoundsFixDef);
+		leftBody.setUserData("leftBody");
+		Body rightBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, right, BodyType.StaticBody, outOfBoundsFixDef);
+		rightBody.setUserData("rightBody");
 		Body randomLineBody = PhysicsFactory.createLineBody(this.mPhysicsWorld, randomLine, outOfBoundsFixDef);
 		randomLineBody.setUserData("randomLineBody");
 		
@@ -136,17 +152,16 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		
 		this.mScene.attachChild(ground);
 		this.mScene.attachChild(roof);
-		this.mScene.attachChild(left);
-		this.mScene.attachChild(right);
 		this.mScene.attachChild(randomLine);
-	
+
 		this.mScene.attachChild(ballShape);
-		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(ballShape, ballBody));
+		physics_conn = new PhysicsConnector(ballShape, ballBody);
+		mPhysicsWorld.registerPhysicsConnector(physics_conn);
 		
 		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
+		this.mScene.registerUpdateHandler(this);
 
 		ballBody.setLinearVelocity(randomNumGen.nextInt(), randomNumGen.nextInt());
-		
 		return this.mScene;
 	}
 
@@ -182,8 +197,58 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		Log.v("ballBodyVelocity", ballBody.getLinearVelocity().toString());
 	}
 	
+	public void onUpdate(final float pSecondsElapsed) {
+		Log.v("Ball Position", ballShape.getX() + ", " + ballShape.getY());
+	}
+
+	public void reset() {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	public Body getBallBody() {
+		return ballBody;
+	}
+	
 	// ===========================================================
 	// Inner and Anonymous Classes
 	// ===================== ======================================
+	/*
+	class BallCollisionUpdate implements ContactListener {
+
+		public void beginContact(Contact contact) {
+			Body bodyA = contact.getFixtureA().getBody();
+			Body bodyB = contact.getFixtureB().getBody();
+			Object userAData = bodyA.getUserData();
+			Object userBData = bodyB.getUserData();
+			if(userAData.equals("ballBody") && userBData.equals("leftBody")
+					|| userAData.equals("leftBody") && userBData.equals("ballBody")) {
+				Log.v("Contact Made", "Ball contacted the left side");
+				ballBody.setTransform(start_position, 0f);
+			}
+			else if(userAData.equals("ballBody") && userBData.equals("rightBody")
+					|| userAData.equals("rightBody") && userBData.equals("ballBody")) {
+				Log.v("Contact Made", "Ball contacted the right side");
+				ballBody.setTransform(start_position, 0f);
+			}
+		}
+
+		public void endContact(Contact contact) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void preSolve(Contact contact, Manifold oldManifold) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void postSolve(Contact contact, ContactImpulse impulse) {
+			// TODO Auto-generated method stub
+			
+		}
+
+	}
+*/
 	
 }
