@@ -132,7 +132,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		final Rectangle roof = new Rectangle(0, 0, CAMERA_WIDTH, 2, vertexBufferObjectManager);
 		final Rectangle left = new Rectangle(0, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
 		final Rectangle right = new Rectangle(CAMERA_WIDTH - 2, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
-		final Rectangle paddleShape = new Rectangle(CAMERA_WIDTH / 2, 5, PADDLE_WIDTH, PADDLE_HEIGHT, vertexBufferObjectManager);
+		final Rectangle paddleShape = new Rectangle(CAMERA_WIDTH / 2, 455, PADDLE_WIDTH, PADDLE_HEIGHT, vertexBufferObjectManager);
 		
 
 		final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
@@ -168,7 +168,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
 		this.mScene.registerUpdateHandler(this);
 		
-		paddleAI = new Paddle(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, vertexBufferObjectManager, mPhysicsWorld, mScene);
+		paddleAI = new Paddle(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, vertexBufferObjectManager, mPhysicsWorld, mScene, 0);
 
 		Vector2 unit = getUnitVector();
 		ballBody.setLinearVelocity(getBallVelocity() * unit.x, getBallVelocity() * unit.y);
@@ -184,7 +184,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 					nextX = PADDLE_WIDTH/2;
 				if(nextX > CAMERA_WIDTH - PADDLE_WIDTH/2)
 					nextX = CAMERA_WIDTH - PADDLE_WIDTH/2;
-				Vector2 v = new Vector2(nextX/PIXEL_TO_METER_RATIO_DEFAULT, 13/PIXEL_TO_METER_RATIO_DEFAULT);
+				Vector2 v = new Vector2(nextX/PIXEL_TO_METER_RATIO_DEFAULT, 465/PIXEL_TO_METER_RATIO_DEFAULT);
 				paddleBody.setTransform(v, 0);
 			}
 			
@@ -225,7 +225,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public void onUpdate(final float pSecondsElapsed) {
 		Log.v("Ball Position", ballShape.getX() + ", " + ballShape.getY());
 		
-		paddleAI.update(ballBody, outOfBounds);
+		paddleAI.update(ballBody);
 		
 		if(outOfBounds) {
 			outOfBounds = false;
