@@ -11,10 +11,13 @@ import java.util.Random;
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.engine.handler.physics.PhysicsHandler;
+import org.andengine.engine.handler.timer.ITimerCallback;
+import org.andengine.engine.handler.timer.TimerHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.EngineOptions.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.FillResolutionPolicy;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
+import org.andengine.entity.modifier.DelayModifier;
 import org.andengine.entity.primitive.Ellipse;
 import org.andengine.entity.primitive.Line;
 import org.andengine.entity.primitive.Rectangle;
@@ -62,9 +65,10 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
 	public static final int CAMERA_WIDTH = 800;
 	public static final int CAMERA_HEIGHT = 480;
-	public static final int PADDLE_WIDTH = 100;
+	public static final int PADDLE_WIDTH = 200;
 	public static final int PADDLE_HEIGHT = 20;
-	public static final Vector2 start_position = new Vector2(CAMERA_WIDTH/64, CAMERA_HEIGHT/64);
+	public static final int BALL_RESET_DELAY = 3;
+	public static final Vector2 start_position = new Vector2(CAMERA_WIDTH/(2*PIXEL_TO_METER_RATIO_DEFAULT), CAMERA_HEIGHT/(2*PIXEL_TO_METER_RATIO_DEFAULT));
 
 	// ===========================================================
 	// Fields
@@ -174,18 +178,19 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
 		if(this.mPhysicsWorld != null) {
 			if(fingerDown) {
+				Log.v("paddle.x", Float.toString(paddleBody.getPosition().x));
 				float nextX = pSceneTouchEvent.getX() - diffX;
-				if(nextX < 25)
-					nextX = 25;
-				if(nextX > 800 - 25)
-					nextX = 800 - 25;
-				Vector2 v = new Vector2(nextX/32, 13f/32f);
+				if(nextX < PADDLE_WIDTH/2)
+					nextX = PADDLE_WIDTH/2;
+				if(nextX > CAMERA_WIDTH - PADDLE_WIDTH/2)
+					nextX = CAMERA_WIDTH - PADDLE_WIDTH/2;
+				Vector2 v = new Vector2(nextX/PIXEL_TO_METER_RATIO_DEFAULT, 13/PIXEL_TO_METER_RATIO_DEFAULT);
 				paddleBody.setTransform(v, 0);
 			}
 			
 			if(pSceneTouchEvent.isActionDown()) {
 				Vector2 current = paddleBody.getWorldPoint(new Vector2(0,0));
-				diffX = pSceneTouchEvent.getX() - current.x*32;
+				diffX = pSceneTouchEvent.getX() - current.x*PIXEL_TO_METER_RATIO_DEFAULT;
 				fingerDown = true;
 				return true;
 			}
@@ -219,12 +224,23 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	
 	public void onUpdate(final float pSecondsElapsed) {
 		Log.v("Ball Position", ballShape.getX() + ", " + ballShape.getY());
+		
+		paddleAI.update(ballBody, outOfBounds);
+		
 		if(outOfBounds) {
 			outOfBounds = false;
-			ballBody.setTransform(start_position, 0f);
-			ballReset();
+			
+			// delays the reset of the ball by BALL_RESET_DELAY seconds
+			TimerHandler timerHandler;
+	        this.getEngine().registerUpdateHandler(timerHandler = new TimerHandler(BALL_RESET_DELAY, new ITimerCallback()
+	        {                      
+	            public void onTimePassed(final TimerHandler pTimerHandler)
+	            {
+	            	ballBody.setTransform(start_position, 0f);
+	    			ballReset();
+	            }
+	        }));
 		}
-		paddleAI.update(ballBody);
 	}
 
 	public void reset() {
