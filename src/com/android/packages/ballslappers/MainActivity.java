@@ -81,9 +81,12 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	private Paddle paddleAI;
 
 	private Random randomNumGen = new Random();
-	public static PhysicsConnector physics_conn;
+	
 	public boolean outOfBounds = false;
 
+	private float[] previousYLocations = {1, 2, 3}; // initialize to different values
+	private int previousYCount = 0;
+	
 	// ===========================================================
 	// Constructors
 	// ===========================================================
@@ -97,7 +100,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	// ===========================================================
 
 	public EngineOptions onCreateEngineOptions() {
-		Toast.makeText(this, "Here we go...", Toast.LENGTH_SHORT).show();
+		Toast.makeText(this, "Let the battle begin...", Toast.LENGTH_SHORT).show();
 
 		final Camera camera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
 
@@ -184,7 +187,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
 		if(this.mPhysicsWorld != null) {
 			if(fingerDown) {
-				Log.i("paddle.x", Float.toString(paddleBody.getPosition().x));
+				//Log.i("paddle.x", Float.toString(paddleBody.getPosition().x));
 				float nextX = pSceneTouchEvent.getX() - diffX;
 				if(nextX < PADDLE_WIDTH/2)
 					nextX = PADDLE_WIDTH/2;
@@ -225,14 +228,32 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	private void ballReset() {
 		Vector2 unit = getUnitVector();
 		ballBody.setLinearVelocity(getRandomVelocity() * unit.x, getRandomVelocity() * unit.y);
-		Log.i("ballBodyVelocity", ballBody.getLinearVelocity().toString());
+		//Log.i("ballBodyVelocity", ballBody.getLinearVelocity().toString());
 	}
 
 	public void onUpdate(final float pSecondsElapsed) {
-		Log.i("Ball Position", ballShape.getX() + ", " + ballShape.getY());
+		//Log.i("Ball Position", ballShape.getX() + ", " + ballShape.getY());
 
 		paddleAI.update(ballBody);
-
+		
+		if (ballStuck()) {
+			/* keep the x velocity the same but alter the y velocity in the appropriate direction to
+			 * make it seem like it's accurately bouncing
+			 * this is just temporary because it won't be an issue when the trajectory of the ball is 
+			 * dependent solely on the position it hits the paddle */
+			int tempYVel;
+			if (ballBody.getPosition().y > CAMERA_HEIGHT / (2 * PIXEL_TO_METER_RATIO_DEFAULT)) {
+				Log.i("Ball stuck", "stuck on ground");
+				tempYVel = -1;
+			}
+			else {
+				Log.i("Ball stuck", "stuck on roof");
+				tempYVel = 1;
+			}
+			
+			ballBody.setLinearVelocity(new Vector2(ballBody.getLinearVelocity().x, tempYVel));				
+		}
+		
 		if(outOfBounds) {
 			outOfBounds = false;
 
@@ -254,10 +275,10 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
 	}
 
-	public Body getBallBody() {
-		return ballBody;
+	public boolean ballStuck() {
+		return ballBody.getLinearVelocity().y == 0;
 	}
-
+	
 	public int getRandomVelocity() {
 		int velocity = 0;
 		while(Math.abs(velocity) < 5 || Math.abs(velocity) > 10)
