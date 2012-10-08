@@ -1,13 +1,8 @@
-<<<<<<< HEAD
 package com.android.packages.ballslappers;
-=======
 /* Proof of concept for a moving ball with off angle lines
  * Must have AndEngine extensions installed
  * Need to change name of class if you want to run this
  */
-
-package com.example.andengine.sample;
->>>>>>> b770c2e22af2a7f76938412d6c170ec180210746
 
 import static org.andengine.extension.physics.box2d.util.constants.PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT;
 
