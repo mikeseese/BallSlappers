@@ -53,6 +53,34 @@ public class Slapper extends Rectangle {
 		return tempVelocity;
 	}
 
+	public float getSlapperX() {
+		return x;
+	}
+
+	public void setSlapperX(float x) {
+		this.x = x;
+	}
+
+	public float getSlapperY() {
+		return y;
+	}
+
+	public void setSlapperY(float y) {
+		this.y = y;
+	}
+
+	public float getSlapperWidth() {
+		return width;
+	}
+
+	public float getSlapperHeight() {
+		return height;
+	}
+
+	public float getSlapperOrientation() {
+		return orientation;
+	}
+
 	// eventually this needs to be a common function between multiple classes
 	// keeps the paddle from going into and past the wall
 	public float bound(float low, float high, float number) {
@@ -62,4 +90,5 @@ public class Slapper extends Rectangle {
 			number = high;
 		return number;
 	}
+	
 } 

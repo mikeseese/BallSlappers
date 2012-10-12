@@ -56,11 +56,11 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
 	private PhysicsWorld mPhysicsWorld;
 
-	private Body ballBody;
+	static Body ballBody;
 	private Rectangle ballShape;
 
 	private Body paddleBody;
-	private Body AIBody;
+	static Body AIBody;
 	private float diffX;
 	private boolean fingerDown;
 
@@ -169,6 +169,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
 		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
 		this.mScene.registerUpdateHandler(this);
+		this.mScene.registerUpdateHandler(new AIUpdater(slapperAI));
 		
 		return this.mScene;
 	}
@@ -221,11 +222,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	}
 
 	public void onUpdate(final float pSecondsElapsed) {
-		//Log.i("Ball Position", ballShape.getX() + ", " + ballShape.getY());
-
-		Log.i("Tranforming", "AIBody should have moved here");
-		AIBody.setTransform(slapperAI.update(ballBody), 0);
-	
 		if (ballStuck()) {
 			/* keep the x velocity the same but alter the y velocity in the appropriate direction to
 			 * make it seem like it's accurately bouncing
@@ -248,8 +244,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			outOfBounds = false;
 
 			// delays the reset of the ball by BALL_RESET_DELAY seconds
-			//TimerHandler timerHandler;
-	        this.getEngine().registerUpdateHandler(/*timerHandler =*/ new TimerHandler(BALL_RESET_DELAY, new ITimerCallback()
+			TimerHandler timerHandler;
+	        this.getEngine().registerUpdateHandler(timerHandler = new TimerHandler(BALL_RESET_DELAY, new ITimerCallback()
 	        {                      
 	            public void onTimePassed(final TimerHandler pTimerHandler)
 	            {

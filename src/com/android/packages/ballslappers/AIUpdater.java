@@ -13,7 +13,7 @@ public class AIUpdater implements IUpdateHandler {
 
 	public void onUpdate(float pSecondsElapsed) {
 		MainActivity.AIBody.setTransform(ai.update(MainActivity.ballBody), 0);
-		Log.i("AIUpdater", "Updated successfully");
+		//Log.i("AIUpdater", "Updated successfully");
 	}
 
 	public void reset() {
