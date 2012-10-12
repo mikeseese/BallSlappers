@@ -6,49 +6,34 @@ import java.util.Random;
 
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.handler.IUpdateHandler;
-import org.andengine.engine.handler.physics.PhysicsHandler;
 import org.andengine.engine.handler.timer.ITimerCallback;
 import org.andengine.engine.handler.timer.TimerHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.EngineOptions.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.FillResolutionPolicy;
-import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
-import org.andengine.entity.primitive.Line;
 import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.Scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.background.Background;
-import org.andengine.entity.shape.IAreaShape;
-import org.andengine.entity.shape.IShape;
-import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.util.FPSLogger;
 import org.andengine.extension.physics.box2d.PhysicsConnector;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
 import org.andengine.extension.physics.box2d.PhysicsWorld;
-import org.andengine.extension.physics.box2d.util.Vector2Pool;
 import org.andengine.input.touch.TouchEvent;
-import org.andengine.opengl.texture.TextureOptions;
-import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
-import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
-import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
-import org.andengine.util.debug.Debug;
 
-import android.hardware.SensorManager;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
-import com.badlogic.gdx.physics.box2d.CircleShape;
 import com.badlogic.gdx.physics.box2d.Contact;
 import com.badlogic.gdx.physics.box2d.ContactImpulse;
 import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.Manifold;
-import com.badlogic.gdx.physics.box2d.PolygonShape;
 
 public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouchListener, IUpdateHandler {
 	// ===========================================================
@@ -75,17 +60,16 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	private Rectangle ballShape;
 
 	private Body paddleBody;
+	private Body AIBody;
 	private float diffX;
 	private boolean fingerDown;
 
-	private Paddle paddleAI;
+	//private Paddle paddleAI;
+	private Slapper slapperAI;
 
 	private Random randomNumGen = new Random();
-	
-	public boolean outOfBounds = false;
 
-	private float[] previousYLocations = {1, 2, 3}; // initialize to different values
-	private int previousYCount = 0;
+	public boolean outOfBounds = false;
 	
 	// ===========================================================
 	// Constructors
@@ -132,6 +116,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		final Rectangle left = new Rectangle(0, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
 		final Rectangle right = new Rectangle(CAMERA_WIDTH - 2, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
 		final Rectangle paddleShape = new Rectangle(CAMERA_WIDTH / 2, 455, PADDLE_WIDTH, PADDLE_HEIGHT, vertexBufferObjectManager);
+		slapperAI = new Slapper(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, vertexBufferObjectManager, 0);
 
 		// create wall bodies (left and right)
 		final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
@@ -156,16 +141,19 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		// create paddle body
 		final FixtureDef paddleDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 		paddleBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, paddleShape, BodyType.KinematicBody, paddleDef);
-		paddleBody.setUserData("paddleBody");	
+		paddleBody.setUserData("paddleBody");
 
+		// initialize the paddle for the AI
+		final FixtureDef AIFixtureDef = PhysicsFactory.createFixtureDef(0,1.0f,0.0f);
+		AIBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, slapperAI, BodyType.KinematicBody, AIFixtureDef);
+		AIBody.setUserData("AIBody");
+		
 		// paint the shapes we want to paint on the scene
 		this.mScene.attachChild(left);
 		this.mScene.attachChild(right);
 		this.mScene.attachChild(ballShape);
 		this.mScene.attachChild(paddleShape);
-
-		// initialize the paddle for the AI
-		paddleAI = new Paddle(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, vertexBufferObjectManager, mPhysicsWorld, mScene, 0);
+		this.mScene.attachChild(slapperAI);
 
 		// initialize the ball with a starting random velocity
 		Vector2 unit = getUnitVector();
@@ -173,10 +161,11 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		
 		// set a listener to determine if the ball is out of bounds
 		mPhysicsWorld.setContactListener(new BallCollisionUpdate());
-		
+
 		// connect the shapes with the bodies for the physics engine
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(ballShape, ballBody));
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(paddleShape, paddleBody));
+		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(slapperAI, AIBody));
 
 		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
 		this.mScene.registerUpdateHandler(this);
@@ -234,8 +223,9 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public void onUpdate(final float pSecondsElapsed) {
 		//Log.i("Ball Position", ballShape.getX() + ", " + ballShape.getY());
 
-		paddleAI.update(ballBody);
-		
+		Log.i("Tranforming", "AIBody should have moved here");
+		AIBody.setTransform(slapperAI.update(ballBody), 0);
+	
 		if (ballStuck()) {
 			/* keep the x velocity the same but alter the y velocity in the appropriate direction to
 			 * make it seem like it's accurately bouncing
@@ -258,8 +248,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			outOfBounds = false;
 
 			// delays the reset of the ball by BALL_RESET_DELAY seconds
-			TimerHandler timerHandler;
-	        this.getEngine().registerUpdateHandler(timerHandler = new TimerHandler(BALL_RESET_DELAY, new ITimerCallback()
+			//TimerHandler timerHandler;
+	        this.getEngine().registerUpdateHandler(/*timerHandler =*/ new TimerHandler(BALL_RESET_DELAY, new ITimerCallback()
 	        {                      
 	            public void onTimePassed(final TimerHandler pTimerHandler)
 	            {
@@ -329,7 +319,5 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			// TODO Auto-generated method stub
 
 		}
-
 	}
-
 }
