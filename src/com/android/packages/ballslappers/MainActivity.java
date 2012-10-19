@@ -12,6 +12,7 @@ import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.EngineOptions.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.FillResolutionPolicy;
 import org.andengine.entity.primitive.Rectangle;
+import org.andengine.entity.scene.CameraScene;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.Scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.background.Background;
@@ -24,6 +25,7 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 
 import android.util.Log;
+import android.view.KeyEvent;
 import android.widget.Toast;
 
 import com.badlogic.gdx.math.Vector2;
@@ -53,6 +55,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	// ===========================================================
 
 	private Scene mScene;
+	//private CameraScene mPauseScene;
 
 	private PhysicsWorld mPhysicsWorld;
 
@@ -201,6 +204,22 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		return false;
 	}
 
+	@Override
+    public boolean onKeyDown(final int pKeyCode, final KeyEvent pEvent) {
+            if(pKeyCode == KeyEvent.KEYCODE_MENU && pEvent.getAction() == KeyEvent.ACTION_DOWN) {
+                    if(this.mEngine.isRunning()) {
+                            //this.mScene.setChildScene(this.mPauseScene, false, true, true);
+                            this.mEngine.stop();
+                    } else {
+                            //this.mScene.clearChildScene();
+                            this.mEngine.start();
+                    }
+                    return true;
+            } else {
+                    return super.onKeyDown(pKeyCode, pEvent);
+            }
+    }
+	
 	@Override
 	public void onResumeGame() {
 		super.onResumeGame();
