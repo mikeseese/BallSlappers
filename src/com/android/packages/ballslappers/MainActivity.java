@@ -61,12 +61,12 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	 * Meaning of dimensions when phone is in landscape:
 	 * 
 	 *  -------------------------------------------------	_________
-	 *  |0,0										|b	|		|
-	 *  |											|u	|		|
-	 *  |											|t	|	CAMERA_HEIGHT
-	 *  |											|t	|		|
-	 *  |											|on	|		|
-	 *  |________________________________________max|s__|	____|____
+	 *  |0,0                                        |b	|       |
+	 *  |                                           |u  |       |
+	 *  |                                           |t  |  CAMERA_HEIGHT
+	 *  |                                           |t  |       |
+	 *  |                                           |on |       |
+	 *  |________________________________________max|s__|   ____|____
 	 *  
 	 *  |----------------- CAMERA_WIDTH ----------------|
 	 *  
