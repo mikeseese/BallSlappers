@@ -34,6 +34,7 @@ import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
+import org.andengine.util.HorizontalAlign;
 import org.andengine.util.color.Color;
 
 import android.graphics.Typeface;
@@ -83,6 +84,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public static final int PAUSE_MENU_RESUME = 0;
 	public static final int PAUSE_MENU_RESTART = 1;
 	public static final int PAUSE_MENU_QUIT = 2;
+	
+	public static final int NUM_LIVES = 1;
 
 	// ===========================================================
 	// Fields
@@ -95,11 +98,15 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	private BitmapTextureAtlas mPauseMenuFontTexture;
     private Font mPauseMenuFont;
     private Font mLivesFont;
+    private Font mGameResetFont;
     private Text playerLives;
     private Text computerLives;
+    private Text gameResetMessage;
     
-    private int numPlayerLives = 5;
-    private int numComputerLives = 5;
+    private int numPlayerLives = NUM_LIVES;
+    private int numComputerLives = NUM_LIVES;
+    protected boolean gameOver = false;
+    protected String loserMessage = "";
 
 	private PhysicsWorld mPhysicsWorld;
 
@@ -145,16 +152,27 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         		 											TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         final BitmapTextureAtlas mLivesTexture = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, 
 					TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+        final BitmapTextureAtlas mGameResetTexture = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, 
+					TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         
         this.mPauseMenuFont = new Font(this.getFontManager(), (ITexture) this.mPauseMenuFontTexture, 
         							   Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 48.0f, true, Color.WHITE);
         this.mLivesFont = new Font(this.getFontManager(), (ITexture) mLivesTexture, 
 				   Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 20.0f, true, Color.RED);
+        this.mGameResetFont = new Font(this.getFontManager(), (ITexture) mGameResetTexture, 
+				   Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 30.0f, true, Color.WHITE);
               
         this.mEngine.getTextureManager().loadTexture(this.mPauseMenuFontTexture);
         this.mEngine.getTextureManager().loadTexture(mLivesTexture);
+        this.mEngine.getTextureManager().loadTexture(mGameResetTexture);
         this.getFontManager().loadFont(this.mPauseMenuFont);
-        this.getFontManager().loadFont(mLivesFont);
+        this.getFontManager().loadFont(this.mLivesFont);
+        this.getFontManager().loadFont(this.mGameResetFont);
+        
+        // Text for resetting the game
+        // 35 is the max size for text. Currently a magic #
+		this.gameResetMessage = new Text(CAMERA_WIDTH/2, CAMERA_HEIGHT/2, this.mGameResetFont, "Game over. " + loserMessage + "Resetting.",
+				40, this.getVertexBufferObjectManager());
 	}
 
 	@Override
@@ -294,6 +312,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			case PAUSE_MENU_RESTART:
 	            // restart the game, for now just reset the ball
 				this.ballReset();
+				// reset the players lives
+				this.resetLives();
 	            // remove the menu
 	            this.mScene.clearChildScene();
 	            this.mPauseMenuScene.reset();
@@ -377,14 +397,28 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		
 		if(outOfBounds) {
 			outOfBounds = false;
+			
+			if(gameOver) {
+				gameResetMessage.setText(getLosingMessage(loserMessage));
+				this.gameResetMessage.setHorizontalAlign(HorizontalAlign.CENTER);
+				this.gameResetMessage.setPosition((float)(CAMERA_WIDTH/2 - gameResetMessage.getWidth()*.5), CAMERA_HEIGHT/2);
+				mScene.attachChild(gameResetMessage);
+			}
 
 			// delays the reset of the ball by BALL_RESET_DELAY seconds
 			TimerHandler timerHandler;
 	        this.getEngine().registerUpdateHandler(timerHandler = new TimerHandler(BALL_RESET_DELAY, new ITimerCallback()
 	        {                      
 	            public void onTimePassed(final TimerHandler pTimerHandler)
-	            {
-	    			ballReset();
+	            {			
+	    			// if someone just lost then reset
+	    			if(gameOver) {
+	    				gameOver = false;
+	    				resetGame();
+	    				mScene.detachChild(gameResetMessage);
+	    			}
+	    			else
+	    				ballReset();
 	            }
 	        }));
 		}
@@ -413,7 +447,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	}
 	
 	private void showPlayerLives(Font font, int numLives) {
-		//this.lives = new Text((int)(CAMERA_WIDTH-(CAMERA_WIDTH*.1)), (int)(CAMERA_HEIGHT-(CAMERA_HEIGHT*.1)),
 		this.playerLives = new Text((int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT-(CAMERA_HEIGHT*.1)),
 				font, ("Lives: " + numLives), "Lives: X".length(), this.getVertexBufferObjectManager());
 		this.mScene.attachChild(playerLives);
@@ -424,7 +457,26 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				font, ("Lives: " + numLives), "Lives: X".length(), this.getVertexBufferObjectManager());
 		this.mScene.attachChild(computerLives);
 	}
+	
+	private void resetLives() {
+		this.numComputerLives = NUM_LIVES;
+		this.numPlayerLives = NUM_LIVES;
+		playerLives.setText("Lives: " + numPlayerLives);
+		computerLives.setText("Lives: " + numComputerLives);
+	}
+	
+	/*
+	 * Naive way to reset the game.
+	 */
+	protected void resetGame() {
+		this.ballReset();
+		this.resetLives();
+	}
 
+	private String getLosingMessage(String loser) {
+		return "Game over. " + loserMessage + "Resetting.";
+	}
+	
 	// ===========================================================
 	// Inner and Anonymous Classes
 	// ===========================================================
@@ -441,12 +493,22 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				Log.i("Contact Made", "Ball contacted the ground");
 				outOfBounds = true;
 				playerLives.setText("Lives: " + --numPlayerLives);
+				
+				if(numPlayerLives == 0) {
+					gameOver = true;
+					loserMessage = "You lose. ";
+				}
 			}
 			else if(userAData.equals("ballBody") && userBData.equals("roofBody")
 					|| userAData.equals("roofBody") && userBData.equals("ballBody")) {
 				Log.i("Contact Made", "Ball contacted the roof");
 				outOfBounds = true;
 				computerLives.setText("Lives: " + --numComputerLives);
+				
+				if(numComputerLives == 0) {
+					gameOver = true;
+					loserMessage = "The Computer loses. ";
+				}
 			}
 		}
 
