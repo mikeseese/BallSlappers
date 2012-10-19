@@ -22,6 +22,7 @@ import org.andengine.entity.scene.menu.MenuScene.IOnMenuItemClickListener;
 import org.andengine.entity.scene.menu.item.IMenuItem;
 import org.andengine.entity.scene.menu.item.TextMenuItem;
 import org.andengine.entity.scene.menu.item.decorator.ColorMenuItemDecorator;
+import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.util.FPSLogger;
 import org.andengine.extension.physics.box2d.PhysicsConnector;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
@@ -31,6 +32,8 @@ import org.andengine.opengl.font.Font;
 import org.andengine.opengl.texture.ITexture;
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
+import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
+import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.util.color.Color;
@@ -60,7 +63,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public static final int PADDLE_WIDTH = 200;
 	public static final int PADDLE_HEIGHT = 20;
 	public static final int BALL_SIZE = 15;
-	public static final int BALL_RESET_DELAY = 3;
+	public static final int BALL_RESET_DELAY = 3; // in seconds
 	public static final Vector2 start_position = new Vector2(CAMERA_WIDTH/(2*PIXEL_TO_METER_RATIO_DEFAULT), 
 															 CAMERA_HEIGHT/(2*PIXEL_TO_METER_RATIO_DEFAULT));
 	
@@ -82,7 +85,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	private PhysicsWorld mPhysicsWorld;
 
 	static Body ballBody;
-	private Rectangle ballShape;
+	private BitmapTextureAtlas mBallBitmapTextureAtlas;
+    private TiledTextureRegion mBallTextureRegion;
 
 	private Body paddleBody;
 	static Body AIBody;
@@ -127,6 +131,15 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
               
         this.mEngine.getTextureManager().loadTexture(this.mPauseMenuFontTexture);
         this.getFontManager().loadFont(this.mPauseMenuFont);
+        
+        /* Texture/Texture regions for ball */
+        this.mBallBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 64, 128, 
+        													  TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+        BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
+
+        this.mBallTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBallBitmapTextureAtlas, 
+        																			this, "orange_ball.png", 0, 32, 2, 1); // 64x32
+        this.mEngine.getTextureManager().loadTexture(this.mBallBitmapTextureAtlas);
 	}
 
 	@Override
@@ -144,8 +157,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		
 		// create all shapes to be painted on the scene
 		final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
-		ballShape = new Rectangle(CAMERA_WIDTH / 2, CAMERA_HEIGHT / 2, BALL_SIZE, BALL_SIZE, vertexBufferObjectManager);
-		ballShape.setColor(1, 0, 0);
 		final Rectangle ground = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, vertexBufferObjectManager);
 		final Rectangle roof = new Rectangle(0, 0, CAMERA_WIDTH, 2, vertexBufferObjectManager);
 		final Rectangle left = new Rectangle(0, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
@@ -170,8 +181,11 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
 		// create ball body
 		final FixtureDef ballDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		ballBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ballShape, BodyType.DynamicBody, ballDef);
-		ballBody.setUserData("ballBody");	
+		final AnimatedSprite ball = new AnimatedSprite(CAMERA_WIDTH/2, CAMERA_HEIGHT/2, this.mBallTextureRegion, 
+													   this.getVertexBufferObjectManager());
+		ball.animate(100);
+        ballBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ball, BodyType.DynamicBody, ballDef);
+		ballBody.setUserData("ballBody");
 		
 		// create paddle body
 		final FixtureDef paddleDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
@@ -186,7 +200,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		// paint the shapes we want to paint on the scene
 		this.mScene.attachChild(left);
 		this.mScene.attachChild(right);
-		this.mScene.attachChild(ballShape);
+		this.mScene.attachChild(ball);
 		this.mScene.attachChild(paddleShape);
 		this.mScene.attachChild(slapperAI);
 
@@ -198,7 +212,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		mPhysicsWorld.setContactListener(new BallCollisionUpdate());
 
 		// connect the shapes with the bodies for the physics engine
-		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(ballShape, ballBody));
+		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(ball, ballBody));
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(paddleShape, paddleBody));
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(slapperAI, AIBody));
 
