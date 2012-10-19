@@ -4,6 +4,8 @@ import static org.andengine.extension.physics.box2d.util.constants.PhysicsConsta
 
 import java.util.Random;
 
+import javax.microedition.khronos.opengles.GL10;
+
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.engine.handler.timer.ITimerCallback;
@@ -12,18 +14,28 @@ import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.EngineOptions.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.FillResolutionPolicy;
 import org.andengine.entity.primitive.Rectangle;
-import org.andengine.entity.scene.CameraScene;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.Scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.background.Background;
+import org.andengine.entity.scene.menu.MenuScene;
+import org.andengine.entity.scene.menu.MenuScene.IOnMenuItemClickListener;
+import org.andengine.entity.scene.menu.item.IMenuItem;
+import org.andengine.entity.scene.menu.item.TextMenuItem;
+import org.andengine.entity.scene.menu.item.decorator.ColorMenuItemDecorator;
 import org.andengine.entity.util.FPSLogger;
 import org.andengine.extension.physics.box2d.PhysicsConnector;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
 import org.andengine.extension.physics.box2d.PhysicsWorld;
 import org.andengine.input.touch.TouchEvent;
+import org.andengine.opengl.font.Font;
+import org.andengine.opengl.texture.ITexture;
+import org.andengine.opengl.texture.TextureOptions;
+import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
+import org.andengine.util.color.Color;
 
+import android.graphics.Typeface;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.widget.Toast;
@@ -37,7 +49,8 @@ import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.Manifold;
 
-public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouchListener, IUpdateHandler {
+public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouchListener, IUpdateHandler, 
+																	IOnMenuItemClickListener {
 	// ===========================================================
 	// Constants
 	// ===========================================================
@@ -48,14 +61,23 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public static final int PADDLE_HEIGHT = 20;
 	public static final int BALL_SIZE = 15;
 	public static final int BALL_RESET_DELAY = 3;
-	public static final Vector2 start_position = new Vector2(CAMERA_WIDTH/(2*PIXEL_TO_METER_RATIO_DEFAULT), CAMERA_HEIGHT/(2*PIXEL_TO_METER_RATIO_DEFAULT));
+	public static final Vector2 start_position = new Vector2(CAMERA_WIDTH/(2*PIXEL_TO_METER_RATIO_DEFAULT), 
+															 CAMERA_HEIGHT/(2*PIXEL_TO_METER_RATIO_DEFAULT));
+	
+	public static final int PAUSE_MENU_RESUME = 0;
+	public static final int PAUSE_MENU_RESTART = 1;
+	public static final int PAUSE_MENU_QUIT = 2;
 
 	// ===========================================================
 	// Fields
 	// ===========================================================
 
 	private Scene mScene;
-	//private CameraScene mPauseScene;
+	private Camera mCamera;
+	private MenuScene mPauseMenuScene;
+	
+	private BitmapTextureAtlas mPauseMenuFontTexture;
+    private Font mPauseMenuFont;
 
 	private PhysicsWorld mPhysicsWorld;
 
@@ -89,14 +111,22 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public EngineOptions onCreateEngineOptions() {
 		Toast.makeText(this, "Let the battle begin...", Toast.LENGTH_SHORT).show();
 
-		final Camera camera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
+		mCamera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
 
-		return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED, new FillResolutionPolicy(), camera);
+		return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED, new FillResolutionPolicy(), mCamera);
 	}
 
 	@Override   
 	public void onCreateResources() {
-
+		/* Load Font/Textures. */
+        this.mPauseMenuFontTexture = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, 
+        		 											TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+        
+        this.mPauseMenuFont = new Font(this.getFontManager(), (ITexture) this.mPauseMenuFontTexture, 
+        							   Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 48.0f, true, Color.WHITE);
+              
+        this.mEngine.getTextureManager().loadTexture(this.mPauseMenuFontTexture);
+        this.getFontManager().loadFont(this.mPauseMenuFont);
 	}
 
 	@Override
@@ -106,6 +136,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		this.mScene = new Scene();
 		this.mScene.setBackground(new Background(0, 0, 0));
 		this.mScene.setOnSceneTouchListener(this);
+		
+		this.mPauseMenuScene = this.createPauseMenuScene();
 		
 		// initialize the physics world with no gravity
 		this.mPhysicsWorld = new PhysicsWorld(new Vector2(0, 0), false);
@@ -206,17 +238,42 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
 	@Override
     public boolean onKeyDown(final int pKeyCode, final KeyEvent pEvent) {
-            if(pKeyCode == KeyEvent.KEYCODE_MENU && pEvent.getAction() == KeyEvent.ACTION_DOWN) {
-                    if(this.mEngine.isRunning()) {
-                            //this.mScene.setChildScene(this.mPauseScene, false, true, true);
-                            this.mEngine.stop();
-                    } else {
-                            //this.mScene.clearChildScene();
-                            this.mEngine.start();
-                    }
-                    return true;
+		if(pKeyCode == KeyEvent.KEYCODE_MENU && pEvent.getAction() == KeyEvent.ACTION_DOWN) {
+			if(this.mScene.hasChildScene()) {
+				// remove the menu
+				this.mPauseMenuScene.back();
             } else {
-                    return super.onKeyDown(pKeyCode, pEvent);
+            	// attach the menu
+            	this.mScene.setChildScene(this.mPauseMenuScene, false, true, true);
+            }
+            return true;
+        } else {
+        	return super.onKeyDown(pKeyCode, pEvent);
+        }
+    }
+	
+	//@Override
+    public boolean onMenuItemClicked(final MenuScene pMenuScene, final IMenuItem pMenuItem, 
+    								 final float pMenuItemLocalX, final float pMenuItemLocalY) {
+		switch(pMenuItem.getID()) {
+			case PAUSE_MENU_RESUME:
+				// resume the game by just removing the menu
+				this.mScene.clearChildScene();
+	            this.mPauseMenuScene.reset();
+	            return true;
+			case PAUSE_MENU_RESTART:
+	            // restart the game, for now just reset the ball
+				this.ballReset();
+	            // remove the menu
+	            this.mScene.clearChildScene();
+	            this.mPauseMenuScene.reset();
+	            return true;
+            case PAUSE_MENU_QUIT:
+                // end the current activity (MainActivity)
+                this.finish();
+                return true;
+            default:
+                return false;
             }
     }
 	
@@ -234,7 +291,36 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	// Methods
 	// ===========================================================
 
+	protected MenuScene createPauseMenuScene() {
+        final MenuScene tempMenuScene = new MenuScene(this.mCamera);
+
+        final IMenuItem resumeMenuItem = new ColorMenuItemDecorator(new TextMenuItem(PAUSE_MENU_RESUME, this.mPauseMenuFont, 
+																   "RESUME", this.getVertexBufferObjectManager()), 
+																   Color.RED, Color.WHITE);
+        resumeMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+        tempMenuScene.addMenuItem(resumeMenuItem);
+        
+        final IMenuItem restartMenuItem = new ColorMenuItemDecorator(new TextMenuItem(PAUSE_MENU_RESTART, this.mPauseMenuFont, 
+        														   "RESTART", this.getVertexBufferObjectManager()), 
+        														   Color.RED, Color.WHITE);
+        restartMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+        tempMenuScene.addMenuItem(restartMenuItem);
+
+        final IMenuItem quitMenuItem = new ColorMenuItemDecorator(new TextMenuItem(PAUSE_MENU_QUIT, this.mPauseMenuFont, 
+																  "QUIT", this.getVertexBufferObjectManager()), 
+																  Color.RED, Color.WHITE);
+        quitMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+        tempMenuScene.addMenuItem(quitMenuItem);
+        
+        tempMenuScene.buildAnimations();
+        tempMenuScene.setBackgroundEnabled(false);
+        tempMenuScene.setOnMenuItemClickListener(this);
+        
+        return tempMenuScene;
+}
+	
 	private void ballReset() {
+    	ballBody.setTransform(start_position, 0f);
 		Vector2 unit = getUnitVector();
 		ballBody.setLinearVelocity(getRandomVelocity() * unit.x, getRandomVelocity() * unit.y);
 		//Log.i("ballBodyVelocity", ballBody.getLinearVelocity().toString());
@@ -268,7 +354,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	        {                      
 	            public void onTimePassed(final TimerHandler pTimerHandler)
 	            {
-	            	ballBody.setTransform(start_position, 0f);
 	    			ballReset();
 	            }
 	        }));
