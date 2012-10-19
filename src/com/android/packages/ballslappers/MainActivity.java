@@ -22,6 +22,7 @@ import org.andengine.entity.scene.menu.MenuScene.IOnMenuItemClickListener;
 import org.andengine.entity.scene.menu.item.IMenuItem;
 import org.andengine.entity.scene.menu.item.TextMenuItem;
 import org.andengine.entity.scene.menu.item.decorator.ColorMenuItemDecorator;
+import org.andengine.entity.text.Text;
 import org.andengine.entity.util.FPSLogger;
 import org.andengine.extension.physics.box2d.PhysicsConnector;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
@@ -55,6 +56,21 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	// Constants
 	// ===========================================================
 
+	/*
+	 * Meaning of dimensions when phone is in landscape:
+	 * 
+	 *  -------------------------------------------------	_________
+	 *  |0,0										|b	|		|
+	 *  |											|u	|		|
+	 *  |											|t	|	CAMERA_HEIGHT
+	 *  |											|t	|		|
+	 *  |											|on	|		|
+	 *  |________________________________________max|s__|	____|____
+	 *  
+	 *  |----------------- CAMERA_WIDTH ----------------|
+	 *  
+	 *  In reality anything at CAMERA_HEIGHT/WIDTH is off my Droid RAZR screen though
+	 */
 	public static final int CAMERA_WIDTH = 800;
 	public static final int CAMERA_HEIGHT = 480;
 	public static final int PADDLE_WIDTH = 200;
@@ -78,6 +94,12 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	
 	private BitmapTextureAtlas mPauseMenuFontTexture;
     private Font mPauseMenuFont;
+    private Font mLivesFont;
+    private Text playerLives;
+    private Text computerLives;
+    
+    private int numPlayerLives = 5;
+    private int numComputerLives = 5;
 
 	private PhysicsWorld mPhysicsWorld;
 
@@ -121,12 +143,18 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		/* Load Font/Textures. */
         this.mPauseMenuFontTexture = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, 
         		 											TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+        final BitmapTextureAtlas mLivesTexture = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, 
+					TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         
         this.mPauseMenuFont = new Font(this.getFontManager(), (ITexture) this.mPauseMenuFontTexture, 
         							   Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 48.0f, true, Color.WHITE);
+        this.mLivesFont = new Font(this.getFontManager(), (ITexture) mLivesTexture, 
+				   Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 20.0f, true, Color.RED);
               
         this.mEngine.getTextureManager().loadTexture(this.mPauseMenuFontTexture);
+        this.mEngine.getTextureManager().loadTexture(mLivesTexture);
         this.getFontManager().loadFont(this.mPauseMenuFont);
+        this.getFontManager().loadFont(mLivesFont);
 	}
 
 	@Override
@@ -189,6 +217,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		this.mScene.attachChild(ballShape);
 		this.mScene.attachChild(paddleShape);
 		this.mScene.attachChild(slapperAI);
+		showPlayerLives(this.mLivesFont, this.numPlayerLives);
+		showComputerLives(this.mLivesFont, this.numComputerLives);
 
 		// initialize the ball with a starting random velocity
 		Vector2 unit = getUnitVector();
@@ -381,10 +411,23 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		Vector2 unitVector = new Vector2(randomNumGen.nextFloat(), randomNumGen.nextFloat());
 		return unitVector.nor();
 	}
+	
+	private void showPlayerLives(Font font, int numLives) {
+		//this.lives = new Text((int)(CAMERA_WIDTH-(CAMERA_WIDTH*.1)), (int)(CAMERA_HEIGHT-(CAMERA_HEIGHT*.1)),
+		this.playerLives = new Text((int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT-(CAMERA_HEIGHT*.1)),
+				font, ("Lives: " + numLives), "Lives: X".length(), this.getVertexBufferObjectManager());
+		this.mScene.attachChild(playerLives);
+	}
+	
+	private void showComputerLives(Font font, int numLives) {
+		this.computerLives = new Text((int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.06),
+				font, ("Lives: " + numLives), "Lives: X".length(), this.getVertexBufferObjectManager());
+		this.mScene.attachChild(computerLives);
+	}
 
 	// ===========================================================
 	// Inner and Anonymous Classes
-	// ===================== ======================================
+	// ===========================================================
 
 	class BallCollisionUpdate implements ContactListener {
 
@@ -397,11 +440,13 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 					|| userAData.equals("groundBody") && userBData.equals("ballBody")) {
 				Log.i("Contact Made", "Ball contacted the ground");
 				outOfBounds = true;
+				playerLives.setText("Lives: " + --numPlayerLives);
 			}
 			else if(userAData.equals("ballBody") && userBData.equals("roofBody")
 					|| userAData.equals("roofBody") && userBData.equals("ballBody")) {
 				Log.i("Contact Made", "Ball contacted the roof");
 				outOfBounds = true;
+				computerLives.setText("Lives: " + --numComputerLives);
 			}
 		}
 
