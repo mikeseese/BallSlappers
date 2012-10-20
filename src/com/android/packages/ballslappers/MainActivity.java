@@ -55,8 +55,7 @@ import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.Manifold;
 
-public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouchListener, IUpdateHandler, 
-																	IOnMenuItemClickListener {
+public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouchListener, IUpdateHandler, IOnMenuItemClickListener {
 	// ===========================================================
 	// Constants
 	// ===========================================================
@@ -199,68 +198,51 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		this.mScene.setBackground(new Background(0, 0, 0));
 		this.mScene.setOnSceneTouchListener(this);
 		
+		// initialize the pause menu scene
 		this.mPauseMenuScene = this.createPauseMenuScene();
 		
 		// initialize the physics world with no gravity
 		this.mPhysicsWorld = new PhysicsWorld(new Vector2(0, 0), false);
 		
-		this.boundaryShapes = createBoundaryShapes();
-		
-		final Rectangle paddleShape = new Rectangle(CAMERA_WIDTH / 2, 455, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager());
-		slapperAI = new Slapper(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(), 0);
-
-		// create wall bodies (left and right)
-		final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		Body leftBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("left"), BodyType.StaticBody, wallFixtureDef);
-		leftBody.setUserData("leftBody");
-		Body rightBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("right"), BodyType.StaticBody, wallFixtureDef);
-		rightBody.setUserData("rightBody");
-		
-		// create bodies for goals (ground and roof)
-		final FixtureDef outOfBoundsFixDef = PhysicsFactory.createFixtureDef(0, 0, 0);
-		outOfBoundsFixDef.isSensor = true;
-		Body groundBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("ground"), BodyType.StaticBody, outOfBoundsFixDef);
-		groundBody.setUserData("groundBody");
-		Body roofBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("roof"), BodyType.StaticBody, outOfBoundsFixDef);
-		roofBody.setUserData("roofBody");
-
-		// create ball body
-		final FixtureDef ballDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		final AnimatedSprite ball = new AnimatedSprite(CAMERA_WIDTH/2, CAMERA_HEIGHT/2, this.mBallTextureRegion, 
-													   this.getVertexBufferObjectManager());
-		//ball.animate(100);
-        ballBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ball, BodyType.DynamicBody, ballDef);
-		ballBody.setUserData("ballBody");
-		
-		// create paddle body
+		// initialize the boundaries (walls & goals)
+		this.boundaryShapes = this.createBoundaryShapes();
+		this.createBoundaryBodies();
+				
+		// initialize the slapper for player
+		final Rectangle playerSlapperShape = new Rectangle(CAMERA_WIDTH / 2, 455, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager());
 		final FixtureDef paddleDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		paddleBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, paddleShape, BodyType.KinematicBody, paddleDef);
+		paddleBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, playerSlapperShape, BodyType.KinematicBody, paddleDef);
 		paddleBody.setUserData("paddleBody");
 
 		// initialize the paddle for the AI
-		final FixtureDef AIFixtureDef = PhysicsFactory.createFixtureDef(0,1.0f,0.0f);
+		slapperAI = new Slapper(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(), 0);
+		final FixtureDef AIFixtureDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 		AIBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, slapperAI, BodyType.KinematicBody, AIFixtureDef);
 		AIBody.setUserData("AIBody");
 		
-		// paint the shapes we want to paint on the scene
+		// initialize the ball
+		final FixtureDef ballDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
+		final AnimatedSprite ball = new AnimatedSprite(CAMERA_WIDTH/2, CAMERA_HEIGHT/2, this.mBallTextureRegion, this.getVertexBufferObjectManager());
+		//ball.animate(100);
+        ballBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ball, BodyType.DynamicBody, ballDef);
+		ballBody.setUserData("ballBody");
+		ballReset();
+		
+		// set a listener to determine if the ball is out of bounds
+		mPhysicsWorld.setContactListener(new BallCollisionUpdate());
+		
+		// paint the shapes we want to actually see on the scene
 		this.mScene.attachChild(boundaryShapes.get("left"));
 		this.mScene.attachChild(boundaryShapes.get("right"));
 		this.mScene.attachChild(ball);
-		this.mScene.attachChild(paddleShape);
+		this.mScene.attachChild(playerSlapperShape);
 		this.mScene.attachChild(slapperAI);
 		showPlayerLives(this.mLivesFont, this.numPlayerLives);
 		showComputerLives(this.mLivesFont, this.numComputerLives);
 
-		// initialize the ball with a starting random velocity
-		Vector2 unit = getUnitVector();
-		ballBody.setLinearVelocity(getRandomVelocity() * unit.x, getRandomVelocity() * unit.y);
-		
-		// set a listener to determine if the ball is out of bounds
-		mPhysicsWorld.setContactListener(new BallCollisionUpdate());
-
 		// connect the shapes with the bodies for the physics engine
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(ball, ballBody));
-		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(paddleShape, paddleBody));
+		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(playerSlapperShape, paddleBody));
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(slapperAI, AIBody));
 
 		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
@@ -313,9 +295,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         }
     }
 	
-	//@Override
-    public boolean onMenuItemClicked(final MenuScene pMenuScene, final IMenuItem pMenuItem, 
-    								 final float pMenuItemLocalX, final float pMenuItemLocalY) {
+    public boolean onMenuItemClicked(final MenuScene pMenuScene, final IMenuItem pMenuItem, final float pMenuItemLocalX, final float pMenuItemLocalY) {
 		switch(pMenuItem.getID()) {
 			case PAUSE_MENU_RESUME:
 				// resume the game by just removing the menu
@@ -357,8 +337,13 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	protected HashMap<String, Rectangle> createBoundaryShapes() {
 		HashMap<String, Rectangle> boundaries = new HashMap<String, Rectangle>();
 		switch (NUM_SLAPPERS) {
-			case 2:
-				// create all shapes to be painted on the scene
+			case 5:
+				// TODO
+			case 4:
+				// TODO
+			case 3:
+				// TODO
+			default: // 2 players
 				final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
 				final Rectangle ground = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, vertexBufferObjectManager);
 				final Rectangle roof = new Rectangle(0, 0, CAMERA_WIDTH, 2, vertexBufferObjectManager);
@@ -368,25 +353,49 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				boundaries.put("roof", roof); 
 				boundaries.put("left", left); 
 				boundaries.put("right", right);
-			default:
-				// do nothing
 		}
 		
 		return boundaries;
+	}
+	
+	protected void createBoundaryBodies() {
+		switch (NUM_SLAPPERS) {
+			case 5:
+				// TODO
+			case 4:
+				// TODO
+			case 3:
+				// TODO
+			default: // 2 players
+				// create wall bodies (left and right)
+				final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
+				Body leftBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("left"), BodyType.StaticBody, wallFixtureDef);
+				leftBody.setUserData("leftBody");
+				Body rightBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("right"), BodyType.StaticBody, wallFixtureDef);
+				rightBody.setUserData("rightBody");
+				
+				// create bodies for goals (ground and roof)
+				final FixtureDef outOfBoundsFixDef = PhysicsFactory.createFixtureDef(0, 0, 0);
+				outOfBoundsFixDef.isSensor = true;
+				Body groundBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("ground"), BodyType.StaticBody, outOfBoundsFixDef);
+				groundBody.setUserData("groundBody");
+				Body roofBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("roof"), BodyType.StaticBody, outOfBoundsFixDef);
+				roofBody.setUserData("roofBody");
+		}
 	}
 	
 	protected MenuScene createPauseMenuScene() {
         final MenuScene tempMenuScene = new MenuScene(this.mCamera);
 
         final IMenuItem resumeMenuItem = new ColorMenuItemDecorator(new TextMenuItem(PAUSE_MENU_RESUME, this.mPauseMenuFont, 
-																   "RESUME", this.getVertexBufferObjectManager()), 
-																   Color.RED, Color.WHITE);
+																    "RESUME", this.getVertexBufferObjectManager()), 
+																    Color.RED, Color.WHITE);
         resumeMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
         tempMenuScene.addMenuItem(resumeMenuItem);
         
         final IMenuItem restartMenuItem = new ColorMenuItemDecorator(new TextMenuItem(PAUSE_MENU_RESTART, this.mPauseMenuFont, 
-        														   "RESTART", this.getVertexBufferObjectManager()), 
-        														   Color.RED, Color.WHITE);
+        														     "RESTART", this.getVertexBufferObjectManager()), 
+        														     Color.RED, Color.WHITE);
         restartMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
         tempMenuScene.addMenuItem(restartMenuItem);
 
