@@ -2,6 +2,7 @@ package com.android.packages.ballslappers;
 
 import static org.andengine.extension.physics.box2d.util.constants.PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT;
 
+import java.util.HashMap;
 import java.util.Random;
 
 import javax.microedition.khronos.opengles.GL10;
@@ -88,6 +89,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public static final int PAUSE_MENU_RESTART = 1;
 	public static final int PAUSE_MENU_QUIT = 2;
 	
+	public static final int NUM_SLAPPERS = 2;
 	public static final int NUM_LIVES = 1;
 
 	// ===========================================================
@@ -112,6 +114,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     protected String loserMessage = "";
 
 	private PhysicsWorld mPhysicsWorld;
+	
+	private HashMap<String, Rectangle> boundaryShapes;
 
 	static Body ballBody;
 	private BitmapTextureAtlas mBallBitmapTextureAtlas;
@@ -200,28 +204,24 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		// initialize the physics world with no gravity
 		this.mPhysicsWorld = new PhysicsWorld(new Vector2(0, 0), false);
 		
-		// create all shapes to be painted on the scene
-		final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
-		final Rectangle ground = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, vertexBufferObjectManager);
-		final Rectangle roof = new Rectangle(0, 0, CAMERA_WIDTH, 2, vertexBufferObjectManager);
-		final Rectangle left = new Rectangle(0, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
-		final Rectangle right = new Rectangle(CAMERA_WIDTH - 2, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
-		final Rectangle paddleShape = new Rectangle(CAMERA_WIDTH / 2, 455, PADDLE_WIDTH, PADDLE_HEIGHT, vertexBufferObjectManager);
-		slapperAI = new Slapper(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, vertexBufferObjectManager, 0);
+		this.boundaryShapes = createBoundaryShapes();
+		
+		final Rectangle paddleShape = new Rectangle(CAMERA_WIDTH / 2, 455, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager());
+		slapperAI = new Slapper(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(), 0);
 
 		// create wall bodies (left and right)
 		final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		Body leftBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, left, BodyType.StaticBody, wallFixtureDef);
+		Body leftBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("left"), BodyType.StaticBody, wallFixtureDef);
 		leftBody.setUserData("leftBody");
-		Body rightBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, right, BodyType.StaticBody, wallFixtureDef);
+		Body rightBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("right"), BodyType.StaticBody, wallFixtureDef);
 		rightBody.setUserData("rightBody");
 		
 		// create bodies for goals (ground and roof)
 		final FixtureDef outOfBoundsFixDef = PhysicsFactory.createFixtureDef(0, 0, 0);
 		outOfBoundsFixDef.isSensor = true;
-		Body groundBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ground, BodyType.StaticBody, outOfBoundsFixDef);
+		Body groundBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("ground"), BodyType.StaticBody, outOfBoundsFixDef);
 		groundBody.setUserData("groundBody");
-		Body roofBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, roof, BodyType.StaticBody, outOfBoundsFixDef);
+		Body roofBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("roof"), BodyType.StaticBody, outOfBoundsFixDef);
 		roofBody.setUserData("roofBody");
 
 		// create ball body
@@ -243,8 +243,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		AIBody.setUserData("AIBody");
 		
 		// paint the shapes we want to paint on the scene
-		this.mScene.attachChild(left);
-		this.mScene.attachChild(right);
+		this.mScene.attachChild(boundaryShapes.get("left"));
+		this.mScene.attachChild(boundaryShapes.get("right"));
 		this.mScene.attachChild(ball);
 		this.mScene.attachChild(paddleShape);
 		this.mScene.attachChild(slapperAI);
@@ -354,6 +354,27 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	// Methods
 	// ===========================================================
 
+	protected HashMap<String, Rectangle> createBoundaryShapes() {
+		HashMap<String, Rectangle> boundaries = new HashMap<String, Rectangle>();
+		switch (NUM_SLAPPERS) {
+			case 2:
+				// create all shapes to be painted on the scene
+				final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
+				final Rectangle ground = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, vertexBufferObjectManager);
+				final Rectangle roof = new Rectangle(0, 0, CAMERA_WIDTH, 2, vertexBufferObjectManager);
+				final Rectangle left = new Rectangle(0, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
+				final Rectangle right = new Rectangle(CAMERA_WIDTH - 2, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
+				boundaries.put("ground", ground); 
+				boundaries.put("roof", roof); 
+				boundaries.put("left", left); 
+				boundaries.put("right", right);
+			default:
+				// do nothing
+		}
+		
+		return boundaries;
+	}
+	
 	protected MenuScene createPauseMenuScene() {
         final MenuScene tempMenuScene = new MenuScene(this.mCamera);
 
