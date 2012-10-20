@@ -8,7 +8,6 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 
-
 public class Slapper extends Rectangle {
 	private float x; //position of bottom of paddle
 	private float y;
@@ -27,7 +26,8 @@ public class Slapper extends Rectangle {
 		this.height = pHeight;
 	}
 
-	public Vector2 update(Body ball) {
+	// this is never called?
+	/*public Vector2 update(Body ball) {
 		this.tempVelocity = ball.getPosition();
 		int ballx = Math.round(PIXEL_TO_METER_RATIO_DEFAULT*tempVelocity.x);
 		int bally = Math.round(PIXEL_TO_METER_RATIO_DEFAULT*tempVelocity.y);
@@ -51,7 +51,7 @@ public class Slapper extends Rectangle {
 		tempVelocity.x = this.x/PIXEL_TO_METER_RATIO_DEFAULT;
 		tempVelocity.y = this.y/PIXEL_TO_METER_RATIO_DEFAULT;
 		return tempVelocity;
-	}
+	}*/
 
 	public float getSlapperX() {
 		return x;
