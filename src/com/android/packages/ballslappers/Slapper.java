@@ -1,5 +1,7 @@
 package com.android.packages.ballslappers;
 
+/* Slappers indicates AI paddles */
+
 import static org.andengine.extension.physics.box2d.util.constants.PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT;
 
 import org.andengine.entity.primitive.Rectangle;

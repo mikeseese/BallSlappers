@@ -77,7 +77,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	 */
 	public static final int CAMERA_WIDTH = 800;
 	public static final int CAMERA_HEIGHT = 480;
-	public static final int PADDLE_WIDTH = 200;
+	public static final int PADDLE_WIDTH = 120;
 	public static final int PADDLE_HEIGHT = 20;
 	public static final int BALL_SIZE = 15;
 	public static final int BALL_RESET_DELAY = 3; // in seconds
@@ -121,11 +121,13 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     private TiledTextureRegion mBallTextureRegion;
 
 	private Body paddleBody;
-	static Body AIBody;
+	static Body AIBody, AIBody1, AIBody2;
 	private float diffX;
 	private boolean fingerDown;
 
-	private Slapper slapperAI;
+	public static Slapper topAI;
+	public static Slapper leftAI;
+	public static Slapper rightAI;
 
 	private Random randomNumGen = new Random();
 
@@ -214,11 +216,22 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		paddleBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, playerSlapperShape, BodyType.KinematicBody, paddleDef);
 		paddleBody.setUserData("paddleBody");
 
-		// initialize the paddle for the AI
-		slapperAI = new Slapper(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(), 0);
+		// initialize the paddle for the AI top//
+		topAI = new Slapper(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(), 0);
 		final FixtureDef AIFixtureDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		AIBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, slapperAI, BodyType.KinematicBody, AIFixtureDef);
+		AIBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, topAI, BodyType.KinematicBody, AIFixtureDef);
 		AIBody.setUserData("AIBody");
+		
+		//4 player paddle test.
+		leftAI = new Slapper(5, 150, PADDLE_HEIGHT, PADDLE_WIDTH, this.getVertexBufferObjectManager(), 90);
+		final FixtureDef AIFixtureDef1 = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
+		AIBody1 = PhysicsFactory.createBoxBody(this.mPhysicsWorld, leftAI, BodyType.KinematicBody, AIFixtureDef1);
+		AIBody1.setUserData("AIBody1");
+		
+		rightAI = new Slapper(775, 150, PADDLE_HEIGHT, PADDLE_WIDTH, this.getVertexBufferObjectManager(), 90);
+		final FixtureDef AIFixtureDef2 = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
+		AIBody2 = PhysicsFactory.createBoxBody(this.mPhysicsWorld, rightAI, BodyType.KinematicBody, AIFixtureDef2);
+		AIBody2.setUserData("AIBody2");
 		
 		// initialize the ball
 		final FixtureDef ballDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
@@ -236,18 +249,24 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		this.mScene.attachChild(boundaryShapes.get("right"));
 		this.mScene.attachChild(ball);
 		this.mScene.attachChild(playerSlapperShape);
-		this.mScene.attachChild(slapperAI);
+		this.mScene.attachChild(topAI);
+		this.mScene.attachChild(leftAI);
+		this.mScene.attachChild(rightAI);
 		showPlayerLives(this.mLivesFont, this.numPlayerLives);
 		showComputerLives(this.mLivesFont, this.numComputerLives);
 
 		// connect the shapes with the bodies for the physics engine
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(ball, ballBody));
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(playerSlapperShape, paddleBody));
-		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(slapperAI, AIBody));
+		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(topAI, AIBody));
+		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(leftAI, AIBody1));
+		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(rightAI, AIBody2));
 
 		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
 		this.mScene.registerUpdateHandler(this);
-		this.mScene.registerUpdateHandler(new AIUpdater(slapperAI));
+		this.mScene.registerUpdateHandler(new AIUpdater(topAI,0));
+		this.mScene.registerUpdateHandler(new AIUpdater(leftAI,1));
+		this.mScene.registerUpdateHandler(new AIUpdater(rightAI,2));
 		
 		return this.mScene;
 	}
@@ -367,12 +386,13 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			case 3:
 				// TODO
 			default: // 2 players
-				// create wall bodies (left and right)
+				// create wall bodies (left and right) 
 				final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 				Body leftBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("left"), BodyType.StaticBody, wallFixtureDef);
 				leftBody.setUserData("leftBody");
 				Body rightBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("right"), BodyType.StaticBody, wallFixtureDef);
 				rightBody.setUserData("rightBody");
+				
 				
 				// create bodies for goals (ground and roof)
 				final FixtureDef outOfBoundsFixDef = PhysicsFactory.createFixtureDef(0, 0, 0);

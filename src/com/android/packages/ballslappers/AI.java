@@ -18,28 +18,67 @@ public class AI {
 		this.slapper = s;
 	}
 	
-	public Vector2 update(Body ball) {
+	public Slapper getSlapper() {
+		return slapper;
+	}
+	public Vector2 update(Body ball, Slapper s, int t) {
+		this.slapper = s;
 		this.newAIPos = ball.getPosition();
 		int ballx = Math.round(PIXEL_TO_METER_RATIO_DEFAULT*newAIPos.x);
 		int bally = Math.round(PIXEL_TO_METER_RATIO_DEFAULT*newAIPos.y);
-
+		
 		int paddleconv = (int) Math.sqrt((slapper.getSlapperX()*slapper.getSlapperX()) + (slapper.getSlapperY()*slapper.getSlapperY()));
 		int ballconv = (int) Math.sqrt((ballx*ballx) + (bally*bally));
-
-		if(paddleconv > ballconv + speed + slapper.getHeight()) {
-			paddleconv -= speed;
-		}
+		
+		if (t == 0){
+			if(paddleconv > ballconv + speed + slapper.getHeight()) {
+					paddleconv -= speed;
+				}
 		//else if(slapper.getX() < ballx - speed) {
-		else if (slapper.getSlapperX() < ballx - speed) {
-			paddleconv += speed;
+				else if (slapper.getSlapperX() < ballx - speed) {
+					paddleconv += speed;
+				}
 		}
-
+		else {
+			if(paddleconv > ballconv + speed + slapper.getWidth()) {
+				paddleconv -= speed;
+			}
+	//else if(slapper.getX() < ballx - speed) {
+			else if (slapper.getSlapperY() < bally - speed) {
+				paddleconv += speed;
+			}
+			
+		}
+		
 		// 800 is camera_width, note that bound might not work as you
 		// want it to, these low, high parameters might not be appropriate 
 		// for y orientation
 		slapper.setSlapperX(slapper.bound(slapper.getWidth()/2, 800 - slapper.getWidth()/2, (float) (paddleconv*Math.cos(slapper.getSlapperOrientation()))));
 		slapper.setSlapperY(slapper.bound(slapper.getHeight(), 480 - slapper.getHeight()/2, (float) (paddleconv*Math.sin(slapper.getSlapperOrientation()))));
-
+		
+		if (t==1){
+			slapper.setSlapperX(slapper.bound(slapper.getWidth()/2, 800 - slapper.getWidth()/2, (float) (paddleconv*Math.cos(slapper.getSlapperOrientation()))));
+			if(paddleconv > ballconv + speed + slapper.getWidth()) {
+				paddleconv -= speed;
+				slapper.setSlapperY(bally);
+			}
+			else {
+				slapper.setSlapperY(bally);
+			}
+			
+		}
+		
+		else if(t==2) {
+			slapper.setSlapperX(775);
+			if(paddleconv > ballconv + speed + slapper.getWidth()) {
+				paddleconv -= speed;
+				slapper.setSlapperY(bally);
+			}
+			else {
+				slapper.setSlapperY(bally);
+			}
+		}
+		
 		newAIPos.x = slapper.getSlapperX()/PIXEL_TO_METER_RATIO_DEFAULT;
 		newAIPos.y = slapper.getSlapperY()/PIXEL_TO_METER_RATIO_DEFAULT;
 		return newAIPos;
