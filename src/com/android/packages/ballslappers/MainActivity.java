@@ -2,6 +2,7 @@ package com.android.packages.ballslappers;
 
 import static org.andengine.extension.physics.box2d.util.constants.PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT;
 
+import java.util.HashMap;
 import java.util.Random;
 
 import javax.microedition.khronos.opengles.GL10;
@@ -54,8 +55,7 @@ import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.Manifold;
 
-public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouchListener, IUpdateHandler, 
-																	IOnMenuItemClickListener {
+public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouchListener, IUpdateHandler, IOnMenuItemClickListener {
 	// ===========================================================
 	// Constants
 	// ===========================================================
@@ -88,6 +88,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public static final int PAUSE_MENU_RESTART = 1;
 	public static final int PAUSE_MENU_QUIT = 2;
 	
+	public static final int NUM_SLAPPERS = 2;
 	public static final int NUM_LIVES = 1;
 
 	// ===========================================================
@@ -95,7 +96,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	// ===========================================================
 
 	private Scene mScene;
-	private Scene countDownScene;
 	private Camera mCamera;
 	private MenuScene mPauseMenuScene;
 	
@@ -113,26 +113,31 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     protected boolean gameOver = false;
     protected boolean gameStarting = false;
     protected boolean resuming = false;
+    protected boolean timerCountOn = false;
     protected String loserMessage = "";
 
+    protected TimerHandler timerHandler;
+    
 	private PhysicsWorld mPhysicsWorld;
+	
+	private HashMap<String, Rectangle> boundaryShapes;
 
 	static Body ballBody;
 	private BitmapTextureAtlas mBallBitmapTextureAtlas;
     private TiledTextureRegion mBallTextureRegion;
 
-	private TimerHandler timerHandler;
 	private Body paddleBody;
-	static Body AIBody;
+	static Body AIBody, AIBody1, AIBody2;
 	private float diffX;
 	private boolean fingerDown;
 
-	private Slapper slapperAI;
+	public static Slapper topAI;
+	//public static Slapper leftAI;
+	//public static Slapper rightAI;
 
 	private Random randomNumGen = new Random();
 
 	public boolean outOfBounds = false;
-	public boolean timerCountOn = false;
 	
 	// ===========================================================
 	// Constructors
@@ -203,80 +208,77 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		this.mScene.setBackground(new Background(0, 0, 0));
 		this.mScene.setOnSceneTouchListener(this);
 		
+		// initialize the pause menu scene
 		this.mPauseMenuScene = this.createPauseMenuScene();
 		
 		// initialize the physics world with no gravity
 		this.mPhysicsWorld = new PhysicsWorld(new Vector2(0, 0), false);
 		
-		// create all shapes to be painted on the scene
-		final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
-		final Rectangle ground = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, vertexBufferObjectManager);
-		final Rectangle roof = new Rectangle(0, 0, CAMERA_WIDTH, 2, vertexBufferObjectManager);
-		final Rectangle left = new Rectangle(0, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
-		final Rectangle right = new Rectangle(CAMERA_WIDTH - 2, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
-		final Rectangle paddleShape = new Rectangle(CAMERA_WIDTH / 2, 455, PADDLE_WIDTH, PADDLE_HEIGHT, vertexBufferObjectManager);
-		slapperAI = new Slapper(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, vertexBufferObjectManager, 0);
+		// initialize the boundaries (walls & goals)
+		this.boundaryShapes = this.createBoundaryShapes();
+		this.createBoundaryBodies();
+				
+		// initialize the slapper for player
+		final Rectangle playerSlapperShape = new Rectangle(CAMERA_WIDTH / 2, 455, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager());
+		final FixtureDef paddleDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
+		paddleBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, playerSlapperShape, BodyType.KinematicBody, paddleDef);
+		paddleBody.setUserData("paddleBody");
 
-		// create wall bodies (left and right)
-		final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		Body leftBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, left, BodyType.StaticBody, wallFixtureDef);
-		leftBody.setUserData("leftBody");
-		Body rightBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, right, BodyType.StaticBody, wallFixtureDef);
-		rightBody.setUserData("rightBody");
+		// initialize the paddle for the AI top//
+		topAI = new Slapper(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(), 0);
+		final FixtureDef AIFixtureDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
+		AIBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, topAI, BodyType.KinematicBody, AIFixtureDef);
+		AIBody.setUserData("AIBody");
 		
-		// create bodies for goals (ground and roof)
-		final FixtureDef outOfBoundsFixDef = PhysicsFactory.createFixtureDef(0, 0, 0);
-		outOfBoundsFixDef.isSensor = true;
-		Body groundBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ground, BodyType.StaticBody, outOfBoundsFixDef);
-		groundBody.setUserData("groundBody");
-		Body roofBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, roof, BodyType.StaticBody, outOfBoundsFixDef);
-		roofBody.setUserData("roofBody");
-
-		// create ball body
+		//4 player paddle test.
+		/*leftAI = new Slapper(5, 150, PADDLE_HEIGHT, PADDLE_WIDTH, this.getVertexBufferObjectManager(), 90);
+		final FixtureDef AIFixtureDef1 = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
+		AIBody1 = PhysicsFactory.createBoxBody(this.mPhysicsWorld, leftAI, BodyType.KinematicBody, AIFixtureDef1);
+		AIBody1.setUserData("AIBody1");*/
+		
+		/*rightAI = new Slapper(775, 150, PADDLE_HEIGHT, PADDLE_WIDTH, this.getVertexBufferObjectManager(), 90);
+		final FixtureDef AIFixtureDef2 = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
+		AIBody2 = PhysicsFactory.createBoxBody(this.mPhysicsWorld, rightAI, BodyType.KinematicBody, AIFixtureDef2);
+		AIBody2.setUserData("AIBody2");*/
+		
+		// initialize the ball
 		final FixtureDef ballDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		final AnimatedSprite ball = new AnimatedSprite(CAMERA_WIDTH/2, CAMERA_HEIGHT/2, this.mBallTextureRegion, 
-													   this.getVertexBufferObjectManager());
+		final AnimatedSprite ball = new AnimatedSprite(CAMERA_WIDTH/2, CAMERA_HEIGHT/2, this.mBallTextureRegion, this.getVertexBufferObjectManager());
 		//ball.animate(100);
         ballBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ball, BodyType.DynamicBody, ballDef);
 		ballBody.setUserData("ballBody");
-		
-		// create paddle body
-		final FixtureDef paddleDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		paddleBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, paddleShape, BodyType.KinematicBody, paddleDef);
-		paddleBody.setUserData("paddleBody");
-
-		// initialize the paddle for the AI
-		final FixtureDef AIFixtureDef = PhysicsFactory.createFixtureDef(0,1.0f,0.0f);
-		AIBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, slapperAI, BodyType.KinematicBody, AIFixtureDef);
-		AIBody.setUserData("AIBody");
-		
-		// paint the shapes we want to paint on the scene
-		this.mScene.attachChild(left);
-		this.mScene.attachChild(right);
-		this.mScene.attachChild(ball);
-		this.mScene.attachChild(paddleShape);
-		this.mScene.attachChild(slapperAI);
-		showPlayerLives(this.mLivesFont, this.numPlayerLives);
-		showComputerLives(this.mLivesFont, this.numComputerLives);
-
-		// initialize the ball with a starting random velocity
-		Vector2 unit = getUnitVector();
-		ballBody.setLinearVelocity(getRandomVelocity() * unit.x, getRandomVelocity() * unit.y);
+		ballReset();
 		
 		// set a listener to determine if the ball is out of bounds
 		mPhysicsWorld.setContactListener(new BallCollisionUpdate());
+		
+		// paint the shapes we want to actually see on the scene
+		this.mScene.attachChild(boundaryShapes.get("left"));
+		this.mScene.attachChild(boundaryShapes.get("right"));
+		this.mScene.attachChild(ball);
+		this.mScene.attachChild(playerSlapperShape);
+		this.mScene.attachChild(topAI);
+		//this.mScene.attachChild(leftAI);
+		//this.mScene.attachChild(rightAI);
+		showPlayerLives(this.mLivesFont, this.numPlayerLives);
+		showComputerLives(this.mLivesFont, this.numComputerLives);
 
 		// connect the shapes with the bodies for the physics engine
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(ball, ballBody));
-		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(paddleShape, paddleBody));
-		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(slapperAI, AIBody));
+		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(playerSlapperShape, paddleBody));
+		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(topAI, AIBody));
+		//mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(leftAI, AIBody1));
+		//mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(rightAI, AIBody2));
 
 		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
 		this.mScene.registerUpdateHandler(this);
-		this.mScene.registerUpdateHandler(new AIUpdater(slapperAI));
-		
+		this.mScene.registerUpdateHandler(new AIUpdater(topAI,0));
+		//this.mScene.registerUpdateHandler(new AIUpdater(leftAI,1));
+		//this.mScene.registerUpdateHandler(new AIUpdater(rightAI,2));
+
 		this.gameStarting = true;
 		startTimer();
+		
 		return this.mScene;
 	}
 
@@ -308,18 +310,15 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	}
 
 	@Override
-    public boolean onKeyDown(final int pKeyCode, final KeyEvent pEvent) {
+	public boolean onKeyDown(final int pKeyCode, final KeyEvent pEvent) {
 		if(pKeyCode == KeyEvent.KEYCODE_MENU && pEvent.getAction() == KeyEvent.ACTION_DOWN) {
 			if(this.mScene.hasChildScene()) {
-				// remove the menu
-				Log.i("Countdown timer", "" + timerCountOn);
-	            Log.i("Menu button pushed", "This removes the menu when menu button pushed");
-				
 	            // set up the count down timer
 	            setLoserMessage("");
 	            this.resuming = true;
 	            startTimer();
-	            
+
+				// remove the menu
 	            this.mPauseMenuScene.back();
             } else {
             	// attach the menu
@@ -330,10 +329,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         	return super.onKeyDown(pKeyCode, pEvent);
         }
     }
-	
-	//@Override
-    public boolean onMenuItemClicked(final MenuScene pMenuScene, final IMenuItem pMenuItem, 
-    								 final float pMenuItemLocalX, final float pMenuItemLocalY) {
+
+    public boolean onMenuItemClicked(final MenuScene pMenuScene, final IMenuItem pMenuItem, final float pMenuItemLocalX, final float pMenuItemLocalY) {
 		switch(pMenuItem.getID()) {
 			case PAUSE_MENU_RESUME:
 				// resume the game by just removing the menu
@@ -347,7 +344,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	            
 	            return true;
 			case PAUSE_MENU_RESTART:
-	            // restart the game, for now just reset the ball
+				// restart the game, for now just reset the ball
 				this.ballReset();
 				// reset the players lives
 				this.resetLives();
@@ -384,18 +381,69 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	// Methods
 	// ===========================================================
 
+	protected HashMap<String, Rectangle> createBoundaryShapes() {
+		HashMap<String, Rectangle> boundaries = new HashMap<String, Rectangle>();
+		switch (NUM_SLAPPERS) {
+			case 5:
+				// TODO
+			case 4:
+				// TODO
+			case 3:
+				// TODO
+			default: // 2 players
+				final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
+				final Rectangle ground = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, vertexBufferObjectManager);
+				final Rectangle roof = new Rectangle(0, 0, CAMERA_WIDTH, 2, vertexBufferObjectManager);
+				final Rectangle left = new Rectangle(0, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
+				final Rectangle right = new Rectangle(CAMERA_WIDTH - 2, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
+				boundaries.put("ground", ground); 
+				boundaries.put("roof", roof); 
+				boundaries.put("left", left); 
+				boundaries.put("right", right);
+		}
+		
+		return boundaries;
+	}
+	
+	protected void createBoundaryBodies() {
+		switch (NUM_SLAPPERS) {
+			case 5:
+				// TODO
+			case 4:
+				// TODO
+			case 3:
+				// TODO
+			default: // 2 players
+				// create wall bodies (left and right) 
+				final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
+				Body leftBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("left"), BodyType.StaticBody, wallFixtureDef);
+				leftBody.setUserData("leftBody");
+				Body rightBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("right"), BodyType.StaticBody, wallFixtureDef);
+				rightBody.setUserData("rightBody");
+				
+				
+				// create bodies for goals (ground and roof)
+				final FixtureDef outOfBoundsFixDef = PhysicsFactory.createFixtureDef(0, 0, 0);
+				outOfBoundsFixDef.isSensor = true;
+				Body groundBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("ground"), BodyType.StaticBody, outOfBoundsFixDef);
+				groundBody.setUserData("groundBody");
+				Body roofBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("roof"), BodyType.StaticBody, outOfBoundsFixDef);
+				roofBody.setUserData("roofBody");
+		}
+	}
+	
 	protected MenuScene createPauseMenuScene() {
         final MenuScene tempMenuScene = new MenuScene(this.mCamera);
 
         final IMenuItem resumeMenuItem = new ColorMenuItemDecorator(new TextMenuItem(PAUSE_MENU_RESUME, this.mPauseMenuFont, 
-																   "RESUME", this.getVertexBufferObjectManager()), 
-																   Color.RED, Color.WHITE);
+																    "RESUME", this.getVertexBufferObjectManager()), 
+																    Color.RED, Color.WHITE);
         resumeMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
         tempMenuScene.addMenuItem(resumeMenuItem);
         
         final IMenuItem restartMenuItem = new ColorMenuItemDecorator(new TextMenuItem(PAUSE_MENU_RESTART, this.mPauseMenuFont, 
-        														   "RESTART", this.getVertexBufferObjectManager()), 
-        														   Color.RED, Color.WHITE);
+        														     "RESTART", this.getVertexBufferObjectManager()), 
+        														     Color.RED, Color.WHITE);
         restartMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
         tempMenuScene.addMenuItem(restartMenuItem);
 
@@ -515,9 +563,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		return this.loserMessage + "Game about to start.";
 	}
 	
-	// do you want to have it countdown coming back from the menu on restart, resume, and hitting the menu button again to make it disappear?
-	// as opposed to just the restart
-	
 	private void startTimer() {
 		if(timerCountOn) {
 			Log.i("timerCountOn", "True");
@@ -539,8 +584,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
             {			
                 mScene.setIgnoreUpdate(false);
     			// if someone just lost then reset
-    			if(gameOver || gameStarting) {
-    				resetGame();
+
+    			if(resuming) {
     				if(gameResetMessage.hasParent())
     					mScene.detachChild(gameResetMessage);
     				if(countDownTimer.hasParent())
@@ -548,7 +593,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     				
     				ballBody.setActive(true);
     			}
-    			else if(resuming) {
+    			else if(gameOver || gameStarting) {
+    				resetGame();
     				if(gameResetMessage.hasParent())
     					mScene.detachChild(gameResetMessage);
     				if(countDownTimer.hasParent())
@@ -572,8 +618,9 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		this.outOfBounds = false;
 		this.timerCountOn = false;
 		this.gameStarting = false;
+		this.resuming = false;
 	}
-	
+
 	/* 
 	 * Note: This  will result in a null point exception if you do not call
 	 * startTimer() before calling this method
