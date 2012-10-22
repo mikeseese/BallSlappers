@@ -29,7 +29,7 @@ public class AI {
 		if(paddleconv > ballconv + speed + slapper.getHeight()) {
 			paddleconv -= speed;
 		}
-		else if(slapper.getX() < ballx - speed) {
+		else if(slapper.getSlapperX() < ballx - speed) {
 			paddleconv += speed;
 		}
 

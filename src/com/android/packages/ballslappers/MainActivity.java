@@ -95,6 +95,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	// ===========================================================
 
 	private Scene mScene;
+	private Scene countDownScene;
 	private Camera mCamera;
 	private MenuScene mPauseMenuScene;
 	
@@ -105,10 +106,13 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     private Text playerLives;
     private Text computerLives;
     private Text gameResetMessage;
+    private Text countDownTimer;
     
     private int numPlayerLives = NUM_LIVES;
     private int numComputerLives = NUM_LIVES;
     protected boolean gameOver = false;
+    protected boolean gameStarting = false;
+    protected boolean resuming = false;
     protected String loserMessage = "";
 
 	private PhysicsWorld mPhysicsWorld;
@@ -117,6 +121,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	private BitmapTextureAtlas mBallBitmapTextureAtlas;
     private TiledTextureRegion mBallTextureRegion;
 
+	private TimerHandler timerHandler;
 	private Body paddleBody;
 	static Body AIBody;
 	private float diffX;
@@ -127,6 +132,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	private Random randomNumGen = new Random();
 
 	public boolean outOfBounds = false;
+	public boolean timerCountOn = false;
 	
 	// ===========================================================
 	// Constructors
@@ -182,9 +188,11 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         this.mEngine.getTextureManager().loadTexture(this.mBallBitmapTextureAtlas);
         
         // Text for resetting the game
-        // 35 is the max size for text. Currently a magic #
+        // 40 is the max size for text. Currently a magic #
 		this.gameResetMessage = new Text(CAMERA_WIDTH/2, CAMERA_HEIGHT/2, this.mGameResetFont, "Game over. " + loserMessage + "Resetting.",
 				40, this.getVertexBufferObjectManager());
+		this.countDownTimer = new Text(CAMERA_WIDTH/2, (int)(CAMERA_HEIGHT*.1), this.mGameResetFont, "Starting in: " + BALL_RESET_DELAY,
+				"Starting in: X".length(), this.getVertexBufferObjectManager());
 	}
 
 	@Override
@@ -267,6 +275,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		this.mScene.registerUpdateHandler(this);
 		this.mScene.registerUpdateHandler(new AIUpdater(slapperAI));
 		
+		this.gameStarting = true;
+		startTimer();
 		return this.mScene;
 	}
 
@@ -302,7 +312,15 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		if(pKeyCode == KeyEvent.KEYCODE_MENU && pEvent.getAction() == KeyEvent.ACTION_DOWN) {
 			if(this.mScene.hasChildScene()) {
 				// remove the menu
-				this.mPauseMenuScene.back();
+				Log.i("Countdown timer", "" + timerCountOn);
+	            Log.i("Menu button pushed", "This removes the menu when menu button pushed");
+				
+	            // set up the count down timer
+	            setLoserMessage("");
+	            this.resuming = true;
+	            startTimer();
+	            
+	            this.mPauseMenuScene.back();
             } else {
             	// attach the menu
             	this.mScene.setChildScene(this.mPauseMenuScene, false, true, true);
@@ -321,6 +339,12 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				// resume the game by just removing the menu
 				this.mScene.clearChildScene();
 	            this.mPauseMenuScene.reset();
+	            
+	            // set up the count down timer
+	            setLoserMessage("");
+	            this.resuming = true;
+	            startTimer();
+	            
 	            return true;
 			case PAUSE_MENU_RESTART:
 	            // restart the game, for now just reset the ball
@@ -329,6 +353,12 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				this.resetLives();
 	            // remove the menu
 	            this.mScene.clearChildScene();
+	            
+	            // set up the count down timer
+	            setLoserMessage("");
+	            this.gameStarting = true;
+	            startTimer();
+	            
 	            this.mPauseMenuScene.reset();
 	            return true;
             case PAUSE_MENU_QUIT:
@@ -408,32 +438,23 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			ballBody.setLinearVelocity(new Vector2(ballBody.getLinearVelocity().x, tempYVel));				
 		}
 		
+		if(timerCountOn) {
+			if(timerHandler != null) {
+				setTimerMessage();
+			}
+			
+			setResetMessage();
+		}
+		
 		if(outOfBounds) {
 			outOfBounds = false;
 			
 			if(gameOver) {
-				gameResetMessage.setText(getLosingMessage(loserMessage));
-				this.gameResetMessage.setHorizontalAlign(HorizontalAlign.CENTER);
-				this.gameResetMessage.setPosition((float)(CAMERA_WIDTH/2 - gameResetMessage.getWidth()*.5), CAMERA_HEIGHT/2);
-				mScene.attachChild(gameResetMessage);
+				this.countDownTimer.setPosition((float)(CAMERA_WIDTH/2 - (countDownTimer.getWidth()*.5)), (float)(CAMERA_HEIGHT*.1));
+				setResetMessage();
 			}
-
-			// delays the reset of the ball by BALL_RESET_DELAY seconds
-			TimerHandler timerHandler;
-	        this.getEngine().registerUpdateHandler(timerHandler = new TimerHandler(BALL_RESET_DELAY, new ITimerCallback()
-	        {                      
-	            public void onTimePassed(final TimerHandler pTimerHandler)
-	            {			
-	    			// if someone just lost then reset
-	    			if(gameOver) {
-	    				gameOver = false;
-	    				resetGame();
-	    				mScene.detachChild(gameResetMessage);
-	    			}
-	    			else
-	    				ballReset();
-	            }
-	        }));
+			
+			startTimer();
 		}
 	}
 
@@ -483,10 +504,90 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	protected void resetGame() {
 		this.ballReset();
 		this.resetLives();
+		//this.resetPaddles(); // This needs to be a thing
 	}
 
-	private String getLosingMessage(String loser) {
-		return "Game over. " + loserMessage + "Resetting.";
+	private void setLoserMessage(String loserMessage) {
+		this.loserMessage = loserMessage;
+	}
+	
+	private String getLosingMessage() {
+		return this.loserMessage + "Game about to start.";
+	}
+	
+	// do you want to have it countdown coming back from the menu on restart, resume, and hitting the menu button again to make it disappear?
+	// as opposed to just the restart
+	
+	private void startTimer() {
+		if(timerCountOn) {
+			Log.i("timerCountOn", "True");
+			return;
+		}
+		else {
+			Log.i("timerCountOn", "False -> Setting true");
+			this.timerCountOn = true;
+		}
+		
+		if(!gameResetMessage.hasParent())
+			this.mScene.attachChild(gameResetMessage);
+		if(!countDownTimer.hasParent())
+			this.mScene.attachChild(countDownTimer);
+		
+        this.getEngine().registerUpdateHandler(timerHandler = new TimerHandler(BALL_RESET_DELAY, new ITimerCallback()
+        {                      
+            public void onTimePassed(final TimerHandler pTimerHandler)
+            {			
+                mScene.setIgnoreUpdate(false);
+    			// if someone just lost then reset
+    			if(gameOver || gameStarting) {
+    				resetGame();
+    				if(gameResetMessage.hasParent())
+    					mScene.detachChild(gameResetMessage);
+    				if(countDownTimer.hasParent())
+    					mScene.detachChild(countDownTimer);
+    				
+    				ballBody.setActive(true);
+    			}
+    			else if(resuming) {
+    				if(gameResetMessage.hasParent())
+    					mScene.detachChild(gameResetMessage);
+    				if(countDownTimer.hasParent())
+    					mScene.detachChild(countDownTimer);
+    				
+    				ballBody.setActive(true);
+    			}
+    			else {
+    				ballReset();
+    			}
+    			
+				clearBooleans();
+            }
+        }));
+        
+        ballBody.setActive(false);
+	}
+	
+	/* One method to set booleans to false */
+	private void clearBooleans() {
+		this.outOfBounds = false;
+		this.timerCountOn = false;
+		this.gameStarting = false;
+	}
+	
+	/* 
+	 * Note: This  will result in a null point exception if you do not call
+	 * startTimer() before calling this method
+	 */
+	private void setTimerMessage() {
+		this.countDownTimer.setText("Starting in: " + (int)(3-timerHandler.getTimerSecondsElapsed()));
+		this.countDownTimer.setPosition((float)(CAMERA_WIDTH/2 - (countDownTimer.getWidth()*.5)), (float)(CAMERA_HEIGHT*.1));
+		this.countDownTimer.setHorizontalAlign(HorizontalAlign.CENTER);
+	}
+	
+	private void setResetMessage() {
+		this.gameResetMessage.setText(getLosingMessage());
+		this.gameResetMessage.setPosition((float)(CAMERA_WIDTH/2 - gameResetMessage.getWidth()*.5), CAMERA_HEIGHT/2);
+		this.gameResetMessage.setHorizontalAlign(HorizontalAlign.CENTER);
 	}
 	
 	// ===========================================================
@@ -508,7 +609,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				
 				if(numPlayerLives == 0) {
 					gameOver = true;
-					loserMessage = "You lose. ";
+					setLoserMessage("You lose. ");
 				}
 			}
 			else if(userAData.equals("ballBody") && userBData.equals("roofBody")
@@ -519,7 +620,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				
 				if(numComputerLives == 0) {
 					gameOver = true;
-					loserMessage = "The Computer loses. ";
+					setLoserMessage("The Computer loses. ");
 				}
 			}
 		}
