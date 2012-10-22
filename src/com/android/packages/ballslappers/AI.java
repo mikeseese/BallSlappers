@@ -2,8 +2,6 @@ package com.android.packages.ballslappers;
 
 import static org.andengine.extension.physics.box2d.util.constants.PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT;
 
-import android.util.Log;
-
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 
@@ -33,7 +31,6 @@ public class AI {
 			if(paddleconv > ballconv + speed + slapper.getHeight()) {
 					paddleconv -= speed;
 				}
-		//else if(slapper.getX() < ballx - speed) {
 				else if (slapper.getSlapperX() < ballx - speed) {
 					paddleconv += speed;
 				}
@@ -42,7 +39,6 @@ public class AI {
 			if(paddleconv > ballconv + speed + slapper.getWidth()) {
 				paddleconv -= speed;
 			}
-	//else if(slapper.getX() < ballx - speed) {
 			else if (slapper.getSlapperY() < bally - speed) {
 				paddleconv += speed;
 			}
