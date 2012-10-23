@@ -1,12 +1,14 @@
 package com.android.packages.ballslappers;
 
-import static org.andengine.extension.physics.box2d.util.constants.PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT;
 
+
+/*IMPORTS*/
 import java.util.HashMap;
 import java.util.Random;
 
 import javax.microedition.khronos.opengles.GL10;
-
+/*AndEngine Imports*/
+import static org.andengine.extension.physics.box2d.util.constants.PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT;
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.engine.handler.timer.ITimerCallback;
@@ -18,12 +20,14 @@ import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.Scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.background.Background;
+import org.andengine.entity.scene.background.SpriteBackground;
 import org.andengine.entity.scene.menu.MenuScene;
 import org.andengine.entity.scene.menu.MenuScene.IOnMenuItemClickListener;
 import org.andengine.entity.scene.menu.item.IMenuItem;
 import org.andengine.entity.scene.menu.item.TextMenuItem;
 import org.andengine.entity.scene.menu.item.decorator.ColorMenuItemDecorator;
 import org.andengine.entity.sprite.AnimatedSprite;
+import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.util.FPSLogger;
 import org.andengine.extension.physics.box2d.PhysicsConnector;
@@ -35,12 +39,15 @@ import org.andengine.opengl.texture.ITexture;
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
+import org.andengine.opengl.texture.region.ITextureRegion;
+import org.andengine.opengl.texture.region.TextureRegion;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.util.HorizontalAlign;
 import org.andengine.util.color.Color;
 
+import android.R.string;
 import android.graphics.Typeface;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -56,11 +63,8 @@ import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.Manifold;
 
 public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouchListener, IUpdateHandler, IOnMenuItemClickListener {
-	// ===========================================================
-	// Constants
-	// ===========================================================
 
-	/*
+	/* SCREEN REFERENCE
 	 * Meaning of dimensions when phone is in landscape:
 	 * 
 	 *  -------------------------------------------------	_________
@@ -77,26 +81,59 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	 */
 	public static final int CAMERA_WIDTH = 800;
 	public static final int CAMERA_HEIGHT = 480;
-	public static final int PADDLE_WIDTH = 200;
+	/* **************************************************************************** */ 
+	 //CURRENT GAME MODES
+	
+	
+	//Options
+			public static final int NUM_SLAPPERS = 4;
+	
+			public static final int NUM_LIVES = 1;
+			
+			public static final boolean PAINBOW = true; //troll stuff
+			
+			public static final boolean POWERUPS = false; //powerups
+		
+	
+
+
+
+
+
+
+
+	/* ***************************************************************************** */
+		//Constants\\
+	
+	//Paddle Constants
+	public static final int PADDLE_WIDTH = 100;
 	public static final int PADDLE_HEIGHT = 20;
+	
+	//Ball Constants
+	public float ballAngle = 0;
+	public double ballAngleDiff = .001;
 	public static final int BALL_SIZE = 15;
 	public static final int BALL_RESET_DELAY = 3; // in seconds
 	public static final Vector2 start_position = new Vector2(CAMERA_WIDTH/(2*PIXEL_TO_METER_RATIO_DEFAULT), 
 															 CAMERA_HEIGHT/(2*PIXEL_TO_METER_RATIO_DEFAULT));
 	
+	//Pause Menu
 	public static final int PAUSE_MENU_RESUME = 0;
 	public static final int PAUSE_MENU_RESTART = 1;
 	public static final int PAUSE_MENU_QUIT = 2;
+
+	// ===========================================================
+	// FIELDS / PARAMETERS
+	// ===========================================================
 	
-	public static final int NUM_SLAPPERS = 2;
-	public static final int NUM_LIVES = 1;
-
-	// ===========================================================
-	// Fields
-	// ===========================================================
-
+		//Main
+	//This is deals with physic and image world.
+	protected TimerHandler timerHandler;
+	private PhysicsWorld mPhysicsWorld;
 	private Scene mScene;
 	private Camera mCamera;
+	
+		//Pause Menu
 	private MenuScene mPauseMenuScene;
 	
 	private BitmapTextureAtlas mPauseMenuFontTexture;
@@ -108,6 +145,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     private Text gameResetMessage;
     private Text countDownTimer;
     
+    	//Game UI Implementations
     private int numPlayerLives = NUM_LIVES;
     private int numComputerLives = NUM_LIVES;
     protected boolean gameOver = false;
@@ -115,41 +153,53 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     protected boolean resuming = false;
     protected boolean timerCountOn = false;
     protected String loserMessage = "";
-
-    protected TimerHandler timerHandler;
+    	
+    	//Sprites / Images
+    //Texture Atlases
+    private String texChoice = "";
+    private BitmapTextureAtlas mPaddleBitmapTextureAtlas;
+    private BitmapTextureAtlas mAIBitmapTextureAtlas;
+    private BitmapTextureAtlas mCollisionBitmapTextureAtlas;
+    private BitmapTextureAtlas mBallBitmapTextureAtlas;
+    private BitmapTextureAtlas mBgBitmapTextureAtlas;
     
-	private PhysicsWorld mPhysicsWorld;
-	
-	private HashMap<String, Rectangle> boundaryShapes;
-
-	static Body ballBody;
-	private BitmapTextureAtlas mBallBitmapTextureAtlas;
+    //Texture Regions
+    private ITextureRegion mBgTexture;
     private TiledTextureRegion mBallTextureRegion;
-
-	private Body paddleBody;
-	static Body AIBody, AIBody1, AIBody2;
+    private TiledTextureRegion mPaddleTextureRegion;
+    private TiledTextureRegion mAITextureRegion;
+    private TiledTextureRegion mCollisionTextureRegion;
+    private TiledTextureRegion mBgTextureRegion;
+    
+    
+    	//Boundaries and parameters
+	private HashMap<String, Rectangle> boundaryShapes;
+	public boolean outOfBounds = false;
+		
+		//Ball
+	static Body ballBody;
+	static AnimatedSprite ball;
+	
+    	//Paddle
+	//User Paddle and Parameters
+    static AnimatedSprite playerSlapperShape;
+	private Body paddleBody; 
 	private float diffX;
 	private boolean fingerDown;
-
-	public static Slapper topAI;
-	//public static Slapper leftAI;
-	//public static Slapper rightAI;
-
+	
+	//AI Paddle and Parameters
+	private double orient = 0;
+	private Body[] aiBody = new Body[4];
+	private Slapper[] aiSlapper = new Slapper[4];
+	FixtureDef[] aiDef = new FixtureDef[4];
+	
+	//Misc.
 	private Random randomNumGen = new Random();
 
-	public boolean outOfBounds = false;
 	
-	// ===========================================================
-	// Constructors
-	// ===========================================================
-
-	// ===========================================================
-	// Getter & Setter
-	// ===========================================================
-
-	// ===========================================================
-	// Methods for/from SuperClass/Interfaces
-	// ===========================================================
+	/* *****************************************************
+	 * Creating the android scene / environment for gameplay
+	 *******************************************************/
 
 	public EngineOptions onCreateEngineOptions() {
 		Toast.makeText(this, "Let the battle begin...", Toast.LENGTH_SHORT).show();
@@ -183,14 +233,45 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         this.getFontManager().loadFont(this.mLivesFont);
         this.getFontManager().loadFont(this.mGameResetFont);
         
-        /* Texture/Texture regions for ball */
+        	/* Texture Regions */
+        //Ball Textures
+        if (PAINBOW){ texChoice = "pony.png"; } else {texChoice="ball.png";}
         this.mBallBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 64, 128, 
         													  TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 
         this.mBallTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBallBitmapTextureAtlas, 
-        																			this, "orange_ball.png", 0, 32, 2, 1); // 64x32
+        																			this, texChoice, 0, 32, 2, 1); // 64x32
         this.mEngine.getTextureManager().loadTexture(this.mBallBitmapTextureAtlas);
+        
+        //Paddle Textures
+        if (PAINBOW){ texChoice = "painbow.png"; } else {texChoice="normal.png";}
+        this.mPaddleBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 512, 512, 
+				  TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+        BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
+        this.mPaddleTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mPaddleBitmapTextureAtlas, 
+										this, texChoice, 0, 0, 1, 1); // Base
+        this.mEngine.getTextureManager().loadTexture(this.mPaddleBitmapTextureAtlas);
+        
+        //Paddle Collision Textures
+        if (PAINBOW){ texChoice = "painbowhit.png"; } 
+        	else {
+        	texChoice="ai.png";
+        	
+        	}
+        this.mCollisionBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 512, 512, 
+				  TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+        BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
+        this.mCollisionTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mCollisionBitmapTextureAtlas, 
+										this, texChoice, 0, 0, 1, 1); // Base
+        this.mEngine.getTextureManager().loadTexture(this.mCollisionBitmapTextureAtlas);
+        
+        
+        //BG Textures
+       this.mBgBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(),1024, 512, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+       BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
+       this.mBgTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mBgBitmapTextureAtlas, this, "bg1.png", 0, 0);
+       this.mEngine.getTextureManager().loadTexture(this.mBgBitmapTextureAtlas);
         
         // Text for resetting the game
         // 40 is the max size for text. Currently a magic #
@@ -201,81 +282,88 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	}
 
 	@Override
+	/* Initialization*/
 	public Scene onCreateScene() {
 		this.mEngine.registerUpdateHandler(new FPSLogger());
-
+		
 		this.mScene = new Scene();
-		this.mScene.setBackground(new Background(0, 0, 0));
+		
+		//Background Creation
+		if (PAINBOW) {
+		Sprite bgSprite = new Sprite(0,0, CAMERA_WIDTH, CAMERA_HEIGHT, mBgTexture, this.getVertexBufferObjectManager());
+		SpriteBackground background=new SpriteBackground(bgSprite);
+		this.mScene.setBackground(background);
+		}
+		else { this.mScene.setBackground(new Background(0, 0, 0)); }
+		
+		
 		this.mScene.setOnSceneTouchListener(this);
 		
-		// initialize the pause menu scene
+		// Initialize Pause Menu
 		this.mPauseMenuScene = this.createPauseMenuScene();
 		
-		// initialize the physics world with no gravity
+		// Initialize Physics World - No Gravity
 		this.mPhysicsWorld = new PhysicsWorld(new Vector2(0, 0), false);
 		
-		// initialize the boundaries (walls & goals)
+		//  boundaries (walls & goals)
 		this.boundaryShapes = this.createBoundaryShapes();
 		this.createBoundaryBodies();
-				
-		// initialize the slapper for player
-		final Rectangle playerSlapperShape = new Rectangle(CAMERA_WIDTH / 2, 455, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager());
-		final FixtureDef paddleDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		paddleBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, playerSlapperShape, BodyType.KinematicBody, paddleDef);
+		
+			/* Setting Up the Game */
+		
+		// Localized Player and paints
+		
+		
+		playerSlapperShape = new AnimatedSprite(CAMERA_WIDTH/2, 455, this.mPaddleTextureRegion, this.getVertexBufferObjectManager());
+		final FixtureDef playerDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
+		paddleBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, playerSlapperShape, BodyType.KinematicBody, playerDef);
 		paddleBody.setUserData("paddleBody");
+		this.mScene.attachChild(playerSlapperShape);
+		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(playerSlapperShape, paddleBody));
 
-		// initialize the paddle for the AI top//
-		topAI = new Slapper(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(), 0);
-		final FixtureDef AIFixtureDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		AIBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, topAI, BodyType.KinematicBody, AIFixtureDef);
-		AIBody.setUserData("AIBody");
+
 		
-		//4 player paddle test.
-		/*leftAI = new Slapper(5, 150, PADDLE_HEIGHT, PADDLE_WIDTH, this.getVertexBufferObjectManager(), 90);
-		final FixtureDef AIFixtureDef1 = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		AIBody1 = PhysicsFactory.createBoxBody(this.mPhysicsWorld, leftAI, BodyType.KinematicBody, AIFixtureDef1);
-		AIBody1.setUserData("AIBody1");*/
+		// initialize the paddle for the AI, and paints them
 		
-		/*rightAI = new Slapper(775, 150, PADDLE_HEIGHT, PADDLE_WIDTH, this.getVertexBufferObjectManager(), 90);
-		final FixtureDef AIFixtureDef2 = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		AIBody2 = PhysicsFactory.createBoxBody(this.mPhysicsWorld, rightAI, BodyType.KinematicBody, AIFixtureDef2);
-		AIBody2.setUserData("AIBody2");*/
+		for (int i = 0; i<NUM_SLAPPERS-1; i++) {
+			if (i>0 && NUM_SLAPPERS==4){if (i==2){orient = 3*Math.PI/2;}else{orient = Math.PI/2;}}
+			if (PAINBOW) {
+				aiSlapper[i] = new Slapper(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, this.mPaddleTextureRegion, this.getVertexBufferObjectManager(), (float) orient);
+			}
+			else {
+				aiSlapper[i] = new Slapper(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, this.mCollisionTextureRegion, this.getVertexBufferObjectManager(), (float) orient);
+			}
+			aiDef[i] = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
+			aiBody[i] = PhysicsFactory.createBoxBody(this.mPhysicsWorld, aiSlapper[i], BodyType.KinematicBody, aiDef[i]);
+			aiBody[i].setUserData(aiBody[i]);
+			this.mScene.attachChild(aiSlapper[i]);
+			mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(aiSlapper[i], aiBody[i]));
+			this.mScene.registerUpdateHandler(new AIUpdater(aiBody[i],aiSlapper[i],i));
+		}
 		
 		// initialize the ball
 		final FixtureDef ballDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		final AnimatedSprite ball = new AnimatedSprite(CAMERA_WIDTH/2, CAMERA_HEIGHT/2, this.mBallTextureRegion, this.getVertexBufferObjectManager());
-		//ball.animate(100);
+		ball = new AnimatedSprite(CAMERA_WIDTH/2, CAMERA_HEIGHT/2, this.mBallTextureRegion, this.getVertexBufferObjectManager());
         ballBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ball, BodyType.DynamicBody, ballDef);
 		ballBody.setUserData("ballBody");
+		this.mScene.attachChild(ball);
+		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(ball, ballBody));
 		ballReset();
 		
 		// set a listener to determine if the ball is out of bounds
 		mPhysicsWorld.setContactListener(new BallCollisionUpdate());
 		
-		// paint the shapes we want to actually see on the scene
+		// paint the boundaries
 		this.mScene.attachChild(boundaryShapes.get("left"));
 		this.mScene.attachChild(boundaryShapes.get("right"));
-		this.mScene.attachChild(ball);
-		this.mScene.attachChild(playerSlapperShape);
-		this.mScene.attachChild(topAI);
-		//this.mScene.attachChild(leftAI);
-		//this.mScene.attachChild(rightAI);
-		showPlayerLives(this.mLivesFont, this.numPlayerLives);
-		showComputerLives(this.mLivesFont, this.numComputerLives);
 
-		// connect the shapes with the bodies for the physics engine
-		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(ball, ballBody));
-		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(playerSlapperShape, paddleBody));
-		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(topAI, AIBody));
-		//mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(leftAI, AIBody1));
-		//mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(rightAI, AIBody2));
-
+		//Updates physics world, etc etc.
 		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
 		this.mScene.registerUpdateHandler(this);
-		this.mScene.registerUpdateHandler(new AIUpdater(topAI,0));
-		//this.mScene.registerUpdateHandler(new AIUpdater(leftAI,1));
-		//this.mScene.registerUpdateHandler(new AIUpdater(rightAI,2));
 
+		showPlayerLives(this.mLivesFont, this.numPlayerLives);
+		showComputerLives(this.mLivesFont, this.numComputerLives);
+		
 		this.gameStarting = true;
 		startTimer();
 		
@@ -460,7 +548,9 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         return tempMenuScene;
 }
 	
-	private void ballReset() {
+	/* Functions for fun */
+	
+ 	private void ballReset() {
     	ballBody.setTransform(start_position, 0f);
 		Vector2 unit = getUnitVector();
 		ballBody.setLinearVelocity(getRandomVelocity() * unit.x, getRandomVelocity() * unit.y);
@@ -468,7 +558,16 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	}
 
 	public void onUpdate(final float pSecondsElapsed) {
-		if (ballStuck()) {
+		ballBody.setTransform(ballBody.getPosition(),ballAngle);
+		if (ballAngle == 360){ ballAngle = 0;}
+		ballAngle += ballAngleDiff;
+		
+		for (int j = 0; j<NUM_SLAPPERS-1; j++) {
+			if (aiSlapper[j].getHit()==true) {
+				aiSlapper[j].setTextureRegion(mCollisionTextureRegion);	
+			}
+		}
+			if (ballStuck()) {
 			/* keep the x velocity the same but alter the y velocity in the appropriate direction to
 			 * make it seem like it's accurately bouncing
 			 * this is just temporary because it won't be an issue when the trajectory of the ball is 
@@ -641,13 +740,46 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	// Inner and Anonymous Classes
 	// ===========================================================
 
-	class BallCollisionUpdate implements ContactListener {
+	class BallCollisionUpdate implements ContactListener{
 
 		public void beginContact(Contact contact) {
 			Body bodyA = contact.getFixtureA().getBody();
 			Body bodyB = contact.getFixtureB().getBody();
 			Object userAData = bodyA.getUserData();
 			Object userBData = bodyB.getUserData();
+					
+			//Rotation / Speed / Hit
+			if(userAData.equals("ballBody") && userBData.equals("paddleBody")
+					|| userAData.equals("paddleBody") && userBData.equals("ballBody")) {
+				Log.i("Contact Made", "Ball contacted the paddle");
+				ballBody.setLinearVelocity(ballBody.getLinearVelocity().x+1,ballBody.getLinearVelocity().y +1);
+				if (ballAngleDiff!=1){
+				ballAngleDiff = 1;
+				}
+				else
+				{
+					ballAngleDiff = Math.random()/10;
+				}
+			}
+			
+			for (int j = 0; j<NUM_SLAPPERS-1; j++) {
+				if(userAData.equals("ballBody") && userBData.equals(aiBody[j])
+						|| userAData.equals(aiBody[j]) && userBData.equals("ballBody")) {
+					Log.i("Contact Made", "Ball contacted the paddle");
+					aiSlapper[j].setHit(true);
+					ballBody.setLinearVelocity(ballBody.getLinearVelocity().x+1,ballBody.getLinearVelocity().y +1);
+					if (ballAngleDiff!=1){
+					ballAngleDiff = 1;
+					}
+					else
+					{
+						ballAngleDiff = Math.random()/10;
+					}
+				}
+			}
+			
+			
+			//Boundary Collision
 			if(userAData.equals("ballBody") && userBData.equals("groundBody")
 					|| userAData.equals("groundBody") && userBData.equals("ballBody")) {
 				Log.i("Contact Made", "Ball contacted the ground");
