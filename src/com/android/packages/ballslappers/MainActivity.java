@@ -86,11 +86,11 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	
 	
 	//Options
-			public static final int NUM_SLAPPERS = 3;
+			public static final int NUM_SLAPPERS = 4;
 	
 			public static final int NUM_LIVES = 1;
 			
-			public static final boolean PAINBOW = false; //troll stuff
+			public static final boolean PAINBOW = true; //troll stuff
 			
 			public static final boolean POWERUPS = false; //powerups
 		
@@ -311,29 +311,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		
 			/* Setting Up the Game */
 		//TEST
-		final FixtureDef wallFD = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-
-		float triWidth = (float) Math.sqrt(((CAMERA_WIDTH/2)*(CAMERA_WIDTH/2))+((CAMERA_HEIGHT*CAMERA_HEIGHT)));
-		final Rectangle btri = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, this.getVertexBufferObjectManager());
-		final Rectangle ltri = new Rectangle(400, 400, 625, 2, this.getVertexBufferObjectManager());
-		final Rectangle rtri = new Rectangle(0, 0, triWidth, 2, this.getVertexBufferObjectManager());
-		double ang = ((Math.PI * Math.tan(480/triWidth))/180);
-		Body lefttri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ltri, BodyType.StaticBody, wallFD);
-		lefttri.setUserData("ltri");
-		Body righttri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, rtri, BodyType.StaticBody, wallFD);
-		righttri.setUserData("rtri");
-		Vector2 pos = new Vector2();
-		pos.x = 600/PIXEL_TO_METER_RATIO_DEFAULT; pos.y = 240/PIXEL_TO_METER_RATIO_DEFAULT;
-		lefttri.setTransform(pos, (float) (Math.PI*.27875));
-		this.mScene.attachChild(ltri);
-		pos.x = 200/PIXEL_TO_METER_RATIO_DEFAULT; pos.y = 240/PIXEL_TO_METER_RATIO_DEFAULT;
-		righttri.setTransform(pos, (float) (Math.PI*.721256));
-		this.mScene.attachChild(rtri);
-		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(rtri, righttri));
-		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(ltri, lefttri));
-
-		Body bottri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, btri, BodyType.StaticBody, wallFD);
-		bottri.setUserData("btri");		
+	
 		
 		//*******************************************
 		
@@ -380,8 +358,11 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		mPhysicsWorld.setContactListener(new BallCollisionUpdate());
 		
 		// paint the boundaries
-		this.mScene.attachChild(boundaryShapes.get("left"));
-		this.mScene.attachChild(boundaryShapes.get("right"));
+		
+		
+		//boundary physics
+		
+		
 
 		//Updates physics world, etc etc.
 		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
@@ -495,18 +476,20 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	// Methods
 	// ===========================================================
 
+	@SuppressWarnings("unused")
 	protected HashMap<String, Rectangle> createBoundaryShapes() {
 		HashMap<String, Rectangle> boundaries = new HashMap<String, Rectangle>();
 		final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
-		switch (NUM_SLAPPERS) {
-			case 5:
-				// TODO
-			case 4:
-				// TODO
-			case 3: // 3 Players
-				
-
-			default: // 2 players
+			if (NUM_SLAPPERS==3) {
+				float triWidth = (float) Math.sqrt(((CAMERA_WIDTH/2)*(CAMERA_WIDTH/2))+((CAMERA_HEIGHT*CAMERA_HEIGHT)));
+				final Rectangle btri = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, this.getVertexBufferObjectManager());
+				final Rectangle ltri = new Rectangle(400, 400, 625, 2, this.getVertexBufferObjectManager());
+				final Rectangle rtri = new Rectangle(0, 0, triWidth, 2, this.getVertexBufferObjectManager());
+				boundaries.put("btri", btri);
+				boundaries.put("ltri", ltri);
+				boundaries.put("rtri", rtri);
+			}
+			if (NUM_SLAPPERS==2 || NUM_SLAPPERS==4) { // 2 players
 				final Rectangle ground = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, vertexBufferObjectManager);
 				final Rectangle roof = new Rectangle(0, 0, CAMERA_WIDTH, 2, vertexBufferObjectManager);
 				final Rectangle left = new Rectangle(0, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
@@ -515,38 +498,59 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				boundaries.put("roof", roof); 
 				boundaries.put("left", left); 
 				boundaries.put("right", right);
-		}
+			}
 		
 		return boundaries;
 	}
 	
+	@SuppressWarnings("unused")
 	protected void createBoundaryBodies() {
-		final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		final FixtureDef outOfBoundsFixDef = PhysicsFactory.createFixtureDef(0, 0, 0);
-		outOfBoundsFixDef.isSensor = true;
-		switch (NUM_SLAPPERS) {
-			case 5:
-				// TODO
-			case 4:
-				// TODO
-			case 3:
-				// create wall bodies/boundaries (left right, bottom) 	
+		final FixtureDef wFD = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
+		final FixtureDef obFD = PhysicsFactory.createFixtureDef(0, 0, 0);
+		FixtureDef set;
+		obFD.isSensor = true;
+			if (NUM_SLAPPERS==5) {
 				
-				default: // 2 players
+			}
+			
+			if (NUM_SLAPPERS==3) {
+				float hyp = (float) Math.sqrt(((CAMERA_WIDTH/2)*(CAMERA_WIDTH/2))+((CAMERA_HEIGHT*CAMERA_HEIGHT)));
+				double ang = ((Math.PI * Math.tan(480/hyp))/180);
+				Body lefttri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("ltri"), BodyType.StaticBody, wFD);
+				lefttri.setUserData("ltri");
+				Body righttri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("rtri"), BodyType.StaticBody, wFD);
+				righttri.setUserData("rtri");
+				Vector2 pos = new Vector2();
+				pos.x = 600/PIXEL_TO_METER_RATIO_DEFAULT; pos.y = 240/PIXEL_TO_METER_RATIO_DEFAULT;
+				lefttri.setTransform(pos, (float) (Math.PI*.27875));
+				pos.x = 200/PIXEL_TO_METER_RATIO_DEFAULT; pos.y = 240/PIXEL_TO_METER_RATIO_DEFAULT;
+				righttri.setTransform(pos, (float) (Math.PI*.721256));
+					
+				Body bottri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("btri"), BodyType.StaticBody, wFD);
+				bottri.setUserData("btri");	
+				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("rtri"), righttri));
+				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("ltri"), lefttri));
+				this.mScene.attachChild(boundaryShapes.get("rtri"));
+				this.mScene.attachChild(boundaryShapes.get("ltri"));
+			}
+			
+			if (NUM_SLAPPERS == 2 || NUM_SLAPPERS==4) { // 2 players
+				if (NUM_SLAPPERS==2){ set = wFD; this.mScene.attachChild(boundaryShapes.get("left")); this.mScene.attachChild(boundaryShapes.get("right")); } else { set = obFD; }
 				// create wall bodies (left and right) 
-				Body leftBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("left"), BodyType.StaticBody, wallFixtureDef);
+				Body leftBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("left"), BodyType.StaticBody, set);
 				leftBody.setUserData("leftBody");
-				Body rightBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("right"), BodyType.StaticBody, wallFixtureDef);
+				Body rightBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("right"), BodyType.StaticBody, set);
 				rightBody.setUserData("rightBody");
 				
 				
 				// create bodies for goals (ground and roof)
-				Body groundBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("ground"), BodyType.StaticBody, outOfBoundsFixDef);
+				Body groundBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("ground"), BodyType.StaticBody, obFD);
 				groundBody.setUserData("groundBody");
-				Body roofBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("roof"), BodyType.StaticBody, outOfBoundsFixDef);
-				roofBody.setUserData("roofBody");
-		}
+				Body roofBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("roof"), BodyType.StaticBody, obFD);
+				roofBody.setUserData("roofBody");	
+			}
 	}
+
 	
 	protected MenuScene createPauseMenuScene() {
         final MenuScene tempMenuScene = new MenuScene(this.mCamera);
