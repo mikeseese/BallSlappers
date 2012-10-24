@@ -53,7 +53,7 @@ public class AI {
 			else if (slapper.getSlapperY() < bally - speed) {
 					paddleconv += speed;
 				}
-			slapper.setSlapperX(slapper.getHeight()/2);
+			slapper.setSlapperX(slapper.getHeight()/2 - MainActivity.TRUE_POS);
 			slapper.setSlapperY(slapper.bound(slapper.getWidth()/2, 480 - slapper.getWidth()/2, (float) bally));
 
 		}
@@ -64,7 +64,7 @@ public class AI {
 			else if (slapper.getSlapperY() - slapper.getWidth()/2 > bally + speed) {
 				location = (int) (slapper.getSlapperY() + speed);
 				}
-			slapper.setSlapperX(800-slapper.getHeight()/2);
+			slapper.setSlapperX(MainActivity.TRUE_POS + 800-slapper.getHeight()/2);
 			slapper.setSlapperY(slapper.bound(slapper.getWidth()/2, 480 - slapper.getWidth()/2, (float) bally));
 
 			
@@ -78,7 +78,7 @@ public class AI {
 		
 		
 		newAIPos.x = slapper.getSlapperX()/PIXEL_TO_METER_RATIO_DEFAULT;
-		newAIPos.y = slapper.getSlapperY()/PIXEL_TO_METER_RATIO_DEFAULT;
+		newAIPos.y = (slapper.getSlapperY())/PIXEL_TO_METER_RATIO_DEFAULT;
 		return newAIPos;
 	}
 }
