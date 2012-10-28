@@ -78,7 +78,7 @@ public class AI {
 		
 		
 		newAIPos.x = slapper.getSlapperX()/PIXEL_TO_METER_RATIO_DEFAULT;
-		newAIPos.y = (slapper.getSlapperY())/PIXEL_TO_METER_RATIO_DEFAULT;
+		newAIPos.y = (slapper.getSlapperY()-MainActivity.TRUE_POS)/PIXEL_TO_METER_RATIO_DEFAULT;
 		return newAIPos;
 	}
 }

@@ -90,7 +90,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	
 	
 	//Options
-			public static final int NUM_SLAPPERS = 3;
+			public static final int NUM_SLAPPERS = 2;
 	
 			public static final int NUM_LIVES = 1;
 			
@@ -189,7 +189,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	
     	//Paddle
 	//User Paddle and Parameters
-    static AnimatedSprite playerSlapperShape;
+    static Slapper playerSlapperShape;
 	private Body paddleBody; 
 	private float diffX;
 	private boolean fingerDown;
@@ -211,7 +211,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public EngineOptions onCreateEngineOptions() {
 		Toast.makeText(this, "Let the battle begin...", Toast.LENGTH_SHORT).show();
 
-		mCamera = new Camera(-300, -600, 1400, 1200);
+		mCamera = new Camera(0, 0, 800, 480);
 
 		return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED, new FillResolutionPolicy(), mCamera);
 	}
@@ -322,7 +322,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		// Localized Player and paints
 		
 		
-		playerSlapperShape = new AnimatedSprite(CAMERA_WIDTH/2, 455, this.mPaddleTextureRegion, this.getVertexBufferObjectManager());
+		playerSlapperShape = new Slapper(CAMERA_WIDTH/2, 455, PADDLE_WIDTH, PADDLE_HEIGHT, this.mPaddleTextureRegion, this.getVertexBufferObjectManager(),(float) orient);
 		final FixtureDef playerDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 		paddleBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, playerSlapperShape, BodyType.KinematicBody, playerDef);
 		paddleBody.setUserData("paddleBody");
@@ -333,9 +333,29 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		// initialize the paddle for the AI, and paints them
 		
 		for (int i = 0; i<NUM_SLAPPERS-1; i++) {
-			if (i>0 && NUM_SLAPPERS==4){if (i==2){orient = 3*Math.PI/2;}else{orient = Math.PI/2;}}
+			if(NUM_SLAPPERS==4){
+				if (i>0)	{
+					if (i==2)	{ 
+						orient = 3*Math.PI/2;
+					}
+					else{
+						orient = Math.PI/2;
+					}
+				}
+			}
+				
+			if(NUM_SLAPPERS==3) {
+				if (i>=0)	{
+					if (i==1)	{ 
+						orient = Math.PI/3;
+					}
+					else{
+						orient = 2*Math.PI/3;
+					}
+				}
+			}
 			
-			aiSlapper[i] = new Slapper(CAMERA_HEIGHT/2, -TRUE_POS, PADDLE_WIDTH, PADDLE_HEIGHT, this.mCollisionTextureRegion, this.getVertexBufferObjectManager(), (float) orient);	
+			aiSlapper[i] = new Slapper(0, -TRUE_POS, PADDLE_WIDTH, PADDLE_HEIGHT, this.mCollisionTextureRegion, this.getVertexBufferObjectManager(), (float) orient);	
 			aiDef[i] = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 			aiBody[i] = PhysicsFactory.createBoxBody(this.mPhysicsWorld, aiSlapper[i], BodyType.KinematicBody, aiDef[i]);
 			aiBody[i].setUserData(aiBody[i]);
@@ -617,7 +637,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
  	private void ballReset() {
     	ballBody.setTransform(start_position, 0f);
 		Vector2 unit = getUnitVector();
-		ballBody.setLinearVelocity(getRandomVelocity() * unit.x, getRandomVelocity() * unit.y);
+		ballBody.setLinearVelocity(getRandomVelocity() * unit.x, getRandomVelocity() * unit.y+3);
 		//Log.i("ballBodyVelocity", ballBody.getLinearVelocity().toString());
 	}
 
@@ -809,7 +829,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	// ===========================================================
 
 	class BallCollisionUpdate implements ContactListener{
-
+		Vector2 temp = new Vector2(0,0);
 		public void beginContact(Contact contact) {
 			Body bodyA = contact.getFixtureA().getBody();
 			Body bodyB = contact.getFixtureB().getBody();
@@ -820,7 +840,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			if(userAData.equals("ballBody") && userBData.equals("paddleBody")
 					|| userAData.equals("paddleBody") && userBData.equals("ballBody")) {
 				Log.i("Contact Made", "Ball contacted the paddle");
-				ballBody.setLinearVelocity(ballBody.getLinearVelocity().x+1,ballBody.getLinearVelocity().y +2);
+				temp = paddleCollision(ballBody,paddleBody,temp);
+				ballBody.setLinearVelocity(temp.x,temp.y);
 				if (ballAngleDiff!=1){
 				ballAngleDiff = 1;
 				}
@@ -837,7 +858,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 					Log.i("Contact Made", "Ball contacted the paddle");
 					aiSlapper[j].setHit(true);
 					ballBody.getPosition();
-					ballBody.setLinearVelocity(ballBody.getLinearVelocity().x+1,ballBody.getLinearVelocity().y +2);
 					if (ballAngleDiff!=1){
 					ballAngleDiff = 1;
 					}
@@ -887,6 +907,21 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		public void postSolve(Contact contact, ContactImpulse impulse) {
 			// TODO Auto-generated method stub
 
+		}
+		
+		public Vector2 paddleCollision(Body a, Body b, Vector2 t) {
+			Vector2 e = new Vector2();
+			e = t;
+			float c = 0,d=0;
+			if (b==paddleBody) {
+				c = (b.getPosition().x - a.getPosition().x)*-10;
+				Log.i("temp = ",""+ c);
+				
+				d = (a.getPosition().y);
+			} 
+			e.x = c;
+			e.y = d;
+			return e;
 		}
 	}
 }
