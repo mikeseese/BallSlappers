@@ -1,0 +1,122 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="center_horizontal"
+    android:background="@drawable/background_test_1" >
+
+    <Button
+        android:id="@+id/button1"
+        style="@color/TransparentColor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="100dp"
+        android:background="@drawable/single_player_play_button_setup"
+        android:onClick="PlaySinglePlayer" />
+
+    <ToggleButton
+        android:id="@+id/toggleSound"
+        style="@color/TransparentColor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:background="@drawable/home_sound_button"
+        android:gravity="center_vertical|center_horizontal|center"
+        android:textOn="@android:string/yes" />
+
+    <Button
+        android:id="@+id/button2"
+        style="@color/TransparentColor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/button1"
+        android:layout_marginBottom="64dp"
+        android:layout_toLeftOf="@+id/button1"
+        android:background="@drawable/lives" />
+
+    <Button
+        android:id="@+id/button3"
+        style="@color/TransparentColor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/button2"
+        android:layout_alignLeft="@+id/button2"
+        android:layout_marginBottom="30dp"
+        android:layout_toLeftOf="@+id/button1"
+        android:background="@drawable/power_ups" />
+
+    <Button
+        android:id="@+id/button4"
+        style="@color/TransparentColor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/button3"
+        android:layout_marginBottom="24dp"
+        android:layout_toLeftOf="@+id/button1"
+        android:background="@drawable/difficulty" />
+
+    <Button
+        android:id="@+id/button5"
+        style="@color/TransparentColor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/button4"
+        android:layout_alignLeft="@+id/button4"
+        android:layout_marginBottom="32dp"
+        android:layout_toLeftOf="@+id/button1"
+        android:background="@drawable/number_of_cpus"
+        android:clickable="false" />
+
+    <CheckBox
+        android:id="@+id/enablePowerUps"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/button3"
+        android:layout_toLeftOf="@+id/toggleSound"
+        android:onClick="poweruptoggle"
+        android:text="Power Ups" />
+
+    <Spinner
+        android:id="@+id/DifficultySelect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/button4"
+        android:layout_alignBottom="@+id/button4"
+        android:layout_alignLeft="@+id/enablePowerUps" />
+
+    <Spinner
+        android:id="@+id/onesLives"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/button2"
+        android:layout_alignBottom="@+id/button2"
+        android:layout_alignParentRight="true" />
+
+    <Spinner
+        android:id="@+id/tensLives"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/onesLives"
+        android:layout_alignBottom="@+id/onesLives"
+        android:layout_toLeftOf="@+id/onesLives" />
+
+    <Spinner
+        android:id="@+id/hundredsLives"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/button2"
+        android:layout_alignBottom="@+id/button2"
+        android:layout_toLeftOf="@+id/tensLives" />
+
+    <Spinner
+        android:id="@+id/CPUSelect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/button5"
+        android:layout_alignBottom="@+id/button5"
+        android:layout_alignLeft="@+id/DifficultySelect" />
+
+</RelativeLayout>

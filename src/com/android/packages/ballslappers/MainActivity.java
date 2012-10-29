@@ -10,6 +10,7 @@ import javax.microedition.khronos.opengles.GL10;
 /*AndEngine Imports*/
 import static org.andengine.extension.physics.box2d.util.constants.PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT;
 import org.andengine.engine.camera.Camera;
+import org.andengine.engine.camera.hud.HUD;
 import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.engine.handler.timer.ITimerCallback;
 import org.andengine.engine.handler.timer.TimerHandler;
@@ -49,6 +50,7 @@ import org.andengine.util.color.Color;
 
 import android.R.string;
 import android.graphics.Typeface;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.widget.Toast;
@@ -81,18 +83,21 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	 */
 	public static final int CAMERA_WIDTH = 800;
 	public static final int CAMERA_HEIGHT = 480;
+	public static final float BUMPER_WIDTH = (float) 352.94;
+	
+	public static final int TRUE_POS = 150;
 	/* **************************************************************************** */ 
 	 //CURRENT GAME MODES
 	
 	
 	//Options
-			public static final int NUM_SLAPPERS = 4;
+			public static int NUM_SLAPPERS = 2;
 	
-			public static final int NUM_LIVES = 1;
+			public static int NUM_LIVES = 1;
 			
-			public static final boolean PAINBOW = true; //troll stuff
+			public static boolean SEESETER = false; //troll stuff
 			
-			public static final boolean POWERUPS = false; //powerups
+			public static boolean POWERUPS = false; //powerups
 		
 	
 
@@ -141,13 +146,13 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     private Font mLivesFont;
     private Font mGameResetFont;
     private Text playerLives;
-    private Text computerLives;
+    private Text[] computerLives = new Text[4];
     private Text gameResetMessage;
     private Text countDownTimer;
     
     	//Game UI Implementations
-    private int numPlayerLives = NUM_LIVES;
-    private int numComputerLives = NUM_LIVES;
+    private int numPlayerLives;
+    private int[] numComputerLives = new int[4]; 
     protected boolean gameOver = false;
     protected boolean gameStarting = false;
     protected boolean resuming = false;
@@ -171,18 +176,21 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     private TiledTextureRegion mCollisionTextureRegion;
     private TiledTextureRegion mBgTextureRegion;
     
-    
-    	//Boundaries and parameters
-	private HashMap<String, Rectangle> boundaryShapes;
+    //Boundaries and parameters
+		//Rectangle Boundaries
+    private HashMap<String, Rectangle> boundaryShapes;
 	public boolean outOfBounds = false;
-		
+	
+		//Triangle Boundaries
+	static Vector2 linePos = new Vector2(0,0);
+	
 		//Ball
 	static Body ballBody;
 	static AnimatedSprite ball;
 	
     	//Paddle
 	//User Paddle and Parameters
-    static AnimatedSprite playerSlapperShape;
+    static Slapper playerSlapperShape;
 	private Body paddleBody; 
 	private float diffX;
 	private boolean fingerDown;
@@ -204,11 +212,24 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public EngineOptions onCreateEngineOptions() {
 		Toast.makeText(this, "Let the battle begin...", Toast.LENGTH_SHORT).show();
 
-		mCamera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
+		mCamera = new Camera(-300, -500, 800+300+300, 1100);
 
 		return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED, new FillResolutionPolicy(), mCamera);
 	}
 
+	public void onCreate(Bundle savedInstanceState){
+		super.onCreate(savedInstanceState);
+		Bundle bundle = getIntent().getExtras();
+		NUM_SLAPPERS= bundle.getInt("cpunumber")+1;
+		NUM_LIVES = bundle.getInt("numberLives");
+		numPlayerLives = NUM_LIVES;
+		numComputerLives[0] = NUM_LIVES;
+		numComputerLives[1] = NUM_LIVES;
+		numComputerLives[2] = NUM_LIVES;
+		numComputerLives[3] = NUM_LIVES;
+		POWERUPS = bundle.getBoolean("powerupen");
+		//difficulty = bundle.getString("difficulty");
+	}
 	@Override   
 	public void onCreateResources() {
 		/* Load Font/Textures. */
@@ -235,7 +256,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         
         	/* Texture Regions */
         //Ball Textures
-        if (PAINBOW){ texChoice = "pony.png"; } else {texChoice="ball.png";}
+        texChoice = "ball.png";
         this.mBallBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 64, 128, 
         													  TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
@@ -245,7 +266,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         this.mEngine.getTextureManager().loadTexture(this.mBallBitmapTextureAtlas);
         
         //Paddle Textures
-        if (PAINBOW){ texChoice = "painbow.png"; } else {texChoice="normal.png";}
+        texChoice = "normal.png";
         this.mPaddleBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 512, 512, 
 				  TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
@@ -254,11 +275,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         this.mEngine.getTextureManager().loadTexture(this.mPaddleBitmapTextureAtlas);
         
         //Paddle Collision Textures
-        if (PAINBOW){ texChoice = "painbowhit.png"; } 
-        	else {
-        	texChoice="ai.png";
-        	
-        	}
+       
+        texChoice="ai.png";
         this.mCollisionBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 512, 512, 
 				  TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
@@ -281,6 +299,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				"Starting in: X".length(), this.getVertexBufferObjectManager());
 	}
 
+	@SuppressWarnings("unused")
 	@Override
 	/* Initialization*/
 	public Scene onCreateScene() {
@@ -289,12 +308,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		this.mScene = new Scene();
 		
 		//Background Creation
-		if (PAINBOW) {
-		Sprite bgSprite = new Sprite(0,0, CAMERA_WIDTH, CAMERA_HEIGHT, mBgTexture, this.getVertexBufferObjectManager());
-		SpriteBackground background=new SpriteBackground(bgSprite);
-		this.mScene.setBackground(background);
-		}
-		else { this.mScene.setBackground(new Background(0, 0, 0)); }
+		 this.mScene.setBackground(new Background(0, 0, 0));
 		
 		
 		this.mScene.setOnSceneTouchListener(this);
@@ -310,16 +324,19 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		this.createBoundaryBodies();
 		
 			/* Setting Up the Game */
-		//TEST
-	
 		
-		//*******************************************
+		this.numPlayerLives = NUM_LIVES;
+		showPlayerLives(this.mLivesFont, this.numPlayerLives);
 		
+		for (int i = 0; i < NUM_SLAPPERS; i++) { 
+			this.numComputerLives[i] = NUM_LIVES; 
+			showComputerLives(this.mLivesFont, this.numComputerLives[i],i);
+			}
 		
 		// Localized Player and paints
 		
 		
-		playerSlapperShape = new AnimatedSprite(CAMERA_WIDTH/2, 455, this.mPaddleTextureRegion, this.getVertexBufferObjectManager());
+		playerSlapperShape = new Slapper(CAMERA_WIDTH/2, 455, PADDLE_WIDTH, PADDLE_HEIGHT, this.mPaddleTextureRegion, this.getVertexBufferObjectManager(),(float) orient);
 		final FixtureDef playerDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 		paddleBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, playerSlapperShape, BodyType.KinematicBody, playerDef);
 		paddleBody.setUserData("paddleBody");
@@ -330,19 +347,35 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		// initialize the paddle for the AI, and paints them
 		
 		for (int i = 0; i<NUM_SLAPPERS-1; i++) {
-			if (i>0 && NUM_SLAPPERS==4){if (i==2){orient = 3*Math.PI/2;}else{orient = Math.PI/2;}}
-			if (PAINBOW) {
-				aiSlapper[i] = new Slapper(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, this.mPaddleTextureRegion, this.getVertexBufferObjectManager(), (float) orient);
+			if(NUM_SLAPPERS==4){
+				if (i>0)	{
+					if (i==2)	{ 
+						orient = 3*Math.PI/2;
+					}
+					else{
+						orient = Math.PI/2;
+					}
+				}
 			}
-			else {
-				aiSlapper[i] = new Slapper(CAMERA_HEIGHT/2, 470, PADDLE_WIDTH, PADDLE_HEIGHT, this.mCollisionTextureRegion, this.getVertexBufferObjectManager(), (float) orient);
+				
+			if(NUM_SLAPPERS==3) {
+				if (i>=0)	{
+					if (i==1)	{ 
+						orient = Math.PI/3;
+					}
+					else{
+						orient = 2*Math.PI/3;
+					}
+				}
 			}
+			
+			aiSlapper[i] = new Slapper(0, -TRUE_POS, PADDLE_WIDTH, PADDLE_HEIGHT, this.mCollisionTextureRegion, this.getVertexBufferObjectManager(), (float) orient);	
 			aiDef[i] = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 			aiBody[i] = PhysicsFactory.createBoxBody(this.mPhysicsWorld, aiSlapper[i], BodyType.KinematicBody, aiDef[i]);
 			aiBody[i].setUserData(aiBody[i]);
 			this.mScene.attachChild(aiSlapper[i]);
 			mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(aiSlapper[i], aiBody[i]));
-			this.mScene.registerUpdateHandler(new AIUpdater(aiBody[i],aiSlapper[i],i));
+			this.mScene.registerUpdateHandler(new AIUpdater(aiBody[i],aiSlapper[i]));
 		}
 		
 		// initialize the ball
@@ -367,9 +400,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		//Updates physics world, etc etc.
 		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
 		this.mScene.registerUpdateHandler(this);
-
-		showPlayerLives(this.mLivesFont, this.numPlayerLives);
-		showComputerLives(this.mLivesFont, this.numComputerLives);
 		
 		this.gameStarting = true;
 		startTimer();
@@ -442,7 +472,9 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				// restart the game, for now just reset the ball
 				this.ballReset();
 				// reset the players lives
-				this.resetLives();
+				for(int i = 0; i<NUM_SLAPPERS-1; i++){
+				this.resetLives(i);
+				}
 	            // remove the menu
 	            this.mScene.clearChildScene();
 	            
@@ -481,19 +513,24 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		HashMap<String, Rectangle> boundaries = new HashMap<String, Rectangle>();
 		final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
 			if (NUM_SLAPPERS==3) {
-				float triWidth = (float) Math.sqrt(((CAMERA_WIDTH/2)*(CAMERA_WIDTH/2))+((CAMERA_HEIGHT*CAMERA_HEIGHT)));
 				final Rectangle btri = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, this.getVertexBufferObjectManager());
-				final Rectangle ltri = new Rectangle(400, 400, 625, 2, this.getVertexBufferObjectManager());
-				final Rectangle rtri = new Rectangle(0, 0, triWidth, 2, this.getVertexBufferObjectManager());
+				final Rectangle ltri = new Rectangle(0, 0, 800, 2, this.getVertexBufferObjectManager());
+				final Rectangle rtri = new Rectangle(0, 0, 800, 2, this.getVertexBufferObjectManager());
+				final Rectangle lbump = new Rectangle(400, 0, BUMPER_WIDTH, 2, this.getVertexBufferObjectManager());
+				final Rectangle rbump = new Rectangle(0, 0, BUMPER_WIDTH, 2, this.getVertexBufferObjectManager());
+				final Rectangle tbump = new Rectangle(0, 0, BUMPER_WIDTH, 2, this.getVertexBufferObjectManager());
+				boundaries.put("lbump", lbump);
+				boundaries.put("rbump", rbump);
+				boundaries.put("tbump", tbump);
 				boundaries.put("btri", btri);
 				boundaries.put("ltri", ltri);
 				boundaries.put("rtri", rtri);
 			}
 			if (NUM_SLAPPERS==2 || NUM_SLAPPERS==4) { // 2 players
-				final Rectangle ground = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, vertexBufferObjectManager);
-				final Rectangle roof = new Rectangle(0, 0, CAMERA_WIDTH, 2, vertexBufferObjectManager);
-				final Rectangle left = new Rectangle(0, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
-				final Rectangle right = new Rectangle(CAMERA_WIDTH - 2, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
+				final Rectangle ground = new Rectangle(-TRUE_POS, CAMERA_HEIGHT - 2, CAMERA_WIDTH + TRUE_POS*2, 2, vertexBufferObjectManager);
+				final Rectangle roof = new Rectangle(-TRUE_POS, 0-TRUE_POS, CAMERA_WIDTH + TRUE_POS*2, 2, vertexBufferObjectManager);
+				final Rectangle left = new Rectangle(0, -TRUE_POS, 2, CAMERA_HEIGHT+2*TRUE_POS, vertexBufferObjectManager);
+				final Rectangle right = new Rectangle(CAMERA_WIDTH - 2, -TRUE_POS, 2, CAMERA_HEIGHT+2*TRUE_POS, vertexBufferObjectManager);
 				boundaries.put("ground", ground); 
 				boundaries.put("roof", roof); 
 				boundaries.put("left", left); 
@@ -514,22 +551,51 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			}
 			
 			if (NUM_SLAPPERS==3) {
-				float hyp = (float) Math.sqrt(((CAMERA_WIDTH/2)*(CAMERA_WIDTH/2))+((CAMERA_HEIGHT*CAMERA_HEIGHT)));
-				double ang = ((Math.PI * Math.tan(480/hyp))/180);
+				
 				Body lefttri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("ltri"), BodyType.StaticBody, wFD);
 				lefttri.setUserData("ltri");
+				
 				Body righttri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("rtri"), BodyType.StaticBody, wFD);
 				righttri.setUserData("rtri");
-				Vector2 pos = new Vector2();
-				pos.x = 600/PIXEL_TO_METER_RATIO_DEFAULT; pos.y = 240/PIXEL_TO_METER_RATIO_DEFAULT;
-				lefttri.setTransform(pos, (float) (Math.PI*.27875));
-				pos.x = 200/PIXEL_TO_METER_RATIO_DEFAULT; pos.y = 240/PIXEL_TO_METER_RATIO_DEFAULT;
-				righttri.setTransform(pos, (float) (Math.PI*.721256));
-					
+				
+				Body lbump = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("lbump"), BodyType.StaticBody, wFD);
+				lbump.setUserData("lbump");
+				
+				Body rbump = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("rbump"), BodyType.StaticBody, wFD);
+				rbump.setUserData("rbump");
+				
+				Body tbump = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("tbump"), BodyType.StaticBody, wFD);
+				tbump.setUserData("tbump");
+				
 				Body bottri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("btri"), BodyType.StaticBody, wFD);
 				bottri.setUserData("btri");	
+				
+				Vector2 pos = new Vector2();
+				linePos.set((float) -88.235/PIXEL_TO_METER_RATIO_DEFAULT, (float)((CAMERA_HEIGHT-152.8275)/PIXEL_TO_METER_RATIO_DEFAULT));
+				lbump.setTransform(linePos, (float) (Math.PI/3));
+				
+				linePos.set((float) 23.53/PIXEL_TO_METER_RATIO_DEFAULT, (float)((CAMERA_HEIGHT-652.065)/PIXEL_TO_METER_RATIO_DEFAULT));
+				lefttri.setTransform(linePos, (float) ((Math.PI*2)/3));
+				
+				linePos.set((float) 400/PIXEL_TO_METER_RATIO_DEFAULT, (float)((CAMERA_HEIGHT-998.475)/PIXEL_TO_METER_RATIO_DEFAULT));
+				tbump.setTransform(linePos, 0);
+				
+				linePos.set((float) 776.47/PIXEL_TO_METER_RATIO_DEFAULT, (float)((CAMERA_HEIGHT-652.065)/PIXEL_TO_METER_RATIO_DEFAULT));
+				righttri.setTransform(linePos, (float) (Math.PI/3));
+				
+				linePos.set((float) 888.235/PIXEL_TO_METER_RATIO_DEFAULT, (float)((CAMERA_HEIGHT-152.8275)/PIXEL_TO_METER_RATIO_DEFAULT));
+				rbump.setTransform(linePos, (float) ((Math.PI*2)/3));
+				
 				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("rtri"), righttri));
 				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("ltri"), lefttri));
+				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("lbump"), lbump));
+				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("btri"), bottri));
+				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("rbump"), rbump));
+				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("tbump"), tbump));
+				this.mScene.attachChild(boundaryShapes.get("lbump"));
+				this.mScene.attachChild(boundaryShapes.get("rbump"));
+				this.mScene.attachChild(boundaryShapes.get("tbump"));
+				this.mScene.attachChild(boundaryShapes.get("btri"));
 				this.mScene.attachChild(boundaryShapes.get("rtri"));
 				this.mScene.attachChild(boundaryShapes.get("ltri"));
 			}
@@ -585,12 +651,12 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
  	private void ballReset() {
     	ballBody.setTransform(start_position, 0f);
 		Vector2 unit = getUnitVector();
-		ballBody.setLinearVelocity(getRandomVelocity() * unit.x, getRandomVelocity() * unit.y);
+		ballBody.setLinearVelocity(getRandomVelocity() * unit.x, getRandomVelocity() * unit.y+3);
 		//Log.i("ballBodyVelocity", ballBody.getLinearVelocity().toString());
 	}
 
 	public void onUpdate(final float pSecondsElapsed) {
-		ballBody.setTransform(ballBody.getPosition(),ballAngle);
+		//ballBody.setTransform(ballBody.getPosition(),ballAngle);
 		if (ballAngle == 360){ ballAngle = 0;}
 		ballAngle += ballAngleDiff;
 		
@@ -664,17 +730,19 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		this.mScene.attachChild(playerLives);
 	}
 	
-	private void showComputerLives(Font font, int numLives) {
-		this.computerLives = new Text((int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.06),
+	private void showComputerLives(Font font, int numLives, int count) {
+		double loc;
+		//if (count == 0){ loc = .01; } else if (count == 1) { loc =.81;} else if (count==2) {  }
+		this.computerLives[count] = new Text((int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.06),
 				font, ("Lives: " + numLives), "Lives: X".length(), this.getVertexBufferObjectManager());
-		this.mScene.attachChild(computerLives);
+		this.mScene.attachChild(computerLives[count]);
 	}
 	
-	private void resetLives() {
-		this.numComputerLives = NUM_LIVES;
+	private void resetLives(int count) {
+		this.numComputerLives[count] = NUM_LIVES;
 		this.numPlayerLives = NUM_LIVES;
 		playerLives.setText("Lives: " + numPlayerLives);
-		computerLives.setText("Lives: " + numComputerLives);
+		computerLives[count].setText("Lives: " + numComputerLives[count]);
 	}
 	
 	/*
@@ -682,7 +750,9 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	 */
 	protected void resetGame() {
 		this.ballReset();
-		this.resetLives();
+		for (int i = 0; i < NUM_SLAPPERS-1; i++) {
+		this.resetLives(i);
+		}
 		//this.resetPaddles(); // This needs to be a thing
 	}
 
@@ -773,7 +843,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	// ===========================================================
 
 	class BallCollisionUpdate implements ContactListener{
-
+		Vector2 temp = new Vector2(0,0);
 		public void beginContact(Contact contact) {
 			Body bodyA = contact.getFixtureA().getBody();
 			Body bodyB = contact.getFixtureB().getBody();
@@ -784,7 +854,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			if(userAData.equals("ballBody") && userBData.equals("paddleBody")
 					|| userAData.equals("paddleBody") && userBData.equals("ballBody")) {
 				Log.i("Contact Made", "Ball contacted the paddle");
-				ballBody.setLinearVelocity(ballBody.getLinearVelocity().x+1,ballBody.getLinearVelocity().y +1);
+				temp = paddleCollision(ballBody,paddleBody,temp);
+				ballBody.setLinearVelocity(temp.x,temp.y);
 				if (ballAngleDiff!=1){
 				ballAngleDiff = 1;
 				}
@@ -794,12 +865,13 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				}
 			}
 			
+			//ai ball redoodoo
 			for (int j = 0; j<NUM_SLAPPERS-1; j++) {
 				if(userAData.equals("ballBody") && userBData.equals(aiBody[j])
 						|| userAData.equals(aiBody[j]) && userBData.equals("ballBody")) {
 					Log.i("Contact Made", "Ball contacted the paddle");
 					aiSlapper[j].setHit(true);
-					ballBody.setLinearVelocity(ballBody.getLinearVelocity().x+1,ballBody.getLinearVelocity().y +1);
+					ballBody.getPosition();
 					if (ballAngleDiff!=1){
 					ballAngleDiff = 1;
 					}
@@ -827,9 +899,9 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 					|| userAData.equals("roofBody") && userBData.equals("ballBody")) {
 				Log.i("Contact Made", "Ball contacted the roof");
 				outOfBounds = true;
-				computerLives.setText("Lives: " + --numComputerLives);
+				computerLives[0].setText("Lives: " + --numComputerLives[0]);
 				
-				if(numComputerLives == 0) {
+				if(numComputerLives[0] == 0) {
 					gameOver = true;
 					setLoserMessage("The Computer loses. ");
 				}
@@ -849,6 +921,21 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		public void postSolve(Contact contact, ContactImpulse impulse) {
 			// TODO Auto-generated method stub
 
+		}
+		
+		public Vector2 paddleCollision(Body a, Body b, Vector2 t) {
+			Vector2 e = new Vector2();
+			e = t;
+			float c = 0,d=0;
+			if (b==paddleBody) {
+				c = (b.getPosition().x - a.getPosition().x)*-10;
+				Log.i("temp = ",""+ c);
+				
+				d = (a.getPosition().y);
+			} 
+			e.x = c;
+			e.y = d;
+			return e;
 		}
 	}
 }
