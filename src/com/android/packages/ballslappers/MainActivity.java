@@ -87,20 +87,13 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public static final int CAMERA_HEIGHT = 480;
 	public static final float BUMPER_WIDTH = (float) 352.94;
 	
-	/* **************************************************************************** */ 
-	 //CURRENT GAME MODES
-	
-	
 	//Options
-			public static int NUM_SLAPPERS = 4;
-			public static int NUM_LIVES = 1;
-			public static boolean SEESETER = false; //troll stuff
-			public static boolean POWERUPS = false; //powerups
-			public static String difficulty;
+	public static int NUM_SLAPPERS = 4;
+	public static int NUM_LIVES = 1;
+	public static boolean SEESETER = false; //troll stuff
+	public static boolean POWERUPS = false; //powerups
+	public static String difficulty;
 
-	/* ***************************************************************************** */
-		//Constants\\
-	
 	//Paddle Constants
 	public static final int PADDLE_WIDTH = 100;
 	public static final int PADDLE_HEIGHT = 20;
@@ -128,14 +121,13 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	// FIELDS / PARAMETERS
 	// ===========================================================
 	
-		//Main
-	//This is deals with physic and image world.
+	//This deals with physic and image world.
 	protected TimerHandler timerHandler;
 	private PhysicsWorld mPhysicsWorld;
 	private Scene mScene;
 	private Camera mCamera;
 	
-		//Pause Menu
+	// Pause Menu
 	protected MenuScene mPauseMenuScene, mHelpMenuScene, mSoundMenuScene;
 	private BitmapTextureAtlas mPauseMenuResumeBitmapTextureAtlas;
     private ITextureRegion mPauseMenuResumeTextureRegion;
@@ -161,7 +153,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     private Text gameResetMessage;
     private Text countDownTimer;
     
-    	//Game UI Implementations
+    //Game UI Implementations
     private int numPlayerLives;
     private int[] numComputerLives = new int[4]; 
     protected boolean gameOver = false;
@@ -170,8 +162,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     protected boolean timerCountOn = false;
     protected String loserMessage = "";
     	
-    	//Sprites / Images
-    //Texture Atlases  
+    // Texture Atlases for paddles, ball, background
     private String texChoice = "";
     private BitmapTextureAtlas mPaddleBitmapTextureAtlas;
     private BitmapTextureAtlas mAIBitmapTextureAtlas;
@@ -188,18 +179,15 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     private TiledTextureRegion mBgTextureRegion;
     
     //Boundaries and parameters
-		//Rectangle Boundaries
     private HashMap<String, Rectangle> boundaryShapes;
 	public boolean outOfBounds = false;
 	
-		//Triangle Boundaries and bumper boundaries
+	//Triangle Boundaries and bumper boundaries helper vector
 	static Vector2 linePos = new Vector2(0,0);
 	
-		//Ball
 	static Body ballBody;
 	static Sprite ball;
 	
-    	//Paddle
 	//User Paddle and Parameters
     static Slapper playerSlapperShape;
 	private Body paddleBody; 
@@ -297,7 +285,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         this.mEngine.getTextureManager().loadTexture(this.mHelpMenuGoBackBitmapTextureAtlas); 
         this.mEngine.getTextureManager().loadTexture(this.mSoundMenuSettingsBitmapTextureAtlas); 
         
-        	/* Texture Regions */
         //Ball Textures
         texChoice = "orange_ball.png";
         this.mBallBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 64, 128, 
@@ -329,10 +316,10 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         
         
         //BG Textures
-       this.mBgBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(),1024, 512, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-       BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
-       this.mBgTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mBgBitmapTextureAtlas, this, "bg1.png", 0, 0);
-       this.mEngine.getTextureManager().loadTexture(this.mBgBitmapTextureAtlas);
+        this.mBgBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(),1024, 512, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+        BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
+        this.mBgTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mBgBitmapTextureAtlas, this, "bg1.png", 0, 0);
+        this.mEngine.getTextureManager().loadTexture(this.mBgBitmapTextureAtlas);
         
         // Text for resetting the game
         // 40 is the max size for text. Currently a magic #
@@ -342,31 +329,23 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				"Starting in: X".length(), this.getVertexBufferObjectManager());
 	}
 
-	@SuppressWarnings("unused")
 	@Override
-	/* Initialization*/
 	public Scene onCreateScene() {
 		this.mEngine.registerUpdateHandler(new FPSLogger());
 		
 		this.mScene = new Scene();
 		
-		//Background Creation
-		 this.mScene.setBackground(new Background(0, 0, 0));
-		
+		this.mScene.setBackground(new Background(0, 0, 0));
 		
 		this.mScene.setOnSceneTouchListener(this);
 		
-		// Initialize Pause Menu
 		this.mPauseMenuScene = this.createPauseMenuScene();
-		//initialize the help menu Scene
 		this.mHelpMenuScene = this.createHelpMenuScene(); 
-		//initialize the Sound menu Scene 
 		this.mSoundMenuScene = this.createSoundMenuScene();
 		
 		// Initialize Physics World - No Gravity
 		this.mPhysicsWorld = new PhysicsWorld(new Vector2(0, 0), false);
 		
-		//  boundaries (walls & goals)
 		this.boundaryShapes = this.createBoundaryShapes();
 		this.createBoundaryBodies();
 		
@@ -380,9 +359,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			showComputerLives(this.mLivesFont, this.numComputerLives[i],i);
 			}
 		
-		// Localized Player and paints
-		
-		
+		// Localized Player and paints		
 		playerSlapperShape = new Slapper(CAMERA_WIDTH/2, 455, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(),(float) orient);
 		final FixtureDef playerDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 		paddleBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, playerSlapperShape, BodyType.KinematicBody, playerDef);
@@ -390,7 +367,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		this.mScene.attachChild(playerSlapperShape);
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(playerSlapperShape, paddleBody));
 
-		
 		// initialize the paddle for the AI, and paints them
 		Vector2 temp = new Vector2(0,0);
 		for (int i = 0; i<NUM_SLAPPERS-1; i++) {
@@ -464,15 +440,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		
 		// set a listener to determine if the ball is out of bounds
 		mPhysicsWorld.setContactListener(new BallCollisionUpdate());
-		
-		// paint the boundaries
-		
-		
-		//boundary physics
-		
-		
 
-		//Updates physics world, etc etc.
 		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
 		this.mScene.registerUpdateHandler(this);
 		
