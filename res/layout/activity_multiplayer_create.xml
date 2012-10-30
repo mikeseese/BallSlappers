@@ -1,16 +1,210 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/background_test_1"
-    tools:context=".MultiplayerCreateActivity" >
-
-    <TextView
-        android:layout_width="wrap_content"
+    android:orientation="vertical"
+	android:background="#434343" >
+	
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/top"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
-        android:text="@string/hello_world"
-        tools:context=".MultiplayerCreateActivity" />
+        android:layout_gravity="center"
+        android:layout_marginTop="50dp"
+        android:layout_weight=".45"
+        android:baselineAligned="false"
+        android:orientation="horizontal" >
+	    
+        <LinearLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/top_left"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:layout_weight=".45"
+            android:orientation="vertical" >
+		    
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="@string/No._Players"
+                android:textSize="20sp" />
+		    
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="@string/Power_Ups"
+                android:textSize="20sp" />
+		    
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="@string/Lives"
+                android:textSize="20sp" />
+		    
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="@string/Game_Name"
+                android:textSize="20sp" />
+		    
+        </LinearLayout>
+    
+        <LinearLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/top_center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:layout_weight=".45"
+            android:orientation="vertical" >
+            
+            <Spinner
+                android:id="@+id/PlayerSelect"
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:layout_gravity="center" />
+            
+	     	<CheckBox
+                android:id="@+id/enablePowerUps"
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:layout_gravity="center" />
+	     
+     <LinearLayout
+         xmlns:android="http://schemas.android.com/apk/res/android"
+         xmlns:tools="http://schemas.android.com/tools"
+         android:id="@+id/Lives_Counter"
+         android:layout_width="wrap_content"
+         android:layout_height="60dp"
+         android:layout_gravity="center"
+         android:orientation="horizontal" >
 
-</RelativeLayout>
+     	<Button
+     	    android:id="@+id/Minus_Lives"
+     	    android:layout_width="30dp"
+     	    android:layout_height="30dp"
+     	    android:layout_gravity="center"
+     	    android:gravity="center"
+     	    android:text="@string/Minus_Lives"
+     	    android:textSize="12sp"
+     	    android:onClick="minusOneLife" />
+     	
+     	<EditText
+     	    android:id="@+id/Edit_Lives_Text"
+     	    android:layout_width="60dp"
+     	    android:layout_height="45dp"
+     	    android:layout_gravity="center"
+     	    android:gravity="center"
+     	    android:inputType="number"
+     	    android:maxLength="2"
+     	    android:text="@string/One" />
+		 
+	    <Button
+	        android:id="@+id/Plus_Lives"
+	        android:layout_width="30dp"
+	        android:layout_height="30dp"
+	        android:layout_gravity="center"
+	        android:gravity="center"
+	        android:text="@string/Plus_Lives"
+	        android:textSize="12sp"
+	        android:onClick="plusOneLife" />
+	     
+    </LinearLayout>
+ 
+	    <EditText
+	        android:id="@+id/GameName"
+	        android:layout_width="125dp"
+	        android:layout_height="60dp"
+	        android:layout_gravity="center"
+	        android:hint="@string/New_Game"
+	        android:maxLines="1"
+	        android:scrollHorizontally="true" />
+  
+     </LinearLayout>
+
+        <LinearLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/top_right"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_marginTop="5dp"
+            android:layout_weight=".1"
+            android:orientation="vertical" >
+
+            <Button
+                android:id="@+id/Select_Lives"
+                android:layout_width="45dp"
+                android:layout_height="30dp"
+                android:layout_gravity="left"
+                android:layout_marginTop="134.5dp"
+                android:onClick="selectLives"
+                android:text="@string/Select"
+                android:textSize="8sp" />
+                
+            <Button
+                android:id="@+id/Select_Game_Name"
+                android:layout_width="45dp"
+                android:layout_height="30dp"
+                android:layout_gravity="left"
+                android:layout_marginTop="30dp"
+                android:onClick="selectGameName"
+                android:text="@string/Select"
+                android:textSize="8sp" />
+
+        </LinearLayout>
+        
+    </LinearLayout>
+    
+    <RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/center"
+        android:layout_width="wrap_content"
+        android:layout_height="150dp"
+        android:layout_gravity="center_horizontal" >
+        
+        <Button
+            android:id="@+id/button1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:background="@drawable/single_player_play_button_setup"
+            android:onClick="HomeScreen" />
+        
+    </RelativeLayout>
+
+    <RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/bottom"
+        android:layout_width="wrap_content"
+        android:layout_height="45dp"
+        android:layout_marginBottom="5dp" >
+
+        <ToggleButton
+            android:id="@+id/toggleSound"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="5dp"
+            android:background="@drawable/home_sound_button"
+            android:textOn="@android:string/yes" />
+
+    </RelativeLayout>
+    
+</LinearLayout>

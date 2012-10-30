@@ -20,6 +20,14 @@
             
         </activity>
         
+        <activity
+            android:name=".MultiplayerCreateActivity"
+            android:label="@string/title_activity_multiplayer_create" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.ballslappers.HomeScreenActivity" />
+        </activity>
+        
         <activity android:name="MainActivity">
             
         </activity>

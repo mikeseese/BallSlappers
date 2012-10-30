@@ -85,19 +85,21 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public static final int CAMERA_HEIGHT = 480;
 	public static final float BUMPER_WIDTH = (float) 352.94;
 	
-	public static final int TRUE_POS = 150;
+	public static final int TRUE_POS = 0;
 	/* **************************************************************************** */ 
 	 //CURRENT GAME MODES
 	
 	
 	//Options
-			public static int NUM_SLAPPERS = 2;
+			public static int NUM_SLAPPERS = 4;
 	
 			public static int NUM_LIVES = 1;
 			
 			public static boolean SEESETER = false; //troll stuff
 			
 			public static boolean POWERUPS = false; //powerups
+			
+			public static String difficulty;
 		
 	
 
@@ -212,7 +214,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public EngineOptions onCreateEngineOptions() {
 		Toast.makeText(this, "Let the battle begin...", Toast.LENGTH_SHORT).show();
 
-		mCamera = new Camera(-300, -500, 800+300+300, 1100);
+		mCamera = new Camera(-300, -600, 1400, 1100);
 
 		return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED, new FillResolutionPolicy(), mCamera);
 	}
@@ -223,13 +225,10 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		NUM_SLAPPERS= bundle.getInt("cpunumber")+1;
 		NUM_LIVES = bundle.getInt("numberLives");
 		numPlayerLives = NUM_LIVES;
-		numComputerLives[0] = NUM_LIVES;
-		numComputerLives[1] = NUM_LIVES;
-		numComputerLives[2] = NUM_LIVES;
-		numComputerLives[3] = NUM_LIVES;
 		POWERUPS = bundle.getBoolean("powerupen");
-		//difficulty = bundle.getString("difficulty");
+		difficulty = bundle.getString("difficulty");
 	}
+	
 	@Override   
 	public void onCreateResources() {
 		/* Load Font/Textures. */
@@ -345,12 +344,12 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
 		
 		// initialize the paddle for the AI, and paints them
-		
+		Vector2 temp = new Vector2(0,0);
 		for (int i = 0; i<NUM_SLAPPERS-1; i++) {
 			if(NUM_SLAPPERS==4){
 				if (i>0)	{
 					if (i==2)	{ 
-						orient = 3*Math.PI/2;
+						orient = Math.PI/2;
 					}
 					else{
 						orient = Math.PI/2;
@@ -369,13 +368,41 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				}
 			}
 			
-			aiSlapper[i] = new Slapper(0, -TRUE_POS, PADDLE_WIDTH, PADDLE_HEIGHT, this.mCollisionTextureRegion, this.getVertexBufferObjectManager(), (float) orient);	
+			aiSlapper[i] = new Slapper(CAMERA_WIDTH/2, PADDLE_HEIGHT, PADDLE_WIDTH, PADDLE_HEIGHT, this.mCollisionTextureRegion, this.getVertexBufferObjectManager(), (float) orient);	
 			aiDef[i] = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 			aiBody[i] = PhysicsFactory.createBoxBody(this.mPhysicsWorld, aiSlapper[i], BodyType.KinematicBody, aiDef[i]);
 			aiBody[i].setUserData(aiBody[i]);
 			this.mScene.attachChild(aiSlapper[i]);
+			if (i==1 && NUM_SLAPPERS==4){
+				
+				temp.set((float) PADDLE_HEIGHT/PIXEL_TO_METER_RATIO_DEFAULT, (float)((MainActivity.CAMERA_HEIGHT/2)/PIXEL_TO_METER_RATIO_DEFAULT));
+				aiBody[i].setTransform(temp, (float) (Math.PI/2));
+				temp.mul(PIXEL_TO_METER_RATIO_DEFAULT);
+				aiSlapper[i].setSlapper(temp);
+				}
+				else if (i==2 && NUM_SLAPPERS==4) {
+				temp.set((float) (800-PADDLE_HEIGHT)/PIXEL_TO_METER_RATIO_DEFAULT, (float)((MainActivity.CAMERA_HEIGHT/2)/PIXEL_TO_METER_RATIO_DEFAULT));
+				aiBody[i].setTransform(temp, (float) (Math.PI/2));
+				temp.mul(PIXEL_TO_METER_RATIO_DEFAULT);
+				aiSlapper[i].setSlapper(temp);
+				}
+			
+			if (i==0 && NUM_SLAPPERS==3){
+				
+				temp.set((float) 43.53/PIXEL_TO_METER_RATIO_DEFAULT, (float)((MainActivity.CAMERA_HEIGHT-652.065)/PIXEL_TO_METER_RATIO_DEFAULT));
+				aiBody[i].setTransform(temp, (float) ((Math.PI*2)/3));
+				temp.mul(PIXEL_TO_METER_RATIO_DEFAULT);
+				aiSlapper[i].setSlapper(temp);
+				}
+				else if (i==1 && NUM_SLAPPERS==3) {
+				temp.set((float) 756.47/PIXEL_TO_METER_RATIO_DEFAULT, (float)((MainActivity.CAMERA_HEIGHT-652.065)/PIXEL_TO_METER_RATIO_DEFAULT));
+				aiBody[i].setTransform(temp, (float) (Math.PI/3));
+				temp.mul(PIXEL_TO_METER_RATIO_DEFAULT);
+
+				aiSlapper[i].setSlapper(temp);
+				}
 			mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(aiSlapper[i], aiBody[i]));
-			this.mScene.registerUpdateHandler(new AIUpdater(aiBody[i],aiSlapper[i]));
+			this.mScene.registerUpdateHandler(new AIUpdater(aiBody[i],aiSlapper[i],i));
 		}
 		
 		// initialize the ball
@@ -651,7 +678,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
  	private void ballReset() {
     	ballBody.setTransform(start_position, 0f);
 		Vector2 unit = getUnitVector();
-		ballBody.setLinearVelocity(getRandomVelocity() * unit.x, getRandomVelocity() * unit.y+3);
+		ballBody.setLinearVelocity(getRandomVelocity()*unit.x, getRandomVelocity() * unit.y+5);
 		//Log.i("ballBodyVelocity", ballBody.getLinearVelocity().toString());
 	}
 
@@ -661,9 +688,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		ballAngle += ballAngleDiff;
 		
 		for (int j = 0; j<NUM_SLAPPERS-1; j++) {
-			if (aiSlapper[j].getHit()==true) {
-				aiSlapper[j].setTextureRegion(mCollisionTextureRegion);	
-			}
+		
 		}
 			if (ballStuck()) {
 			/* keep the x velocity the same but alter the y velocity in the appropriate direction to
@@ -855,7 +880,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 					|| userAData.equals("paddleBody") && userBData.equals("ballBody")) {
 				Log.i("Contact Made", "Ball contacted the paddle");
 				temp = paddleCollision(ballBody,paddleBody,temp);
-				ballBody.setLinearVelocity(temp.x,temp.y);
+				ballBody.setLinearVelocity(temp.x,ballBody.getLinearVelocity().y + temp.y);
 				if (ballAngleDiff!=1){
 				ballAngleDiff = 1;
 				}
@@ -871,6 +896,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 						|| userAData.equals(aiBody[j]) && userBData.equals("ballBody")) {
 					Log.i("Contact Made", "Ball contacted the paddle");
 					aiSlapper[j].setHit(true);
+					temp = paddleCollision(ballBody,aiBody[j],temp);
+					ballBody.setLinearVelocity(temp.x, temp.y+ballBody.getLinearVelocity().y);
 					ballBody.getPosition();
 					if (ballAngleDiff!=1){
 					ballAngleDiff = 1;
@@ -927,12 +954,10 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			Vector2 e = new Vector2();
 			e = t;
 			float c = 0,d=0;
-			if (b==paddleBody) {
 				c = (b.getPosition().x - a.getPosition().x)*-10;
 				Log.i("temp = ",""+ c);
 				
-				d = (a.getPosition().y);
-			} 
+				d =  1;//a.getLinearVelocity().y;
 			e.x = c;
 			e.y = d;
 			return e;

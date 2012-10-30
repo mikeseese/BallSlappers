@@ -5,12 +5,37 @@
     android:background="@drawable/background_test_1"
     tools:context=".OptionsScreenActivity" >
 
-    <TextView
+    <Button
+        android:id="@+id/btnSet"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
+        android:layout_marginTop="45dp"
+        android:text="@string/hello_world" />
+
+    <Spinner
+        android:id="@+id/hundredsLives"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
         android:layout_centerVertical="true"
-        android:text="@string/hello_world"
-        tools:context=".OptionsScreenActivity" />
+        android:layout_marginLeft="48dp" />
+
+    <Spinner
+        android:id="@+id/tensLives"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/hundredsLives"
+        android:layout_alignBottom="@+id/hundredsLives"
+        android:layout_centerHorizontal="true" />
+
+    <Spinner
+        android:id="@+id/onesLives"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/tensLives"
+        android:layout_alignBottom="@+id/tensLives"
+        android:layout_toRightOf="@+id/tensLives" />
 
 </RelativeLayout>

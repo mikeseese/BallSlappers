@@ -1,63 +1,85 @@
 <LinearLayout xmlns:tools="http://schemas.android.com/tools"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/LinearLayout1"
+    android:id="@+id/LinearLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="fill_parent"
     android:layout_gravity="center"
-    android:background="@drawable/background_test_1"
-    android:gravity="center|center_horizontal|center_vertical"
+    android:background="#434343"
     android:orientation="vertical" >
+
+	<LinearLayout
+	    xmlns:tools="http://schemas.android.com/tools"
+	    xmlns:android="http://schemas.android.com/apk/res/android"
+	    android:id="@+id/Menu_Layout"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_gravity="center_horizontal"
+	    android:layout_marginTop="125dp"
+	    android:gravity="center_horizontal"
+	    android:orientation="vertical" >
+	
+	    <Button
+	        android:id="@+id/singlePlayerButton"
+	        style="@color/TransparentColor"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_margin="@dimen/Dim10"
+	        android:layout_marginBottom="49dp"
+	        android:layout_marginRight="40dp"
+	        android:background="@drawable/home_single_player_button"
+	        android:onClick="SinglePlayerCreate" />
+	
+	    <Button
+	        android:id="@+id/multiplayerButton"
+	        style="@color/TransparentColor"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_margin="@dimen/Dim10"
+	        android:layout_marginBottom="112dp"
+	        android:layout_marginLeft="12dp"
+	        android:background="@drawable/home_multiplayer_button"
+	        android:onClick="MultiplayerCreate" />
+	
+	    <Button
+	        android:id="@+id/tutorialButton"
+	        style="@color/TransparentColor"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_margin="@dimen/Dim10"
+	        android:layout_marginBottom="73dp"
+	        android:background="@drawable/home_tutorial_button"
+	        android:onClick="TutorialScreen" />
+	
+	    <Button
+	        android:id="@+id/optionsButton"
+	        style="@color/TransparentColor"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_margin="@dimen/Dim10"
+	        android:layout_marginBottom="82dp"
+	        android:background="@drawable/home_options_button"
+	        android:onClick="OptionsScreen" />
 
-    <Button
-        android:id="@+id/singlePlayerButton"
-        style="@color/TransparentColor"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="@dimen/Dim10"
-        android:layout_marginBottom="49dp"
-        android:layout_marginRight="40dp"
-        android:background="@drawable/home_single_player_button"
-        android:onClick="SinglePlayerCreate" />
-
-    <Button
-        android:id="@+id/multiplayerButton"
-        style="@color/TransparentColor"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="@dimen/Dim10"
-        android:layout_marginBottom="112dp"
-        android:layout_marginLeft="12dp"
-        android:background="@drawable/home_multiplayer_button"
-        android:onClick="MultiplayerCreate" />
-
-    <Button
-        android:id="@+id/tutorialButton"
-        style="@color/TransparentColor"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="@dimen/Dim10"
-        android:layout_marginBottom="73dp"
-        android:background="@drawable/home_tutorial_button"
-        android:onClick="TutorialScreen" />
-
-    <Button
-        android:id="@+id/optionsButton"
-        style="@color/TransparentColor"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="@dimen/Dim10"
-        android:layout_marginBottom="82dp"
-        android:background="@drawable/home_options_button"
-        android:onClick="OptionsScreen" />
-
-    <ToggleButton
-        android:id="@+id/toggleSound"
-        style="@color/TransparentColor"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|right"
-        android:background="@drawable/home_sound_button"
-        android:gravity="center_vertical|center_horizontal|center"
-        android:textOn="@android:string/yes" />
+		</LinearLayout>
+		
+	    <RelativeLayout
+	        xmlns:android="http://schemas.android.com/apk/res/android"
+	        xmlns:tools="http://schemas.android.com/tools"
+	        android:id="@+id/Sound_Layout"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_marginBottom="5dp" >
+		
+	        <ToggleButton
+	            android:id="@+id/toggleSound"
+	            android:layout_width="40dp"
+	            android:layout_height="40dp"
+	            android:layout_alignParentBottom="true"
+	            android:layout_alignParentRight="true"
+	            android:layout_marginRight="5dp"
+	            android:background="@drawable/home_sound_button"
+	            android:textOn="@android:string/yes" />
+	
+	    </RelativeLayout>
 
 </LinearLayout>
