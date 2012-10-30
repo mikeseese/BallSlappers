@@ -170,7 +170,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     private HashMap<String, Rectangle> boundaryShapes;
 	public boolean outOfBounds = false;
 	
-		//Triangle Boundaries
+		//Triangle Boundaries and bumper boundaries
 	static Vector2 linePos = new Vector2(0,0);
 	
 		//Ball
@@ -539,24 +539,24 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				final Rectangle roof = new Rectangle(0, 0, CAMERA_WIDTH, 2, vertexBufferObjectManager);
 				final Rectangle left = new Rectangle(0, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
 				final Rectangle right = new Rectangle(CAMERA_WIDTH - 2, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
-				/*final Rectangle bottomLeftBumper = new Rectangle();
-				final Rectangle bottomRightBumper = new Rectangle();
-				final Rectangle topLeftBumper = new Rectangle();
-				final Rectangle topRightBumper = new Rectangle();*/
+				final Rectangle bottomLeftBumper = new Rectangle(0, 0, 150, 2, vertexBufferObjectManager);
+				final Rectangle bottomRightBumper = new Rectangle(0, 0, 150, 2, vertexBufferObjectManager);
+				final Rectangle topLeftBumper = new Rectangle(0, 0, 150, 2, vertexBufferObjectManager);
+				final Rectangle topRightBumper = new Rectangle(0, 0, 150, 2, vertexBufferObjectManager);
 				
 				boundaries.put("ground", ground); 
 				boundaries.put("roof", roof); 
 				boundaries.put("left", left); 
 				boundaries.put("right", right);	
-				/*boundaries.put("bottomLeftBumper", bottomLeftBumper);
+				boundaries.put("bottomLeftBumper", bottomLeftBumper);
 				boundaries.put("bottomRightBumper", bottomRightBumper);
 				boundaries.put("topLeftBumper", topLeftBumper);
-				boundaries.put("topRightBumper", topRightBumper);*/
+				boundaries.put("topRightBumper", topRightBumper);
 
 				break;
 			}
 			case 3: {
-				final Rectangle btri = new Rectangle(0, 0, CAMERA_WIDTH, 2, this.getVertexBufferObjectManager());
+				final Rectangle btri = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, this.getVertexBufferObjectManager());
 				final Rectangle ltri = new Rectangle(0, 0, CAMERA_WIDTH, 2, this.getVertexBufferObjectManager());
 				final Rectangle rtri = new Rectangle(0, 0, CAMERA_WIDTH, 2, this.getVertexBufferObjectManager());
 				final Rectangle lbump = new Rectangle(0, 0, BUMPER_WIDTH, 2, this.getVertexBufferObjectManager());
@@ -589,56 +589,71 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	}
 	
 	protected void createBoundaryBodies() {
-		final FixtureDef wFD = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		final FixtureDef obFD = PhysicsFactory.createFixtureDef(0, 0, 0);
-		FixtureDef set;
-		obFD.isSensor = true;
+		final FixtureDef wallFD = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
+		final FixtureDef outOfBoundsFD = PhysicsFactory.createFixtureDef(0, 0, 0);
+		outOfBoundsFD.isSensor = true;
 		switch (NUM_SLAPPERS) {
-			case 4: {
-				set = obFD; 
-				/*this.mScene.attachChild(boundaryShapes.get("bottomLeftBumper")); 
-				this.mScene.attachChild(boundaryShapes.get("bottomRightBumper"));
-				this.mScene.attachChild(boundaryShapes.get("topLeftBumper"));
-				this.mScene.attachChild(boundaryShapes.get("topRightBumper"));*/
-				
-				/*this.mScene.attachChild(boundaryShapes.get("ground"));
-				this.mScene.attachChild(boundaryShapes.get("roof"));
-				this.mScene.attachChild(boundaryShapes.get("left"));
-				this.mScene.attachChild(boundaryShapes.get("right"));*/
-				
+			case 4: {				
 				// create bodies for goals
-				Body leftBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("left"), BodyType.StaticBody, set);
+				Body leftBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("left"), BodyType.StaticBody, outOfBoundsFD);
 				leftBody.setUserData("leftBody");
-				Body rightBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("right"), BodyType.StaticBody, set);
+				Body rightBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("right"), BodyType.StaticBody, outOfBoundsFD);
 				rightBody.setUserData("rightBody");
 				
-				Body groundBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("ground"), BodyType.StaticBody, obFD);
+				Body groundBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("ground"), BodyType.StaticBody, outOfBoundsFD);
 				groundBody.setUserData("groundBody");
-				Body roofBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("roof"), BodyType.StaticBody, obFD);
-				roofBody.setUserData("roofBody");	
+				Body roofBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("roof"), BodyType.StaticBody, outOfBoundsFD);
+				roofBody.setUserData("roofBody");
+				
+				Body bottomLeftBumperBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("bottomLeftBumper"), BodyType.StaticBody, wallFD);
+				bottomLeftBumperBody.setUserData("bottomLeftBumperBody");
+				Body bottomRightBumperBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("bottomRightBumper"), BodyType.StaticBody, wallFD);
+				bottomRightBumperBody.setUserData("bottomRightBumperBody");
+				Body topLeftBumperBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("topLeftBumper"), BodyType.StaticBody, wallFD);
+				topLeftBumperBody.setUserData("topLeftBumperBody");
+				Body topRightBumperBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("topRightBumper"), BodyType.StaticBody, wallFD);
+				topRightBumperBody.setUserData("topRightBumperBody");
+								
+				linePos.set(150, 200);
+				bottomLeftBumperBody.setTransform(linePos, (float) (Math.PI/3));
+				
+				linePos.set(200, 250);
+				bottomRightBumperBody.setTransform(linePos, (float) ((Math.PI*2)/3));
+				
+				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("bottomLeftBumper"), bottomLeftBumperBody));
+				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("bottomRightBumper"), bottomRightBumperBody));
+				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("topLeftBumper"), topLeftBumperBody));
+				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("topRightBumper"), topRightBumperBody));
+				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("left"), leftBody));
+				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("right"), rightBody));
+				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("roof"), roofBody));
+				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("ground"), groundBody));
+				this.mScene.attachChild(boundaryShapes.get("bottomLeftBumper")); 
+				this.mScene.attachChild(boundaryShapes.get("bottomRightBumper"));
+				this.mScene.attachChild(boundaryShapes.get("topLeftBumper"));
+				this.mScene.attachChild(boundaryShapes.get("topRightBumper"));
 				
 				break;
 			}
 			case 3: {
-				Body lefttri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("ltri"), BodyType.StaticBody, wFD);
+				Body lefttri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("ltri"), BodyType.StaticBody, wallFD);
 				lefttri.setUserData("ltri");
 				
-				Body righttri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("rtri"), BodyType.StaticBody, wFD);
+				Body righttri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("rtri"), BodyType.StaticBody, wallFD);
 				righttri.setUserData("rtri");
 				
-				Body lbump = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("lbump"), BodyType.StaticBody, wFD);
+				Body lbump = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("lbump"), BodyType.StaticBody, wallFD);
 				lbump.setUserData("lbump");
 				
-				Body rbump = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("rbump"), BodyType.StaticBody, wFD);
+				Body rbump = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("rbump"), BodyType.StaticBody, wallFD);
 				rbump.setUserData("rbump");
 				
-				Body tbump = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("tbump"), BodyType.StaticBody, wFD);
+				Body tbump = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("tbump"), BodyType.StaticBody, wallFD);
 				tbump.setUserData("tbump");
 				
-				Body bottri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("btri"), BodyType.StaticBody, wFD);
+				Body bottri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("btri"), BodyType.StaticBody, wallFD);
 				bottri.setUserData("btri");	
 				
-				Vector2 pos = new Vector2();
 				linePos.set((float) -88.235/PIXEL_TO_METER_RATIO_DEFAULT, (float)((CAMERA_HEIGHT-152.8275)/PIXEL_TO_METER_RATIO_DEFAULT));
 				lbump.setTransform(linePos, (float) (Math.PI/3));
 				
@@ -669,23 +684,25 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				
 				break;
 			}
-			default: { // 2 players
-				set = wFD; 
-				this.mScene.attachChild(boundaryShapes.get("left")); 
-				this.mScene.attachChild(boundaryShapes.get("right")); 
-				
+			default: { // 2 players		
 				// create wall bodies (left and right) 
-				Body leftBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("left"), BodyType.StaticBody, set);
+				Body leftBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("left"), BodyType.StaticBody, wallFD);
 				leftBody.setUserData("leftBody");
-				Body rightBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("right"), BodyType.StaticBody, set);
+				Body rightBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("right"), BodyType.StaticBody, wallFD);
 				rightBody.setUserData("rightBody");
 				
 				// create bodies for goals (ground and roof)
-				Body groundBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("ground"), BodyType.StaticBody, obFD);
+				Body groundBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("ground"), BodyType.StaticBody, outOfBoundsFD);
 				groundBody.setUserData("groundBody");
-				Body roofBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("roof"), BodyType.StaticBody, obFD);
-				roofBody.setUserData("roofBody");	
+				Body roofBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("roof"), BodyType.StaticBody, outOfBoundsFD);
+				roofBody.setUserData("roofBody");
 				
+				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("left"), leftBody));
+				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("right"), rightBody));
+				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("roof"), roofBody));
+				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("ground"), groundBody));
+				this.mScene.attachChild(boundaryShapes.get("left")); 
+				this.mScene.attachChild(boundaryShapes.get("right")); 
 				break;
 			}
 		}
