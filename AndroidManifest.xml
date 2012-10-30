@@ -9,20 +9,23 @@
         android:icon="@drawable/ic_launcher"
         android:theme="@style/AppTheme">
         
-        <activity android:name="HomeScreenActivity">
+        <activity android:name="HomeScreenActivity"
+            android:screenOrientation="portrait" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         
-        <activity android:name="SinglePlayerCreateActivity">
+        <activity android:name="SinglePlayerCreateActivity"
+            android:screenOrientation="portrait" >
             
         </activity>
         
         <activity
             android:name=".MultiplayerCreateActivity"
-            android:label="@string/title_activity_multiplayer_create" >
+            android:label="@string/title_activity_multiplayer_create"
+            android:screenOrientation="portrait" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.ballslappers.HomeScreenActivity" />
