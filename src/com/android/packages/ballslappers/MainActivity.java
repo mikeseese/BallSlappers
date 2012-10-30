@@ -85,29 +85,16 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public static final int CAMERA_HEIGHT = 480;
 	public static final float BUMPER_WIDTH = (float) 352.94;
 	
-	public static final int TRUE_POS = 0;
 	/* **************************************************************************** */ 
 	 //CURRENT GAME MODES
 	
 	
 	//Options
 			public static int NUM_SLAPPERS = 4;
-	
 			public static int NUM_LIVES = 1;
-			
 			public static boolean SEESETER = false; //troll stuff
-			
 			public static boolean POWERUPS = false; //powerups
-			
 			public static String difficulty;
-		
-	
-
-
-
-
-
-
 
 	/* ***************************************************************************** */
 		//Constants\\
@@ -214,7 +201,14 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public EngineOptions onCreateEngineOptions() {
 		Toast.makeText(this, "Let the battle begin...", Toast.LENGTH_SHORT).show();
 
-		mCamera = new Camera(-300, -600, 1400, 1100);
+		switch (NUM_SLAPPERS) { 
+			case 3:
+				mCamera = new Camera(-300, -600, 1400, 1100);
+				break;
+			default:
+				mCamera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
+				break;
+		}
 
 		return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED, new FillResolutionPolicy(), mCamera);
 	}
@@ -335,7 +329,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		// Localized Player and paints
 		
 		
-		playerSlapperShape = new Slapper(CAMERA_WIDTH/2, 455, PADDLE_WIDTH, PADDLE_HEIGHT, this.mPaddleTextureRegion, this.getVertexBufferObjectManager(),(float) orient);
+		playerSlapperShape = new Slapper(CAMERA_WIDTH/2, 455, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(),(float) orient);
 		final FixtureDef playerDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 		paddleBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, playerSlapperShape, BodyType.KinematicBody, playerDef);
 		paddleBody.setUserData("paddleBody");
@@ -368,7 +362,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				}
 			}
 			
-			aiSlapper[i] = new Slapper(CAMERA_WIDTH/2, PADDLE_HEIGHT, PADDLE_WIDTH, PADDLE_HEIGHT, this.mCollisionTextureRegion, this.getVertexBufferObjectManager(), (float) orient);	
+			aiSlapper[i] = new Slapper(CAMERA_WIDTH/2, PADDLE_HEIGHT, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(), (float) orient);	
 			aiDef[i] = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 			aiBody[i] = PhysicsFactory.createBoxBody(this.mPhysicsWorld, aiSlapper[i], BodyType.KinematicBody, aiDef[i]);
 			aiBody[i].setUserData(aiBody[i]);
@@ -535,11 +529,24 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	// Methods
 	// ===========================================================
 
-	@SuppressWarnings("unused")
 	protected HashMap<String, Rectangle> createBoundaryShapes() {
 		HashMap<String, Rectangle> boundaries = new HashMap<String, Rectangle>();
 		final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
-			if (NUM_SLAPPERS==3) {
+		
+		switch (NUM_SLAPPERS) {
+			case 4: {
+				final Rectangle ground = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, vertexBufferObjectManager);
+				final Rectangle roof = new Rectangle(0, 0, CAMERA_WIDTH, 2, vertexBufferObjectManager);
+				final Rectangle left = new Rectangle(0, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
+				final Rectangle right = new Rectangle(CAMERA_WIDTH - 2, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
+				boundaries.put("ground", ground); 
+				boundaries.put("roof", roof); 
+				boundaries.put("left", left); 
+				boundaries.put("right", right);				
+				
+				break;
+			}
+			case 3: {
 				final Rectangle btri = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, this.getVertexBufferObjectManager());
 				final Rectangle ltri = new Rectangle(0, 0, 800, 2, this.getVertexBufferObjectManager());
 				final Rectangle rtri = new Rectangle(0, 0, 800, 2, this.getVertexBufferObjectManager());
@@ -552,33 +559,58 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				boundaries.put("btri", btri);
 				boundaries.put("ltri", ltri);
 				boundaries.put("rtri", rtri);
+			
+				break;
 			}
-			if (NUM_SLAPPERS==2 || NUM_SLAPPERS==4) { // 2 players
-				final Rectangle ground = new Rectangle(-TRUE_POS, CAMERA_HEIGHT - 2, CAMERA_WIDTH + TRUE_POS*2, 2, vertexBufferObjectManager);
-				final Rectangle roof = new Rectangle(-TRUE_POS, 0-TRUE_POS, CAMERA_WIDTH + TRUE_POS*2, 2, vertexBufferObjectManager);
-				final Rectangle left = new Rectangle(0, -TRUE_POS, 2, CAMERA_HEIGHT+2*TRUE_POS, vertexBufferObjectManager);
-				final Rectangle right = new Rectangle(CAMERA_WIDTH - 2, -TRUE_POS, 2, CAMERA_HEIGHT+2*TRUE_POS, vertexBufferObjectManager);
+			default: { // 2 players 
+				final Rectangle ground = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, vertexBufferObjectManager);
+				final Rectangle roof = new Rectangle(0, 0, CAMERA_WIDTH, 2, vertexBufferObjectManager);
+				final Rectangle left = new Rectangle(0, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
+				final Rectangle right = new Rectangle(CAMERA_WIDTH - 2, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
 				boundaries.put("ground", ground); 
 				boundaries.put("roof", roof); 
 				boundaries.put("left", left); 
 				boundaries.put("right", right);
+				
+				break;
 			}
+		}
 		
 		return boundaries;
 	}
 	
-	@SuppressWarnings("unused")
 	protected void createBoundaryBodies() {
 		final FixtureDef wFD = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 		final FixtureDef obFD = PhysicsFactory.createFixtureDef(0, 0, 0);
 		FixtureDef set;
 		obFD.isSensor = true;
-			if (NUM_SLAPPERS==5) {
+		switch (NUM_SLAPPERS) {
+			case 4: {
+				set = obFD; 
+				/*this.mScene.attachChild(boundaryShapes.get("bottomLeftBumper")); 
+				this.mScene.attachChild(boundaryShapes.get("bottomRightBumper"));
+				this.mScene.attachChild(boundaryShapes.get("topLeftBumper"));
+				this.mScene.attachChild(boundaryShapes.get("topRightBumper"));*/
 				
+				/*this.mScene.attachChild(boundaryShapes.get("ground"));
+				this.mScene.attachChild(boundaryShapes.get("roof"));
+				this.mScene.attachChild(boundaryShapes.get("left"));
+				this.mScene.attachChild(boundaryShapes.get("right"));*/
+				
+				// create bodies for goals
+				Body leftBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("left"), BodyType.StaticBody, set);
+				leftBody.setUserData("leftBody");
+				Body rightBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("right"), BodyType.StaticBody, set);
+				rightBody.setUserData("rightBody");
+				
+				Body groundBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("ground"), BodyType.StaticBody, obFD);
+				groundBody.setUserData("groundBody");
+				Body roofBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("roof"), BodyType.StaticBody, obFD);
+				roofBody.setUserData("roofBody");	
+				
+				break;
 			}
-			
-			if (NUM_SLAPPERS==3) {
-				
+			case 3: {
 				Body lefttri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("ltri"), BodyType.StaticBody, wFD);
 				lefttri.setUserData("ltri");
 				
@@ -625,23 +657,29 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				this.mScene.attachChild(boundaryShapes.get("btri"));
 				this.mScene.attachChild(boundaryShapes.get("rtri"));
 				this.mScene.attachChild(boundaryShapes.get("ltri"));
+				
+				break;
 			}
-			
-			if (NUM_SLAPPERS == 2 || NUM_SLAPPERS==4) { // 2 players
-				if (NUM_SLAPPERS==2){ set = wFD; this.mScene.attachChild(boundaryShapes.get("left")); this.mScene.attachChild(boundaryShapes.get("right")); } else { set = obFD; }
+			default: { // 2 players
+				set = wFD; 
+				this.mScene.attachChild(boundaryShapes.get("left")); 
+				this.mScene.attachChild(boundaryShapes.get("right")); 
+				
 				// create wall bodies (left and right) 
 				Body leftBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("left"), BodyType.StaticBody, set);
 				leftBody.setUserData("leftBody");
 				Body rightBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("right"), BodyType.StaticBody, set);
 				rightBody.setUserData("rightBody");
 				
-				
 				// create bodies for goals (ground and roof)
 				Body groundBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("ground"), BodyType.StaticBody, obFD);
 				groundBody.setUserData("groundBody");
 				Body roofBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("roof"), BodyType.StaticBody, obFD);
 				roofBody.setUserData("roofBody");	
+				
+				break;
 			}
+		}
 	}
 
 	
@@ -929,6 +967,28 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				computerLives[0].setText("Lives: " + --numComputerLives[0]);
 				
 				if(numComputerLives[0] == 0) {
+					gameOver = true;
+					setLoserMessage("The Computer loses. ");
+				}
+			}
+			else if(userAData.equals("ballBody") && userBData.equals("leftBody")
+					|| userAData.equals("leftBody") && userBData.equals("ballBody")) {
+				Log.i("Contact Made", "Ball contacted the left");
+				outOfBounds = true;
+				computerLives[1].setText("Lives: " + --numComputerLives[1]);
+				
+				if(numComputerLives[1] == 0) {
+					gameOver = true;
+					setLoserMessage("The Computer loses. ");
+				}
+			}
+			else if(userAData.equals("ballBody") && userBData.equals("rightBody")
+					|| userAData.equals("rightBody") && userBData.equals("ballBody")) {
+				Log.i("Contact Made", "Ball contacted the right");
+				outOfBounds = true;
+				computerLives[2].setText("Lives: " + --numComputerLives[2]);
+				
+				if(numComputerLives[2] == 0) {
 					gameOver = true;
 					setLoserMessage("The Computer loses. ");
 				}
