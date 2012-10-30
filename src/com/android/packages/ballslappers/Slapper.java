@@ -36,7 +36,11 @@ public class Slapper extends AnimatedSprite {
 	public float getSlapperX() {
 		return x;
 	}
-
+	
+	public void setSlapper(Vector2 a) {
+		this.y = a.y;
+		this.x = a.x;
+	}
 	public void setHit(boolean t){
 		hit = t;
 	}

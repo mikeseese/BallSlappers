@@ -1,5 +1,58 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Hello World, Home!</string>
+
     <string name="app_name">BallSlappers</string>
+    <string name="Menu_Button_Single_Player">Single Player</string>
+    <string name="Menu_Button_Multiplayer">Multiplayer</string>
+    <string name="Menu_Button_Tutorial">Tutorial</string>
+    <string name="Menu_Button_Options">Options</string>
+    <string name="title_activity_home_screen">BallSlappers</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="No._CPUs">No. CPUs</string>
+    <string name="No._Players">No. Players</string>
+    <string name="Difficulty">Difficulty</string>
+    <string name="Power_Ups">Power Ups</string>
+    <string name="Lives">Lives</string>
+    <string name="Zero">0</string>
+    <string name="One">1</string>
+    <string name="Plus_Lives">+</string>
+    <string name="Minus_Lives">-</string>
+    <string name="Select">Select</string>
+    <string name="Game_Name">Game Name</string>
+    <string name="New_Game">New Game</string>
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_single_player_create">Single Player Setup</string>
+    <string name="title_activity_multiplayer_create">Multiplayer Create</string>
+    <string name="title_activity_tutorial_screen">Tutorial</string>
+    <string name="title_activity_options_screen">Options</string>
+    <string-array name="Difficulties">
+        <item >Easy</item>
+        <item >Medium</item>
+        <item >Hard</item>
+    </string-array>
+    
+    <string-array name="NUMCPU">
+        <item >1</item>
+        <item >2</item>
+        <item >3</item>
+    </string-array>
+    
+    <string-array name="NumericDial">
+        <item >0</item>
+        <item >1</item>
+        <item >2</item>
+        <item >3</item>
+        <item >4</item>
+        <item >5</item>
+        <item >6</item>
+        <item >7</item>
+        <item >8</item>
+        <item >9</item>
+    </string-array>
+    <string-array name="NUMPLAYERS">
+        <item >1</item>
+        <item >2</item>
+        <item >3</item>
+        <item >4</item>
+        <item >5</item>
+    </string-array>
 </resources>
