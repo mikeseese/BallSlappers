@@ -539,18 +539,27 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				final Rectangle roof = new Rectangle(0, 0, CAMERA_WIDTH, 2, vertexBufferObjectManager);
 				final Rectangle left = new Rectangle(0, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
 				final Rectangle right = new Rectangle(CAMERA_WIDTH - 2, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
+				/*final Rectangle bottomLeftBumper = new Rectangle();
+				final Rectangle bottomRightBumper = new Rectangle();
+				final Rectangle topLeftBumper = new Rectangle();
+				final Rectangle topRightBumper = new Rectangle();*/
+				
 				boundaries.put("ground", ground); 
 				boundaries.put("roof", roof); 
 				boundaries.put("left", left); 
-				boundaries.put("right", right);				
-				
+				boundaries.put("right", right);	
+				/*boundaries.put("bottomLeftBumper", bottomLeftBumper);
+				boundaries.put("bottomRightBumper", bottomRightBumper);
+				boundaries.put("topLeftBumper", topLeftBumper);
+				boundaries.put("topRightBumper", topRightBumper);*/
+
 				break;
 			}
 			case 3: {
-				final Rectangle btri = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, this.getVertexBufferObjectManager());
-				final Rectangle ltri = new Rectangle(0, 0, 800, 2, this.getVertexBufferObjectManager());
-				final Rectangle rtri = new Rectangle(0, 0, 800, 2, this.getVertexBufferObjectManager());
-				final Rectangle lbump = new Rectangle(400, 0, BUMPER_WIDTH, 2, this.getVertexBufferObjectManager());
+				final Rectangle btri = new Rectangle(0, 0, CAMERA_WIDTH, 2, this.getVertexBufferObjectManager());
+				final Rectangle ltri = new Rectangle(0, 0, CAMERA_WIDTH, 2, this.getVertexBufferObjectManager());
+				final Rectangle rtri = new Rectangle(0, 0, CAMERA_WIDTH, 2, this.getVertexBufferObjectManager());
+				final Rectangle lbump = new Rectangle(0, 0, BUMPER_WIDTH, 2, this.getVertexBufferObjectManager());
 				final Rectangle rbump = new Rectangle(0, 0, BUMPER_WIDTH, 2, this.getVertexBufferObjectManager());
 				final Rectangle tbump = new Rectangle(0, 0, BUMPER_WIDTH, 2, this.getVertexBufferObjectManager());
 				boundaries.put("lbump", lbump);
@@ -947,51 +956,84 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				}
 			}
 			
-			
-			//Boundary Collision
-			if(userAData.equals("ballBody") && userBData.equals("groundBody")
-					|| userAData.equals("groundBody") && userBData.equals("ballBody")) {
-				Log.i("Contact Made", "Ball contacted the ground");
-				outOfBounds = true;
-				playerLives.setText("Lives: " + --numPlayerLives);
-				
-				if(numPlayerLives == 0) {
-					gameOver = true;
-					setLoserMessage("You lose. ");
-				}
-			}
-			else if(userAData.equals("ballBody") && userBData.equals("roofBody")
-					|| userAData.equals("roofBody") && userBData.equals("ballBody")) {
-				Log.i("Contact Made", "Ball contacted the roof");
-				outOfBounds = true;
-				computerLives[0].setText("Lives: " + --numComputerLives[0]);
-				
-				if(numComputerLives[0] == 0) {
-					gameOver = true;
-					setLoserMessage("The Computer loses. ");
-				}
-			}
-			else if(userAData.equals("ballBody") && userBData.equals("leftBody")
-					|| userAData.equals("leftBody") && userBData.equals("ballBody")) {
-				Log.i("Contact Made", "Ball contacted the left");
-				outOfBounds = true;
-				computerLives[1].setText("Lives: " + --numComputerLives[1]);
-				
-				if(numComputerLives[1] == 0) {
-					gameOver = true;
-					setLoserMessage("The Computer loses. ");
-				}
-			}
-			else if(userAData.equals("ballBody") && userBData.equals("rightBody")
-					|| userAData.equals("rightBody") && userBData.equals("ballBody")) {
-				Log.i("Contact Made", "Ball contacted the right");
-				outOfBounds = true;
-				computerLives[2].setText("Lives: " + --numComputerLives[2]);
-				
-				if(numComputerLives[2] == 0) {
-					gameOver = true;
-					setLoserMessage("The Computer loses. ");
-				}
+			boundaryCollision(userAData, userBData);
+		}
+		
+		public void boundaryCollision(Object userAData, Object userBData) {
+			switch (NUM_SLAPPERS) {
+				case 4: 
+					if(userAData.equals("ballBody") && userBData.equals("groundBody")
+							|| userAData.equals("groundBody") && userBData.equals("ballBody")) {
+						Log.i("Contact Made", "Ball contacted the ground");
+						outOfBounds = true;
+						playerLives.setText("Lives: " + --numPlayerLives);
+						
+						if(numPlayerLives == 0) {
+							gameOver = true;
+							setLoserMessage("You lose. ");
+						}
+					}
+					else if(userAData.equals("ballBody") && userBData.equals("roofBody")
+							|| userAData.equals("roofBody") && userBData.equals("ballBody")) {
+						Log.i("Contact Made", "Ball contacted the roof");
+						outOfBounds = true;
+						computerLives[0].setText("Lives: " + --numComputerLives[0]);
+						
+						if(numComputerLives[0] == 0) {
+							gameOver = true;
+							setLoserMessage("Computer0 loses. ");
+						}
+					}
+					else if(userAData.equals("ballBody") && userBData.equals("leftBody")
+							|| userAData.equals("leftBody") && userBData.equals("ballBody")) {
+						Log.i("Contact Made", "Ball contacted the left");
+						outOfBounds = true;
+						computerLives[1].setText("Lives: " + --numComputerLives[1]);
+						
+						if(numComputerLives[1] == 0) {
+							gameOver = true;
+							setLoserMessage("Computer1 loses. ");
+						}
+					}
+					else if(userAData.equals("ballBody") && userBData.equals("rightBody")
+							|| userAData.equals("rightBody") && userBData.equals("ballBody")) {
+						Log.i("Contact Made", "Ball contacted the right");
+						outOfBounds = true;
+						computerLives[2].setText("Lives: " + --numComputerLives[2]);
+						
+						if(numComputerLives[2] == 0) {
+							gameOver = true;
+							setLoserMessage("Computer2 loses. ");
+						}
+					}
+					break;
+				case 3:
+					break;
+				default:
+					if(userAData.equals("ballBody") && userBData.equals("groundBody")
+							|| userAData.equals("groundBody") && userBData.equals("ballBody")) {
+						Log.i("Contact Made", "Ball contacted the ground");
+						outOfBounds = true;
+						playerLives.setText("Lives: " + --numPlayerLives);
+						
+						if(numPlayerLives == 0) {
+							gameOver = true;
+							setLoserMessage("You lose. ");
+						}
+					}
+					else if(userAData.equals("ballBody") && userBData.equals("roofBody")
+							|| userAData.equals("roofBody") && userBData.equals("ballBody")) {
+						Log.i("Contact Made", "Ball contacted the roof");
+						outOfBounds = true;
+						computerLives[0].setText("Lives: " + --numComputerLives[0]);
+						
+						if(numComputerLives[0] == 0) {
+							gameOver = true;
+							setLoserMessage("The Computer loses. ");
+						}
+					}
+					
+					break;
 			}
 		}
 
