@@ -614,11 +614,17 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				Body topRightBumperBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("topRightBumper"), BodyType.StaticBody, wallFD);
 				topRightBumperBody.setUserData("topRightBumperBody");
 								
-				linePos.set(150, 200);
+				linePos.set(75/PIXEL_TO_METER_RATIO_DEFAULT, (CAMERA_HEIGHT-75)/PIXEL_TO_METER_RATIO_DEFAULT);
 				bottomLeftBumperBody.setTransform(linePos, (float) (Math.PI/3));
 				
-				linePos.set(200, 250);
+				linePos.set((CAMERA_WIDTH-175)/PIXEL_TO_METER_RATIO_DEFAULT, (CAMERA_HEIGHT-75)/PIXEL_TO_METER_RATIO_DEFAULT);
 				bottomRightBumperBody.setTransform(linePos, (float) ((Math.PI*2)/3));
+				
+				linePos.set(75/PIXEL_TO_METER_RATIO_DEFAULT, 75/PIXEL_TO_METER_RATIO_DEFAULT);
+				topLeftBumperBody.setTransform(linePos, (float) (2*Math.PI/3));
+				
+				linePos.set((CAMERA_WIDTH-175)/PIXEL_TO_METER_RATIO_DEFAULT, 75/PIXEL_TO_METER_RATIO_DEFAULT);
+				topRightBumperBody.setTransform(linePos, (float) (Math.PI/3));
 				
 				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("bottomLeftBumper"), bottomLeftBumperBody));
 				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("bottomRightBumper"), bottomRightBumperBody));
