@@ -24,7 +24,9 @@ import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.scene.background.SpriteBackground;
 import org.andengine.entity.scene.menu.MenuScene;
 import org.andengine.entity.scene.menu.MenuScene.IOnMenuItemClickListener;
+import org.andengine.entity.scene.menu.animator.SlideMenuAnimator;
 import org.andengine.entity.scene.menu.item.IMenuItem;
+import org.andengine.entity.scene.menu.item.SpriteMenuItem;
 import org.andengine.entity.scene.menu.item.TextMenuItem;
 import org.andengine.entity.scene.menu.item.decorator.ColorMenuItemDecorator;
 import org.andengine.entity.sprite.AnimatedSprite;
@@ -115,6 +117,12 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public static final int PAUSE_MENU_RESUME = 0;
 	public static final int PAUSE_MENU_RESTART = 1;
 	public static final int PAUSE_MENU_QUIT = 2;
+	public static final int PAUSE_MENU_HELP = 3;
+	public static final int PAUSE_MENU_SOUND = 4;
+	public static final int HELP_MENU_HOWTOPLAY = 5;
+	public static final int HELP_MENU_GOBACK = 6;
+	public static final int SOUND_MENU_SETTINGS = 7;
+	public static final int SOUND_MENU_GOBACK = 8;
 
 	// ===========================================================
 	// FIELDS / PARAMETERS
@@ -128,10 +136,24 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	private Camera mCamera;
 	
 		//Pause Menu
-	private MenuScene mPauseMenuScene;
+	protected MenuScene mPauseMenuScene, mHelpMenuScene, mSoundMenuScene;
+	private BitmapTextureAtlas mPauseMenuResumeBitmapTextureAtlas;
+    private ITextureRegion mPauseMenuResumeTextureRegion;
+    private BitmapTextureAtlas mPauseMenuRestartBitmapTextureAtlas; 
+    private ITextureRegion mPauseMenuRestartTextureRegion;
+    private BitmapTextureAtlas mPauseMenuQuitBitmapTextureAtlas;
+    private ITextureRegion mPauseMenuQuitTextureRegion; 
+    private BitmapTextureAtlas mPauseMenuHelpBitmapTextureAtlas;
+    private ITextureRegion mPauseMenuHelpTextureRegion;
+    private BitmapTextureAtlas mPauseMenuSoundBitmapTextureAtlas;
+    private ITextureRegion mPauseMenuSoundTextureRegion; 
+    private BitmapTextureAtlas mHelpMenuHowToPlayBitmapTextureAtlas; 
+    private ITextureRegion mHelpMenuHowToPlayTextureRegion; 
+    private BitmapTextureAtlas mHelpMenuGoBackBitmapTextureAtlas;
+    private ITextureRegion mHelpMenuGoBackTextureRegion; 
+    private BitmapTextureAtlas mSoundMenuSettingsBitmapTextureAtlas;
+    private ITextureRegion mSoundMenuSettingsTextureRegion;
 	
-	private BitmapTextureAtlas mPauseMenuFontTexture;
-    private Font mPauseMenuFont;
     private Font mLivesFont;
     private Font mGameResetFont;
     private Text playerLives;
@@ -149,7 +171,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     protected String loserMessage = "";
     	
     	//Sprites / Images
-    //Texture Atlases
+    //Texture Atlases  
     private String texChoice = "";
     private BitmapTextureAtlas mPaddleBitmapTextureAtlas;
     private BitmapTextureAtlas mAIBitmapTextureAtlas;
@@ -226,26 +248,50 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	@Override   
 	public void onCreateResources() {
 		/* Load Font/Textures. */
-        this.mPauseMenuFontTexture = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, 
-        		 											TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         final BitmapTextureAtlas mLivesTexture = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, 
 					TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         final BitmapTextureAtlas mGameResetTexture = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, 
 					TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         
-        this.mPauseMenuFont = new Font(this.getFontManager(), (ITexture) this.mPauseMenuFontTexture, 
-        							   Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 48.0f, true, Color.WHITE);
         this.mLivesFont = new Font(this.getFontManager(), (ITexture) mLivesTexture, 
 				   Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 20.0f, true, Color.RED);
         this.mGameResetFont = new Font(this.getFontManager(), (ITexture) mGameResetTexture, 
 				   Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 30.0f, true, Color.WHITE);
               
-        this.mEngine.getTextureManager().loadTexture(this.mPauseMenuFontTexture);
         this.mEngine.getTextureManager().loadTexture(mLivesTexture);
         this.mEngine.getTextureManager().loadTexture(mGameResetTexture);
-        this.getFontManager().loadFont(this.mPauseMenuFont);
         this.getFontManager().loadFont(this.mLivesFont);
         this.getFontManager().loadFont(this.mGameResetFont);
+        
+        // Pause Menu textures
+        this.mPauseMenuResumeBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
+        this.mPauseMenuRestartBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
+        this.mPauseMenuQuitBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
+        this.mPauseMenuHelpBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
+        this.mPauseMenuSoundBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
+        this.mHelpMenuHowToPlayBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
+        this.mHelpMenuGoBackBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
+        this.mSoundMenuSettingsBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
+        
+        BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
+
+        this.mPauseMenuResumeTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuResumeBitmapTextureAtlas, this, "Resume.png", 0, 99); 
+        this.mPauseMenuRestartTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuRestartBitmapTextureAtlas, this, "Restart.png", 0, 99); 
+        this.mPauseMenuQuitTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuQuitBitmapTextureAtlas, this, "Quit.png", 0, 99); 
+        this.mPauseMenuHelpTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuHelpBitmapTextureAtlas, this, "Help.png", 0, 99); 
+        this.mPauseMenuSoundTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuSoundBitmapTextureAtlas, this, "Sound.png", 0, 99); 
+        this.mHelpMenuHowToPlayTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mHelpMenuHowToPlayBitmapTextureAtlas, this, "HelpMenu.png", 0, 356);
+        this.mHelpMenuGoBackTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mHelpMenuGoBackBitmapTextureAtlas, this, "goBack.png", 0, 99); 
+        this.mSoundMenuSettingsTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mSoundMenuSettingsBitmapTextureAtlas, this, "SoundMenu.png", 0, 356); 
+
+        this.mEngine.getTextureManager().loadTexture(this.mPauseMenuResumeBitmapTextureAtlas);
+        this.mEngine.getTextureManager().loadTexture(this.mPauseMenuRestartBitmapTextureAtlas);
+        this.mEngine.getTextureManager().loadTexture(this.mPauseMenuQuitBitmapTextureAtlas); 
+        this.mEngine.getTextureManager().loadTexture(this.mPauseMenuHelpBitmapTextureAtlas); 
+        this.mEngine.getTextureManager().loadTexture(this.mPauseMenuSoundBitmapTextureAtlas);
+        this.mEngine.getTextureManager().loadTexture(this.mHelpMenuHowToPlayBitmapTextureAtlas); 
+        this.mEngine.getTextureManager().loadTexture(this.mHelpMenuGoBackBitmapTextureAtlas); 
+        this.mEngine.getTextureManager().loadTexture(this.mSoundMenuSettingsBitmapTextureAtlas); 
         
         	/* Texture Regions */
         //Ball Textures
@@ -308,6 +354,10 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		
 		// Initialize Pause Menu
 		this.mPauseMenuScene = this.createPauseMenuScene();
+		//initialize the help menu Scene
+		this.mHelpMenuScene = this.createHelpMenuScene(); 
+		//initialize the Sound menu Scene 
+		this.mSoundMenuScene = this.createSoundMenuScene();
 		
 		// Initialize Physics World - No Gravity
 		this.mPhysicsWorld = new PhysicsWorld(new Vector2(0, 0), false);
@@ -510,6 +560,25 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
                 // end the current activity (MainActivity)
                 this.finish();
                 return true;
+            case PAUSE_MENU_HELP:
+            	//bring up the help menu
+            	this.mScene.setChildScene(this.mHelpMenuScene, false, true, true);
+            	return true;
+            case PAUSE_MENU_SOUND:
+            	//bring up sound menu (music level/on/off, FX level/on/off, master volume)
+            	this.mScene.setChildScene(this.mSoundMenuScene, false, true, true);
+            	return true;
+            case HELP_MENU_HOWTOPLAY:
+            	//this test just resumes
+            	this.mScene.clearChildScene();
+	            this.mPauseMenuScene.reset();
+            	return true;
+            case HELP_MENU_GOBACK:
+            	this.mScene.setChildScene(this.mPauseMenuScene, false, true, true);
+            	return true;
+            case SOUND_MENU_GOBACK:
+            	this.mScene.setChildScene(this.mPauseMenuScene, false, true, true);
+            	return true;
             default:
                 return false;
             }
@@ -614,11 +683,17 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				Body topRightBumperBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("topRightBumper"), BodyType.StaticBody, wallFD);
 				topRightBumperBody.setUserData("topRightBumperBody");
 								
-				linePos.set(150, 200);
+				linePos.set(75/PIXEL_TO_METER_RATIO_DEFAULT, (CAMERA_HEIGHT-75)/PIXEL_TO_METER_RATIO_DEFAULT);
 				bottomLeftBumperBody.setTransform(linePos, (float) (Math.PI/3));
 				
-				linePos.set(200, 250);
+				linePos.set((CAMERA_WIDTH-175)/PIXEL_TO_METER_RATIO_DEFAULT, (CAMERA_HEIGHT-75)/PIXEL_TO_METER_RATIO_DEFAULT);
 				bottomRightBumperBody.setTransform(linePos, (float) ((Math.PI*2)/3));
+				
+				linePos.set(75/PIXEL_TO_METER_RATIO_DEFAULT, 75/PIXEL_TO_METER_RATIO_DEFAULT);
+				topLeftBumperBody.setTransform(linePos, (float) (2*Math.PI/3));
+				
+				linePos.set((CAMERA_WIDTH-175)/PIXEL_TO_METER_RATIO_DEFAULT, 75/PIXEL_TO_METER_RATIO_DEFAULT);
+				topRightBumperBody.setTransform(linePos, (float) (Math.PI/3));
 				
 				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("bottomLeftBumper"), bottomLeftBumperBody));
 				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("bottomRightBumper"), bottomRightBumperBody));
@@ -710,31 +785,71 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
 	
 	protected MenuScene createPauseMenuScene() {
-        final MenuScene tempMenuScene = new MenuScene(this.mCamera);
-
-        final IMenuItem resumeMenuItem = new ColorMenuItemDecorator(new TextMenuItem(PAUSE_MENU_RESUME, this.mPauseMenuFont, 
-																    "RESUME", this.getVertexBufferObjectManager()), 
-																    Color.RED, Color.WHITE);
+		final MenuScene tempMenuScene = new MenuScene(this.mCamera);
+	      
+        final SpriteMenuItem resumeMenuItem = new SpriteMenuItem(PAUSE_MENU_RESUME, this.mPauseMenuResumeTextureRegion, this.getVertexBufferObjectManager());
         resumeMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
         tempMenuScene.addMenuItem(resumeMenuItem);
-        
-        final IMenuItem restartMenuItem = new ColorMenuItemDecorator(new TextMenuItem(PAUSE_MENU_RESTART, this.mPauseMenuFont, 
-        														     "RESTART", this.getVertexBufferObjectManager()), 
-        														     Color.RED, Color.WHITE);
+             
+        final SpriteMenuItem restartMenuItem = new SpriteMenuItem(PAUSE_MENU_RESTART, this.mPauseMenuRestartTextureRegion, this.getVertexBufferObjectManager());
         restartMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
         tempMenuScene.addMenuItem(restartMenuItem);
-
-        final IMenuItem quitMenuItem = new ColorMenuItemDecorator(new TextMenuItem(PAUSE_MENU_QUIT, this.mPauseMenuFont, 
-																  "QUIT", this.getVertexBufferObjectManager()), 
-																  Color.RED, Color.WHITE);
+       
+        final SpriteMenuItem quitMenuItem = new SpriteMenuItem(PAUSE_MENU_QUIT, this.mPauseMenuQuitTextureRegion, this.getVertexBufferObjectManager());
         quitMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
         tempMenuScene.addMenuItem(quitMenuItem);
+               
+        final SpriteMenuItem helpMenuItem = new SpriteMenuItem(PAUSE_MENU_HELP, this.mPauseMenuHelpTextureRegion, this.getVertexBufferObjectManager());
+        helpMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+        tempMenuScene.addMenuItem(helpMenuItem);
+           
+        final SpriteMenuItem soundMenuItem = new SpriteMenuItem(PAUSE_MENU_SOUND, this.mPauseMenuSoundTextureRegion, this.getVertexBufferObjectManager());
+        soundMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+        tempMenuScene.addMenuItem(soundMenuItem);
         
         tempMenuScene.buildAnimations();
         tempMenuScene.setBackgroundEnabled(false);
         tempMenuScene.setOnMenuItemClickListener(this);
         
         return tempMenuScene;
+}
+	
+protected MenuScene createHelpMenuScene() {
+    final MenuScene tempMenuScene = new MenuScene(this.mCamera);
+    
+    final SpriteMenuItem howToPlayMenuItem = new SpriteMenuItem(HELP_MENU_HOWTOPLAY, this.mHelpMenuHowToPlayTextureRegion, this.getVertexBufferObjectManager());
+    final SpriteMenuItem goBackMenuItem = new SpriteMenuItem(HELP_MENU_GOBACK, this.mHelpMenuGoBackTextureRegion, this.getVertexBufferObjectManager());
+
+    howToPlayMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+    goBackMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+    tempMenuScene.addMenuItem(howToPlayMenuItem);
+    tempMenuScene.addMenuItem(goBackMenuItem);
+    tempMenuScene.setMenuAnimator(new SlideMenuAnimator());
+              
+    tempMenuScene.buildAnimations();
+    tempMenuScene.setBackgroundEnabled(false);
+    tempMenuScene.setOnMenuItemClickListener(this);
+    
+    return tempMenuScene;
+}	
+
+protected MenuScene createSoundMenuScene() {
+    final MenuScene tempMenuScene = new MenuScene(this.mCamera);
+    
+    final SpriteMenuItem settingsMenuItem = new SpriteMenuItem(SOUND_MENU_SETTINGS, this.mSoundMenuSettingsTextureRegion, this.getVertexBufferObjectManager());
+    final SpriteMenuItem goBackMenuItem = new SpriteMenuItem(HELP_MENU_GOBACK, this.mHelpMenuGoBackTextureRegion, this.getVertexBufferObjectManager());
+
+    settingsMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+    goBackMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+    tempMenuScene.addMenuItem(settingsMenuItem);
+    tempMenuScene.addMenuItem(goBackMenuItem);
+    tempMenuScene.setMenuAnimator(new SlideMenuAnimator());
+          
+    tempMenuScene.buildAnimations();
+    tempMenuScene.setBackgroundEnabled(false);
+    tempMenuScene.setOnMenuItemClickListener(this);
+    
+    return tempMenuScene;
 }
 	
 	/* Functions for fun */
