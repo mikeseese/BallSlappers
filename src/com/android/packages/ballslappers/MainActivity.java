@@ -197,7 +197,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	
 		//Ball
 	static Body ballBody;
-	static AnimatedSprite ball;
+	static Sprite ball;
 	
     	//Paddle
 	//User Paddle and Parameters
@@ -224,6 +224,10 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		Toast.makeText(this, "Let the battle begin...", Toast.LENGTH_SHORT).show();
 
 		switch (NUM_SLAPPERS) { 
+			case 4:
+				// this needs to be changed
+				mCamera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_WIDTH);
+				break;
 			case 3:
 				mCamera = new Camera(-300, -600, 1400, 1100);
 				break;
@@ -295,7 +299,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         
         	/* Texture Regions */
         //Ball Textures
-        texChoice = "ball.png";
+        texChoice = "orange_ball.png";
         this.mBallBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 64, 128, 
         													  TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
@@ -304,24 +308,24 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         																			this, texChoice, 0, 32, 2, 1); // 64x32
         this.mEngine.getTextureManager().loadTexture(this.mBallBitmapTextureAtlas);
         
-        //Paddle Textures
-        texChoice = "normal.png";
+        //Paddle Textures (not used anymore)
+        /*texChoice = "normal.png";
         this.mPaddleBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 512, 512, 
 				  TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
         this.mPaddleTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mPaddleBitmapTextureAtlas, 
 										this, texChoice, 0, 0, 1, 1); // Base
-        this.mEngine.getTextureManager().loadTexture(this.mPaddleBitmapTextureAtlas);
+        this.mEngine.getTextureManager().loadTexture(this.mPaddleBitmapTextureAtlas);*/
         
         //Paddle Collision Textures
        
-        texChoice="ai.png";
+        /*texChoice="ai.png";
         this.mCollisionBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 512, 512, 
 				  TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
         this.mCollisionTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mCollisionBitmapTextureAtlas, 
 										this, texChoice, 0, 0, 2, 1); // Base
-        this.mEngine.getTextureManager().loadTexture(this.mCollisionBitmapTextureAtlas);
+        this.mEngine.getTextureManager().loadTexture(this.mCollisionBitmapTextureAtlas);*/
         
         
         //BG Textures
@@ -451,8 +455,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		
 		// initialize the ball
 		final FixtureDef ballDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
-		ball = new AnimatedSprite(CAMERA_WIDTH/2, CAMERA_HEIGHT/2, this.mBallTextureRegion, this.getVertexBufferObjectManager());
-        ballBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ball, BodyType.DynamicBody, ballDef);
+        ball = new Sprite(CAMERA_WIDTH/2, CAMERA_HEIGHT/2, this.mBallTextureRegion, this.getVertexBufferObjectManager());
+		ballBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ball, BodyType.DynamicBody, ballDef);
 		ballBody.setUserData("ballBody");
 		this.mScene.attachChild(ball);
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(ball, ballBody));
