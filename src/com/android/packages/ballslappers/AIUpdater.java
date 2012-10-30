@@ -13,7 +13,7 @@ public class AIUpdater implements IUpdateHandler {
 	Slapper slapper;
 	AI ai;
 	Body aibody;
-	int type=0;
+	int type = 0;
 	float o = 0;
 	Vector2 temp = new Vector2(0,0);
 	
@@ -26,18 +26,11 @@ public class AIUpdater implements IUpdateHandler {
 	}
 
 	public void onUpdate(float pSecondsElapsed) {
-		
-		
 		aibody.setTransform(ai.update(MainActivity.ballBody, slapper,type), o);
-		
-		
-		
-		//Log.i("AIUpdater", "Updated successfully");
 	}
 
 	public void reset() {
 		// TODO Auto-generated method stub
-		
 	}
 
 }

@@ -17,10 +17,7 @@ public class Slapper extends AnimatedSprite {
 	private float y;
 	private float width;
 	private float height;
-	private float speed = 15;
-    private TiledTextureRegion tr;
 	private float orientation = 0; //(float) (Math.PI/2) in rad
-	private Vector2 tempVelocity;
 	public boolean hit = false;
 
 	public Slapper(float pX, float pY, float pWidth, float pHeight, TiledTextureRegion tr, VertexBufferObjectManager vertexBufferObjectManager, float orientation) {
@@ -30,7 +27,6 @@ public class Slapper extends AnimatedSprite {
 		this.orientation = orientation;
 		this.width = pWidth;
 		this.height = pHeight;
-		this.tr = tr;
 	}
 
 	public float getSlapperX() {
@@ -83,10 +79,4 @@ public class Slapper extends AnimatedSprite {
 			number = high;
 		return number;
 	}
-
-	public void setTextureRegion(TiledTextureRegion t) {
-		tr = t;
-		
-	}
-	
 } 
