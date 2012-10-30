@@ -12,7 +12,7 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 
-public class Slapper extends AnimatedSprite {
+public class Slapper extends Rectangle {
 	private float x; //position of bottom of paddle
 	private float y;
 	private float width;
@@ -20,8 +20,8 @@ public class Slapper extends AnimatedSprite {
 	private float orientation = 0; //(float) (Math.PI/2) in rad
 	public boolean hit = false;
 
-	public Slapper(float pX, float pY, float pWidth, float pHeight, TiledTextureRegion tr, VertexBufferObjectManager vertexBufferObjectManager, float orientation) {
-		super(pX, pY, pWidth, pHeight, tr, vertexBufferObjectManager);
+	public Slapper(float pX, float pY, float pWidth, float pHeight, VertexBufferObjectManager vertexBufferObjectManager, float orientation) {
+		super(pX, pY, pWidth, pHeight, vertexBufferObjectManager);
 		this.x = pX;
 		this.y = pY;
 		this.orientation = orientation;
