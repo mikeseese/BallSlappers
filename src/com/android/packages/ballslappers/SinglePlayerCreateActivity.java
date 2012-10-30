@@ -98,12 +98,6 @@ public class SinglePlayerCreateActivity extends Activity {
 	     });
     }
 	
-	public int selectLives(View view){
-     	EditText editText = (EditText) findViewById(R.id.Edit_Lives_Text);
-     	lives = Integer.parseInt(editText.getText().toString());
-     	return lives;
-    }
-	
 	public void minusOneLife(View view){
      	EditText editText = (EditText) findViewById(R.id.Edit_Lives_Text);
      	tempLives = Integer.parseInt(editText.getText().toString());
@@ -131,6 +125,9 @@ public class SinglePlayerCreateActivity extends Activity {
     }
     
     public void PlaySinglePlayer(View view){
+     	EditText editText = (EditText) findViewById(R.id.Edit_Lives_Text);
+     	lives = Integer.parseInt(editText.getText().toString());
+     	
     	Bundle bundle = new Bundle();
     	bundle.putString("difficulty", difficultySelected);
     	bundle.putInt("numberLives", lives);

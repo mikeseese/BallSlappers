@@ -83,89 +83,57 @@
                 android:layout_height="60dp"
                 android:layout_gravity="center" />
 	     
-     <LinearLayout
-         xmlns:android="http://schemas.android.com/apk/res/android"
-         xmlns:tools="http://schemas.android.com/tools"
-         android:id="@+id/Lives_Counter"
-         android:layout_width="wrap_content"
-         android:layout_height="60dp"
-         android:layout_gravity="center"
-         android:orientation="horizontal" >
+		     <LinearLayout
+		         xmlns:android="http://schemas.android.com/apk/res/android"
+		         xmlns:tools="http://schemas.android.com/tools"
+		         android:id="@+id/Lives_Counter"
+		         android:layout_width="wrap_content"
+		         android:layout_height="60dp"
+		         android:layout_gravity="center"
+		         android:orientation="horizontal" >
 
-     	<Button
-     	    android:id="@+id/Minus_Lives"
-     	    android:layout_width="30dp"
-     	    android:layout_height="30dp"
-     	    android:layout_gravity="center"
-     	    android:gravity="center"
-     	    android:text="@string/Minus_Lives"
-     	    android:textSize="12sp"
-     	    android:onClick="minusOneLife" />
-     	
-     	<EditText
-     	    android:id="@+id/Edit_Lives_Text"
-     	    android:layout_width="60dp"
-     	    android:layout_height="45dp"
-     	    android:layout_gravity="center"
-     	    android:gravity="center"
-     	    android:inputType="number"
-     	    android:maxLength="2"
-     	    android:text="@string/One" />
-		 
-	    <Button
-	        android:id="@+id/Plus_Lives"
-	        android:layout_width="30dp"
-	        android:layout_height="30dp"
-	        android:layout_gravity="center"
-	        android:gravity="center"
-	        android:text="@string/Plus_Lives"
-	        android:textSize="12sp"
-	        android:onClick="plusOneLife" />
+		     	<Button
+		     	    android:id="@+id/Minus_Lives"
+		     	    android:layout_width="30dp"
+		     	    android:layout_height="30dp"
+		     	    android:layout_gravity="center"
+		     	    android:gravity="center"
+		     	    android:text="@string/Minus_Lives"
+		     	    android:textSize="12sp"
+		     	    android:onClick="minusOneLife" />
+		     	
+		     	<EditText
+		     	    android:id="@+id/Edit_Lives_Text"
+		     	    android:layout_width="60dp"
+		     	    android:layout_height="45dp"
+		     	    android:layout_gravity="center"
+		     	    android:gravity="center"
+		     	    android:inputType="number"
+		     	    android:maxLength="2"
+		     	    android:text="@string/One" />
+				 
+			    <Button
+			        android:id="@+id/Plus_Lives"
+			        android:layout_width="30dp"
+			        android:layout_height="30dp"
+			        android:layout_gravity="center"
+			        android:gravity="center"
+			        android:text="@string/Plus_Lives"
+			        android:textSize="12sp"
+			        android:onClick="plusOneLife" />
 	     
-    </LinearLayout>
+    		</LinearLayout>
  
-	    <EditText
-	        android:id="@+id/GameName"
-	        android:layout_width="125dp"
-	        android:layout_height="60dp"
-	        android:layout_gravity="center"
-	        android:hint="@string/New_Game"
-	        android:maxLines="1"
-	        android:scrollHorizontally="true" />
+		    <EditText
+		        android:id="@+id/GameName"
+		        android:layout_width="125dp"
+		        android:layout_height="60dp"
+		        android:layout_gravity="center"
+		        android:hint="@string/New_Game"
+		        android:maxLines="1"
+		        android:scrollHorizontally="true" />
   
-     </LinearLayout>
-
-        <LinearLayout
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:tools="http://schemas.android.com/tools"
-            android:id="@+id/top_right"
-            android:layout_width="wrap_content"
-            android:layout_height="fill_parent"
-            android:layout_marginTop="5dp"
-            android:layout_weight=".1"
-            android:orientation="vertical" >
-
-            <Button
-                android:id="@+id/Select_Lives"
-                android:layout_width="45dp"
-                android:layout_height="30dp"
-                android:layout_gravity="left"
-                android:layout_marginTop="134.5dp"
-                android:onClick="selectLives"
-                android:text="@string/Select"
-                android:textSize="8sp" />
-                
-            <Button
-                android:id="@+id/Select_Game_Name"
-                android:layout_width="45dp"
-                android:layout_height="30dp"
-                android:layout_gravity="left"
-                android:layout_marginTop="30dp"
-                android:onClick="selectGameName"
-                android:text="@string/Select"
-                android:textSize="8sp" />
-
-        </LinearLayout>
+    	</LinearLayout>
         
     </LinearLayout>
     

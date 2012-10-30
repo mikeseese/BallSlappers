@@ -66,17 +66,6 @@ public class MultiplayerCreateActivity extends Activity {
 	     
     }
 	
-	public void selectGameName(View view){
-     	EditText editText = (EditText) findViewById(R.id.GameName);
-     	newGameName = editText.getText().toString();
-    }
-	
-	public int selectLives(View view){
-     	EditText editText = (EditText) findViewById(R.id.Edit_Lives_Text);
-     	lives = Integer.parseInt(editText.getText().toString());
-     	return lives;
-    }
-	
 	public void minusOneLife(View view){
      	EditText editText = (EditText) findViewById(R.id.Edit_Lives_Text);
      	tempLives = Integer.parseInt(editText.getText().toString());
@@ -104,6 +93,11 @@ public class MultiplayerCreateActivity extends Activity {
     }
     
     public void PlaySinglePlayer(View view){
+     	EditText editText = (EditText) findViewById(R.id.GameName);
+     	newGameName = editText.getText().toString();
+     	editText = (EditText) findViewById(R.id.Edit_Lives_Text);
+     	lives = Integer.parseInt(editText.getText().toString());
+     	
     	Bundle bundle = new Bundle();
     	bundle.putString("gameName", newGameName);
     	bundle.putInt("numberLives", lives);
