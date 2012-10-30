@@ -636,10 +636,10 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				break;
 			}
 			case 3: {
-				Body lefttri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("ltri"), BodyType.StaticBody, wallFD);
+				Body lefttri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("ltri"), BodyType.StaticBody, outOfBoundsFD);
 				lefttri.setUserData("ltri");
 				
-				Body righttri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("rtri"), BodyType.StaticBody, wallFD);
+				Body righttri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("rtri"), BodyType.StaticBody, outOfBoundsFD);
 				righttri.setUserData("rtri");
 				
 				Body lbump = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("lbump"), BodyType.StaticBody, wallFD);
@@ -651,7 +651,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				Body tbump = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("tbump"), BodyType.StaticBody, wallFD);
 				tbump.setUserData("tbump");
 				
-				Body bottri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("btri"), BodyType.StaticBody, wallFD);
+				Body bottri = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("btri"), BodyType.StaticBody, outOfBoundsFD);
 				bottri.setUserData("btri");	
 				
 				linePos.set((float) -88.235/PIXEL_TO_METER_RATIO_DEFAULT, (float)((CAMERA_HEIGHT-152.8275)/PIXEL_TO_METER_RATIO_DEFAULT));
@@ -1025,10 +1025,43 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 					}
 					break;
 				case 3:
+					if(userAData.equals("ballBody") && userBData.equals("btri")
+							|| userAData.equals("btri") && userBData.equals("ballBody")) {
+						Log.i("Contact Made", "Ball contacted the ground");
+						outOfBounds = true;
+						playerLives.setText("Lives: " + --numPlayerLives);
+						
+						if(numPlayerLives == 0) {
+							gameOver = true;
+							setLoserMessage("You lose. ");
+						}
+					}
+					else if(userAData.equals("ballBody") && userBData.equals("rtri")
+							|| userAData.equals("rtri") && userBData.equals("ballBody")) {
+						Log.i("Contact Made", "Ball contacted the roof");
+						outOfBounds = true;
+						computerLives[0].setText("Lives: " + --numComputerLives[0]);
+						
+						if(numComputerLives[0] == 0) {
+							gameOver = true;
+							setLoserMessage("Computer0 loses. ");
+						}
+					}
+					else if(userAData.equals("ballBody") && userBData.equals("ltri")
+							|| userAData.equals("ltri") && userBData.equals("ballBody")) {
+						Log.i("Contact Made", "Ball contacted the left");
+						outOfBounds = true;
+						computerLives[1].setText("Lives: " + --numComputerLives[1]);
+						
+						if(numComputerLives[1] == 0) {
+							gameOver = true;
+							setLoserMessage("Computer1 loses. ");
+						}
+					}
 					break;
 				default:
-					if(userAData.equals("ballBody") && userBData.equals("groundBody")
-							|| userAData.equals("groundBody") && userBData.equals("ballBody")) {
+					if(userAData.equals("ballBody") && userBData.equals("rtri")
+							|| userAData.equals("rtri") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the ground");
 						outOfBounds = true;
 						playerLives.setText("Lives: " + --numPlayerLives);
