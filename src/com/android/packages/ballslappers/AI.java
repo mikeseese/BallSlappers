@@ -10,7 +10,7 @@ import com.badlogic.gdx.physics.box2d.Body;
 public class AI {
 	/* Vector2 for the position the ball should move to */
 	private Vector2 newAIPos = new Vector2();
-	private static final float speed = 20;
+	private static final float speed = 5;
 	private Slapper slapper;
 	
 	public AI(Slapper s) {
@@ -36,7 +36,7 @@ public class AI {
 				slapperX = slapperX-xmove;
 				slapperY = slapperY-ymove;
 				
-				if (slapperY <= -518.475+40){ //trial and error niggas suck a dick coined by james(mike)
+				if (slapperY <= -518.475+40){
 					slapperX= slapperX+xmove;
 					slapperY = slapperY+ymove;
 				}
@@ -44,7 +44,7 @@ public class AI {
 			else if(slapperY <bally+ymove) {
 				slapperX = slapperX+xmove;
 				slapperY = slapperY+ymove;
-				if (slapperY >= 223.53-80 && MainActivity.NUM_SLAPPERS==3){ //trial and error niggas suck a dick coined by james(mike)
+				if (slapperY >= 223.53-80 && MainActivity.NUM_SLAPPERS==3){
 					slapperX= slapperX-xmove;
 					slapperY = slapperY-ymove;
 				}
@@ -52,10 +52,10 @@ public class AI {
 		}
 		else if (orientation==0) {	//if it is horizontal it should move based on x axis only
 			if(slapperX > ballx - xmove) {
-				slapperX = slapperX-xmove;
+				slapperX = slapper.bound(MainActivity.PADDLE_WIDTH/2,  MainActivity.CAMERA_WIDTH - MainActivity.PADDLE_WIDTH/2, slapperX-xmove);
 			}
-			else if(slapperX <ballx+xmove) {
-				slapperX = slapperX+xmove;
+			else if(slapperX < ballx+xmove) {
+				slapperX = slapper.bound(MainActivity.PADDLE_WIDTH/2, MainActivity.CAMERA_WIDTH - MainActivity.PADDLE_WIDTH/2, slapperX+xmove);
 			}	
 		}	
 		
