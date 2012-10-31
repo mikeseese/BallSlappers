@@ -10,7 +10,7 @@ import com.badlogic.gdx.physics.box2d.Body;
 public class AI {
 	/* Vector2 for the position the ball should move to */
 	private Vector2 newAIPos = new Vector2();
-	private static final float speed = 10;
+	private static final float speed = 7;
 	private Slapper slapper;
 	
 	public AI(Slapper s) {
