@@ -96,6 +96,9 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public static float SLAPPER_WALL_BUFFER = 15;
 	public static float WALL_WIDTH = 3;
 	
+	public static Color GOAL_COLOR = new Color(25f/255f, 25f/255f, 25f/255f); // grey
+	public static Color AI_SLAPPER_COLOR = new Color(150f/255f, 150f/255f, 150f/255f); // lighter grey
+	
 	//Options
 	public static int NUM_SLAPPERS = 4;
 	public static int NUM_LIVES = 1;
@@ -413,6 +416,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			}
 			
 			aiSlapper[i] = new Slapper(CAMERA_WIDTH/2 - PADDLE_WIDTH/2, SLAPPER_WALL_BUFFER, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(), (float) orient);	
+			aiSlapper[i].setColor(AI_SLAPPER_COLOR);
 			aiDef[i] = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 			aiBody[i] = PhysicsFactory.createBoxBody(this.mPhysicsWorld, aiSlapper[i], BodyType.KinematicBody, aiDef[i]);
 			aiBody[i].setUserData(aiBody[i]);
@@ -614,7 +618,12 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				final Rectangle bottomRightBumper = new Rectangle(0, 0, bumperLength, WALL_WIDTH, vertexBufferObjectManager);
 				final Rectangle topLeftBumper = new Rectangle(0, 0, bumperLength, WALL_WIDTH, vertexBufferObjectManager);
 				final Rectangle topRightBumper = new Rectangle(0, 0, bumperLength, WALL_WIDTH, vertexBufferObjectManager);
-						
+					
+				ground.setColor(GOAL_COLOR);
+				roof.setColor(GOAL_COLOR);
+				left.setColor(GOAL_COLOR);
+				right.setColor(GOAL_COLOR);
+				
 				boundaries.put("ground", ground); 
 				boundaries.put("roof", roof); 
 				boundaries.put("left", left); 
@@ -639,7 +648,11 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				boundaries.put("btri", btri);
 				boundaries.put("ltri", ltri);
 				boundaries.put("rtri", rtri);
-			
+
+				btri.setColor(GOAL_COLOR);
+				ltri.setColor(GOAL_COLOR);
+				rtri.setColor(GOAL_COLOR);
+				
 				break;
 			}
 			default: { // 2 players 
@@ -651,6 +664,9 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				boundaries.put("roof", roof); 
 				boundaries.put("left", left); 
 				boundaries.put("right", right);
+				
+				ground.setColor(GOAL_COLOR);
+				roof.setColor(GOAL_COLOR);
 				
 				break;
 			}
@@ -710,7 +726,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				this.mScene.attachChild(boundaryShapes.get("topLeftBumper"));
 				this.mScene.attachChild(boundaryShapes.get("topRightBumper"));
 				
-				//testing
 				this.mScene.attachChild(boundaryShapes.get("roof")); 
 				this.mScene.attachChild(boundaryShapes.get("ground"));
 				this.mScene.attachChild(boundaryShapes.get("left"));
