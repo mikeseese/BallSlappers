@@ -367,7 +367,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			}
 		
 		// Localized Player and paints		
-		playerSlapperShape = new Slapper(CAMERA_WIDTH/2, CAMERA_HEIGHT - PADDLE_HEIGHT - 15, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(),(float) orient);
+		playerSlapperShape = new Slapper(CAMERA_WIDTH/2 - PADDLE_WIDTH/2, CAMERA_HEIGHT - PADDLE_HEIGHT - 15, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(),(float) orient);
 		final FixtureDef playerDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 		paddleBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, playerSlapperShape, BodyType.KinematicBody, playerDef);
 		paddleBody.setUserData("paddleBody");
@@ -399,19 +399,19 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				}
 			}
 			
-			aiSlapper[i] = new Slapper(CAMERA_WIDTH/2, PADDLE_HEIGHT, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(), (float) orient);	
+			aiSlapper[i] = new Slapper(CAMERA_WIDTH/2 - PADDLE_WIDTH/2, PADDLE_HEIGHT, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(), (float) orient);	
 			aiDef[i] = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 			aiBody[i] = PhysicsFactory.createBoxBody(this.mPhysicsWorld, aiSlapper[i], BodyType.KinematicBody, aiDef[i]);
 			aiBody[i].setUserData(aiBody[i]);
 			this.mScene.attachChild(aiSlapper[i]);
 			if (i==1 && NUM_SLAPPERS==4){ // left ai slapper
-				temp.set((float) (CAMERA_WIDTH/4 - bumperSideLength/2 + 15)/PIXEL_TO_METER_RATIO_DEFAULT, (float)((CAMERA_HEIGHT/2)/PIXEL_TO_METER_RATIO_DEFAULT));
+				temp.set((float) (CAMERA_WIDTH/4 - bumperSideLength/2 + 15)/PIXEL_TO_METER_RATIO_DEFAULT, (float)((CAMERA_HEIGHT/2 - PADDLE_WIDTH/2)/PIXEL_TO_METER_RATIO_DEFAULT));
 				aiBody[i].setTransform(temp, (float) (Math.PI/2));
 				temp.mul(PIXEL_TO_METER_RATIO_DEFAULT);
 				aiSlapper[i].setSlapper(temp);
 			}
 			else if (i==2 && NUM_SLAPPERS==4) { // right ai slapper
-				temp.set((float) (CAMERA_WIDTH/4 + sideLength + 3*bumperSideLength/2 + 5 - PADDLE_HEIGHT)/PIXEL_TO_METER_RATIO_DEFAULT, (float)((CAMERA_HEIGHT/2)/PIXEL_TO_METER_RATIO_DEFAULT));
+				temp.set((float) (CAMERA_WIDTH/4 + sideLength + 3*bumperSideLength/2 + 5 - PADDLE_HEIGHT)/PIXEL_TO_METER_RATIO_DEFAULT, (float)((CAMERA_HEIGHT/2 - PADDLE_WIDTH/2)/PIXEL_TO_METER_RATIO_DEFAULT));
 				aiBody[i].setTransform(temp, (float) (Math.PI/2));
 				temp.mul(PIXEL_TO_METER_RATIO_DEFAULT);
 				aiSlapper[i].setSlapper(temp);
@@ -431,7 +431,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				aiSlapper[i].setSlapper(temp);
 				}
 			mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(aiSlapper[i], aiBody[i]));
-			this.mScene.registerUpdateHandler(new AIUpdater(aiBody[i],aiSlapper[i],i));
+			this.mScene.registerUpdateHandler(new AIUpdater(aiBody[i],aiSlapper[i]));
 		}
 		
 		// initialize the ball
