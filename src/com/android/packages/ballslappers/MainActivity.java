@@ -690,10 +690,10 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				this.mScene.attachChild(boundaryShapes.get("topRightBumper"));
 				
 				//testing
-				this.mScene.attachChild(boundaryShapes.get("roof")); 
+				/*this.mScene.attachChild(boundaryShapes.get("roof")); 
 				this.mScene.attachChild(boundaryShapes.get("ground"));
 				this.mScene.attachChild(boundaryShapes.get("left"));
-				this.mScene.attachChild(boundaryShapes.get("right"));
+				this.mScene.attachChild(boundaryShapes.get("right"));*/
 				
 				break;
 			}
