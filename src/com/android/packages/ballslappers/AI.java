@@ -21,7 +21,7 @@ public class AI {
 		return slapper;
 	}
 	
-	public Vector2 update(Body ball, Slapper slapper2, int type) {
+	public Vector2 update(Body ball, Slapper slapper2) {
 		this.newAIPos = ball.getPosition();
 		int ballx = Math.round(PIXEL_TO_METER_RATIO_DEFAULT*newAIPos.x);
 		int bally = Math.round(PIXEL_TO_METER_RATIO_DEFAULT*newAIPos.y);

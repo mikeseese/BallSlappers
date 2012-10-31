@@ -13,20 +13,18 @@ public class AIUpdater implements IUpdateHandler {
 	Slapper slapper;
 	AI ai;
 	Body aibody;
-	int type = 0;
 	float o = 0;
 	Vector2 temp = new Vector2(0,0);
 	
-	public AIUpdater(Body a, Slapper s, int t) {
+	public AIUpdater(Body a, Slapper s) {
 		this.ai = new AI(s);
 		this.slapper = s;
 		this.aibody = a;
-		this.type = t;
 		this.o = slapper.getSlapperOrientation();
 	}
 
 	public void onUpdate(float pSecondsElapsed) {
-		aibody.setTransform(ai.update(MainActivity.ballBody, slapper,type), o);
+		aibody.setTransform(ai.update(MainActivity.ballBody, slapper), o);
 	}
 
 	public void reset() {
