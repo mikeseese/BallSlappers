@@ -9,6 +9,8 @@ import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
+import android.util.Log;
+
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 
@@ -70,13 +72,46 @@ public class Slapper extends Rectangle {
 		return orientation;
 	}
 
-	// eventually this needs to be a common function between multiple classes
 	// keeps the paddle from going into and past the wall
-	public float bound(float low, float high, float number) {
-		if(number < low)
-			number = low;
-		if(number > high)
-			number = high;
+	public float bound(float number) {
+		if (MainActivity.NUM_SLAPPERS == 4) {
+			if (orientation == 0) {
+				float low = MainActivity.CAMERA_WIDTH/4 + MainActivity.bumperSideLength/2 + this.width/2;
+				float high = low + MainActivity.sideLength - this.width;
+				if(number < low)
+					number = low;
+				if(number > high)
+					number = high;
+			}
+			else { // orientation == Math.PI/2
+				float low = MainActivity.bumperSideLength + this.width/2;
+				float high = low + MainActivity.sideLength - this.width;
+				if(number < low)
+					number = low;
+				if(number > high)
+					number = high;
+			}
+		}
+		else if (MainActivity.NUM_SLAPPERS == 3) {
+			if (orientation == 0) {
+				float low = this.width/2;
+				float high = low + MainActivity.CAMERA_WIDTH - this.width;
+				if(number < low)
+					number = low;
+				if(number > high)
+					number = high;
+			}
+		}
+		else { //if (MainActivity.NUM_SLAPPERS == 2) {
+			if (orientation == 0) {
+				float low = this.width/2;
+				float high = low + MainActivity.CAMERA_WIDTH - this.width;
+				if(number < low)
+					number = low;
+				if(number > high)
+					number = high;
+			}
+		}
 		return number;
 	}
 } 
