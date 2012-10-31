@@ -85,16 +85,16 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	 */
 	public static float CAMERA_WIDTH = 800;
 	public static float CAMERA_HEIGHT = 480;
-	public static final float BUMPER_WIDTH = (float) 352.94;
+	public static final float BUMPER_WIDTH = (float) 352.94; // for n == 3
 	
-	// values for 4 slappers
+	// values for n == 4 slappers
 	public static float bumperSideLength;
 	public static float bumperLength;
 	public static float sideLength;
 	
 	public static float fingerBuffer = 100;
 	public static float SLAPPER_WALL_BUFFER = 15;
-	public static float WALL_WIDTH = 2;
+	public static float WALL_WIDTH = 3;
 	
 	//Options
 	public static int NUM_SLAPPERS = 4;
@@ -418,13 +418,13 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			aiBody[i].setUserData(aiBody[i]);
 			this.mScene.attachChild(aiSlapper[i]);
 			if (i==1 && NUM_SLAPPERS==4){ // left ai slapper
-				temp.set((float) ((CAMERA_WIDTH - bumperSideLength*2 - sideLength)/2 + PADDLE_HEIGHT - 5)/PIXEL_TO_METER_RATIO_DEFAULT, (float)((CAMERA_HEIGHT/2 - PADDLE_WIDTH/2)/PIXEL_TO_METER_RATIO_DEFAULT));
+				temp.set((float) ((CAMERA_WIDTH - bumperSideLength*2 - sideLength)/2 + SLAPPER_WALL_BUFFER)/PIXEL_TO_METER_RATIO_DEFAULT, (float)((CAMERA_HEIGHT/2 - PADDLE_WIDTH/2)/PIXEL_TO_METER_RATIO_DEFAULT));
 				aiBody[i].setTransform(temp, (float) (Math.PI/2));
 				temp.mul(PIXEL_TO_METER_RATIO_DEFAULT);
 				aiSlapper[i].setSlapper(temp);
 			}
 			else if (i==2 && NUM_SLAPPERS==4) { // right ai slapper
-				temp.set((float) ((CAMERA_WIDTH - bumperSideLength*2 - sideLength)/2 + sideLength + 2*bumperSideLength + 5 - PADDLE_HEIGHT)/PIXEL_TO_METER_RATIO_DEFAULT, (float)((CAMERA_HEIGHT/2 - PADDLE_WIDTH/2)/PIXEL_TO_METER_RATIO_DEFAULT));
+				temp.set((float) ((CAMERA_WIDTH - bumperSideLength*2 - sideLength)/2 + sideLength + 2*bumperSideLength - SLAPPER_WALL_BUFFER)/PIXEL_TO_METER_RATIO_DEFAULT, (float)((CAMERA_HEIGHT/2 - PADDLE_WIDTH/2)/PIXEL_TO_METER_RATIO_DEFAULT));
 				aiBody[i].setTransform(temp, (float) (Math.PI/2));
 				temp.mul(PIXEL_TO_METER_RATIO_DEFAULT);
 				aiSlapper[i].setSlapper(temp);
@@ -627,12 +627,12 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				break;
 			}
 			case 3: {
-				final Rectangle btri = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, this.getVertexBufferObjectManager());
-				final Rectangle ltri = new Rectangle(0, 0, CAMERA_WIDTH, 2, this.getVertexBufferObjectManager());
-				final Rectangle rtri = new Rectangle(0, 0, CAMERA_WIDTH, 2, this.getVertexBufferObjectManager());
-				final Rectangle lbump = new Rectangle(0, 0, BUMPER_WIDTH, 2, this.getVertexBufferObjectManager());
-				final Rectangle rbump = new Rectangle(0, 0, BUMPER_WIDTH, 2, this.getVertexBufferObjectManager());
-				final Rectangle tbump = new Rectangle(0, 0, BUMPER_WIDTH, 2, this.getVertexBufferObjectManager());
+				final Rectangle btri = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, WALL_WIDTH, this.getVertexBufferObjectManager());
+				final Rectangle ltri = new Rectangle(0, 0, CAMERA_WIDTH, WALL_WIDTH, this.getVertexBufferObjectManager());
+				final Rectangle rtri = new Rectangle(0, 0, CAMERA_WIDTH, WALL_WIDTH, this.getVertexBufferObjectManager());
+				final Rectangle lbump = new Rectangle(0, 0, BUMPER_WIDTH, WALL_WIDTH, this.getVertexBufferObjectManager());
+				final Rectangle rbump = new Rectangle(0, 0, BUMPER_WIDTH, WALL_WIDTH, this.getVertexBufferObjectManager());
+				final Rectangle tbump = new Rectangle(0, 0, BUMPER_WIDTH, WALL_WIDTH, this.getVertexBufferObjectManager());
 				boundaries.put("lbump", lbump);
 				boundaries.put("rbump", rbump);
 				boundaries.put("tbump", tbump);
@@ -930,8 +930,9 @@ protected MenuScene createSoundMenuScene() {
 	
 	public int getRandomVelocity() {
 		int velocity = 0;
-		while(Math.abs(velocity) < 5 || Math.abs(velocity) > 10)
-			velocity = randomNumGen.nextInt() % 15;
+		//while(Math.abs(velocity) < 5 || Math.abs(velocity) > 10)
+			//velocity = randomNumGen.nextInt() % 15;
+		velocity = 15;	// hard code this for now for testing purposes, (tired of having to restart)
 		return velocity;
 	}
 
