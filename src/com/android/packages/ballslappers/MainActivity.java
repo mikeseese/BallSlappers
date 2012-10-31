@@ -92,6 +92,10 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public static float bumperLength;
 	public static float sideLength;
 	
+	public static float fingerBuffer = 100;
+	public static float SLAPPER_WALL_BUFFER = 15;
+	public static float WALL_WIDTH = 2;
+	
 	//Options
 	public static int NUM_SLAPPERS = 4;
 	public static int NUM_LIVES = 1;
@@ -367,7 +371,16 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			}
 		
 		// Localized Player and paints		
-		playerSlapperShape = new Slapper(CAMERA_WIDTH/2 - PADDLE_WIDTH/2, CAMERA_HEIGHT - PADDLE_HEIGHT - 15, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(),(float) orient);
+		if (NUM_SLAPPERS == 4) {
+			playerSlapperShape = new Slapper(CAMERA_WIDTH/2 - PADDLE_WIDTH/2, (sideLength + bumperSideLength * 2 - SLAPPER_WALL_BUFFER - PADDLE_HEIGHT/2), PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(),(float) orient);
+		}
+		else if (NUM_SLAPPERS == 3) {
+			// needs to be updated to implement fingerBuffer
+			playerSlapperShape = new Slapper(CAMERA_WIDTH/2 - PADDLE_WIDTH/2, (CAMERA_HEIGHT - SLAPPER_WALL_BUFFER - PADDLE_HEIGHT/2), PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(),(float) orient);
+		}
+		else { // NUM_SLAPPERS == 2
+			playerSlapperShape = new Slapper(CAMERA_WIDTH/2 - PADDLE_WIDTH/2, (CAMERA_HEIGHT - fingerBuffer - SLAPPER_WALL_BUFFER - PADDLE_HEIGHT/2), PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(),(float) orient);
+		}
 		final FixtureDef playerDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 		paddleBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, playerSlapperShape, BodyType.KinematicBody, playerDef);
 		paddleBody.setUserData("paddleBody");
@@ -399,19 +412,19 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				}
 			}
 			
-			aiSlapper[i] = new Slapper(CAMERA_WIDTH/2 - PADDLE_WIDTH/2, PADDLE_HEIGHT, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(), (float) orient);	
+			aiSlapper[i] = new Slapper(CAMERA_WIDTH/2 - PADDLE_WIDTH/2, SLAPPER_WALL_BUFFER, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(), (float) orient);	
 			aiDef[i] = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 			aiBody[i] = PhysicsFactory.createBoxBody(this.mPhysicsWorld, aiSlapper[i], BodyType.KinematicBody, aiDef[i]);
 			aiBody[i].setUserData(aiBody[i]);
 			this.mScene.attachChild(aiSlapper[i]);
 			if (i==1 && NUM_SLAPPERS==4){ // left ai slapper
-				temp.set((float) (CAMERA_WIDTH/4 - bumperSideLength/2 + 15)/PIXEL_TO_METER_RATIO_DEFAULT, (float)((CAMERA_HEIGHT/2 - PADDLE_WIDTH/2)/PIXEL_TO_METER_RATIO_DEFAULT));
+				temp.set((float) ((CAMERA_WIDTH - bumperSideLength*2 - sideLength)/2 + PADDLE_HEIGHT - 5)/PIXEL_TO_METER_RATIO_DEFAULT, (float)((CAMERA_HEIGHT/2 - PADDLE_WIDTH/2)/PIXEL_TO_METER_RATIO_DEFAULT));
 				aiBody[i].setTransform(temp, (float) (Math.PI/2));
 				temp.mul(PIXEL_TO_METER_RATIO_DEFAULT);
 				aiSlapper[i].setSlapper(temp);
 			}
 			else if (i==2 && NUM_SLAPPERS==4) { // right ai slapper
-				temp.set((float) (CAMERA_WIDTH/4 + sideLength + 3*bumperSideLength/2 + 5 - PADDLE_HEIGHT)/PIXEL_TO_METER_RATIO_DEFAULT, (float)((CAMERA_HEIGHT/2 - PADDLE_WIDTH/2)/PIXEL_TO_METER_RATIO_DEFAULT));
+				temp.set((float) ((CAMERA_WIDTH - bumperSideLength*2 - sideLength)/2 + sideLength + 2*bumperSideLength + 5 - PADDLE_HEIGHT)/PIXEL_TO_METER_RATIO_DEFAULT, (float)((CAMERA_HEIGHT/2 - PADDLE_WIDTH/2)/PIXEL_TO_METER_RATIO_DEFAULT));
 				aiBody[i].setTransform(temp, (float) (Math.PI/2));
 				temp.mul(PIXEL_TO_METER_RATIO_DEFAULT);
 				aiSlapper[i].setSlapper(temp);
@@ -463,7 +476,16 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				//Log.i("paddle.x", Float.toString(paddleBody.getPosition().x));
 				float nextX = pSceneTouchEvent.getX() - diffX;
 				nextX = playerSlapperShape.bound(nextX);
-				Vector2 v = new Vector2(nextX/PIXEL_TO_METER_RATIO_DEFAULT, (CAMERA_HEIGHT - PADDLE_HEIGHT - 5)/PIXEL_TO_METER_RATIO_DEFAULT);
+				Vector2 v;
+				if (NUM_SLAPPERS == 2) {
+					v = new Vector2(nextX/PIXEL_TO_METER_RATIO_DEFAULT, (CAMERA_HEIGHT - fingerBuffer - SLAPPER_WALL_BUFFER)/PIXEL_TO_METER_RATIO_DEFAULT);
+				}
+				else if (NUM_SLAPPERS == 3) {
+					v = new Vector2(nextX/PIXEL_TO_METER_RATIO_DEFAULT, (CAMERA_HEIGHT - SLAPPER_WALL_BUFFER)/PIXEL_TO_METER_RATIO_DEFAULT);
+				}
+				else { // NUM_SLAPPERS == 4
+					v = new Vector2(nextX/PIXEL_TO_METER_RATIO_DEFAULT, (sideLength + bumperSideLength * 2 - SLAPPER_WALL_BUFFER)/PIXEL_TO_METER_RATIO_DEFAULT);
+				}
 				paddleBody.setTransform(v, 0);
 			}
 
@@ -580,20 +602,19 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		
 		switch (NUM_SLAPPERS) {
 			case 4: {
-				bumperSideLength = 150;
+				bumperSideLength = 95;
 				bumperLength = (float) (bumperSideLength * Math.sqrt(2));
-				sideLength = CAMERA_HEIGHT - 2 * bumperSideLength - 2 * 2;	// 2 is the size of the boundaries
+				sideLength = CAMERA_HEIGHT - fingerBuffer - 2 * bumperSideLength - 2 * WALL_WIDTH;
 
-				
-				final Rectangle ground = new Rectangle(CAMERA_WIDTH/4 + bumperSideLength/2, sideLength + bumperSideLength * 2 - 2, sideLength, 2, vertexBufferObjectManager);
-				final Rectangle roof = new Rectangle(CAMERA_WIDTH/4 + bumperSideLength/2, 0, sideLength, 2, vertexBufferObjectManager);
-				final Rectangle left = new Rectangle(CAMERA_WIDTH/4 - bumperSideLength/2, bumperSideLength, 2, sideLength, vertexBufferObjectManager);
-				final Rectangle right = new Rectangle(CAMERA_WIDTH/4 + sideLength + 3*bumperSideLength/2, bumperSideLength, 2, sideLength, vertexBufferObjectManager);
-				final Rectangle bottomLeftBumper = new Rectangle(0, 0, bumperLength, 2, vertexBufferObjectManager);
-				final Rectangle bottomRightBumper = new Rectangle(0, 0, bumperLength, 2, vertexBufferObjectManager);
-				final Rectangle topLeftBumper = new Rectangle(0, 0, bumperLength, 2, vertexBufferObjectManager);
-				final Rectangle topRightBumper = new Rectangle(0, 0, bumperLength, 2, vertexBufferObjectManager);
-				
+				final Rectangle ground = new Rectangle((CAMERA_WIDTH - bumperSideLength*2 - sideLength)/2 + bumperSideLength, sideLength + bumperSideLength * 2 - WALL_WIDTH, sideLength, WALL_WIDTH, vertexBufferObjectManager);
+				final Rectangle roof = new Rectangle((CAMERA_WIDTH - bumperSideLength*2 - sideLength)/2 + bumperSideLength, 0, sideLength, WALL_WIDTH, vertexBufferObjectManager);
+				final Rectangle left = new Rectangle((CAMERA_WIDTH - bumperSideLength*2 - sideLength)/2, bumperSideLength, WALL_WIDTH, sideLength, vertexBufferObjectManager);
+				final Rectangle right = new Rectangle((CAMERA_WIDTH - bumperSideLength*2 - sideLength)/2 + sideLength + 2*bumperSideLength, bumperSideLength, WALL_WIDTH, sideLength, vertexBufferObjectManager);
+				final Rectangle bottomLeftBumper = new Rectangle(0, 0, bumperLength, WALL_WIDTH, vertexBufferObjectManager);
+				final Rectangle bottomRightBumper = new Rectangle(0, 0, bumperLength, WALL_WIDTH, vertexBufferObjectManager);
+				final Rectangle topLeftBumper = new Rectangle(0, 0, bumperLength, WALL_WIDTH, vertexBufferObjectManager);
+				final Rectangle topRightBumper = new Rectangle(0, 0, bumperLength, WALL_WIDTH, vertexBufferObjectManager);
+						
 				boundaries.put("ground", ground); 
 				boundaries.put("roof", roof); 
 				boundaries.put("left", left); 
@@ -622,10 +643,10 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				break;
 			}
 			default: { // 2 players 
-				final Rectangle ground = new Rectangle(0, CAMERA_HEIGHT - 2, CAMERA_WIDTH, 2, vertexBufferObjectManager);
-				final Rectangle roof = new Rectangle(0, 0, CAMERA_WIDTH, 2, vertexBufferObjectManager);
-				final Rectangle left = new Rectangle(0, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
-				final Rectangle right = new Rectangle(CAMERA_WIDTH - 2, 0, 2, CAMERA_HEIGHT, vertexBufferObjectManager);
+				final Rectangle ground = new Rectangle(0, CAMERA_HEIGHT - WALL_WIDTH - fingerBuffer, CAMERA_WIDTH, WALL_WIDTH, vertexBufferObjectManager);
+				final Rectangle roof = new Rectangle(0, 0, CAMERA_WIDTH, WALL_WIDTH, vertexBufferObjectManager);
+				final Rectangle left = new Rectangle(0, 0, WALL_WIDTH, CAMERA_HEIGHT - fingerBuffer, vertexBufferObjectManager);
+				final Rectangle right = new Rectangle(CAMERA_WIDTH - WALL_WIDTH, 0, WALL_WIDTH, CAMERA_HEIGHT - fingerBuffer, vertexBufferObjectManager);
 				boundaries.put("ground", ground); 
 				boundaries.put("roof", roof); 
 				boundaries.put("left", left); 
@@ -664,16 +685,16 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				Body topRightBumperBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, boundaryShapes.get("topRightBumper"), BodyType.StaticBody, wallFD);
 				topRightBumperBody.setUserData("topRightBumperBody");
 								
-				linePos.set((CAMERA_WIDTH/4)/PIXEL_TO_METER_RATIO_DEFAULT, (CAMERA_HEIGHT - bumperSideLength/2 - 2*2)/PIXEL_TO_METER_RATIO_DEFAULT);
+				linePos.set(((CAMERA_WIDTH - bumperSideLength*2 - sideLength)/2 + bumperSideLength/2)/PIXEL_TO_METER_RATIO_DEFAULT, (bumperSideLength + sideLength + bumperSideLength/2)/PIXEL_TO_METER_RATIO_DEFAULT);
 				bottomLeftBumperBody.setTransform(linePos, (float) (Math.PI/4));
 				
-				linePos.set((3*CAMERA_WIDTH/4 - 10)/PIXEL_TO_METER_RATIO_DEFAULT, (CAMERA_HEIGHT - bumperSideLength/2 - 2*2)/PIXEL_TO_METER_RATIO_DEFAULT);
+				linePos.set(((CAMERA_WIDTH - bumperSideLength*2 - sideLength)/2 + bumperSideLength*1.5f + sideLength)/PIXEL_TO_METER_RATIO_DEFAULT, (bumperSideLength + sideLength + bumperSideLength/2)/PIXEL_TO_METER_RATIO_DEFAULT);
 				bottomRightBumperBody.setTransform(linePos, (float) ((Math.PI*3)/4));
 				
-				linePos.set((CAMERA_WIDTH/4)/PIXEL_TO_METER_RATIO_DEFAULT, (bumperSideLength/2)/PIXEL_TO_METER_RATIO_DEFAULT);
+				linePos.set(((CAMERA_WIDTH - bumperSideLength*2 - sideLength)/2 + bumperSideLength/2)/PIXEL_TO_METER_RATIO_DEFAULT, (bumperSideLength/2)/PIXEL_TO_METER_RATIO_DEFAULT);
 				topLeftBumperBody.setTransform(linePos, (float) ((Math.PI*3)/4));
 				
-				linePos.set((3*CAMERA_WIDTH/4 - 10)/PIXEL_TO_METER_RATIO_DEFAULT, (bumperSideLength/2)/PIXEL_TO_METER_RATIO_DEFAULT);
+				linePos.set(((CAMERA_WIDTH - bumperSideLength*2 - sideLength)/2 + bumperSideLength*1.5f + sideLength)/PIXEL_TO_METER_RATIO_DEFAULT, (bumperSideLength/2)/PIXEL_TO_METER_RATIO_DEFAULT);
 				topRightBumperBody.setTransform(linePos, (float) (Math.PI/4));
 				
 				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("bottomLeftBumper"), bottomLeftBumperBody));
@@ -690,10 +711,10 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				this.mScene.attachChild(boundaryShapes.get("topRightBumper"));
 				
 				//testing
-				/*this.mScene.attachChild(boundaryShapes.get("roof")); 
+				this.mScene.attachChild(boundaryShapes.get("roof")); 
 				this.mScene.attachChild(boundaryShapes.get("ground"));
 				this.mScene.attachChild(boundaryShapes.get("left"));
-				this.mScene.attachChild(boundaryShapes.get("right"));*/
+				this.mScene.attachChild(boundaryShapes.get("right"));
 				
 				break;
 			}
@@ -764,7 +785,12 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("roof"), roofBody));
 				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(boundaryShapes.get("ground"), groundBody));
 				this.mScene.attachChild(boundaryShapes.get("left")); 
-				this.mScene.attachChild(boundaryShapes.get("right")); 
+				this.mScene.attachChild(boundaryShapes.get("right"));
+				
+				//testing
+				this.mScene.attachChild(boundaryShapes.get("ground"));
+				this.mScene.attachChild(boundaryShapes.get("roof"));
+				
 				break;
 			}
 		}
