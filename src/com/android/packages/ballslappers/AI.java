@@ -10,7 +10,7 @@ import com.badlogic.gdx.physics.box2d.Body;
 public class AI {
 	/* Vector2 for the position the ball should move to */
 	private Vector2 newAIPos = new Vector2();
-	private static final float speed = 5;
+	private static final float speed = 10;
 	private Slapper slapper;
 	
 	public AI(Slapper s) {
@@ -34,16 +34,18 @@ public class AI {
 		if(orientation !=0) { //if it is not horizontal then it should move based on y axis solely
 			if(slapperY > bally - ymove) {
 				slapperX = slapperX-xmove;
-				slapperY = slapperY-ymove;
+				slapperY = slapper.bound(slapperY-ymove); // if NUM_SLAPPERS == 3 then bound just returns slapperY
+														  // because I'm not sure what's going on with these #s below
+														  // (I think they are bounding with them)
 				
-				if (slapperY <= -518.475+40){
+				if (slapperY <= -518.475+40 && MainActivity.NUM_SLAPPERS == 3){
 					slapperX= slapperX+xmove;
 					slapperY = slapperY+ymove;
 				}
 			}
 			else if(slapperY <bally+ymove) {
 				slapperX = slapperX+xmove;
-				slapperY = slapperY+ymove;
+				slapperY = slapper.bound(slapperY+ymove);
 				if (slapperY >= 223.53-80 && MainActivity.NUM_SLAPPERS==3){
 					slapperX= slapperX-xmove;
 					slapperY = slapperY-ymove;
@@ -52,13 +54,13 @@ public class AI {
 		}
 		else if (orientation==0) {	//if it is horizontal it should move based on x axis only
 			if(slapperX > ballx - xmove) {
-				slapperX = slapper.bound(MainActivity.PADDLE_WIDTH/2,  MainActivity.CAMERA_WIDTH - MainActivity.PADDLE_WIDTH/2, slapperX-xmove);
+				slapperX = slapper.bound(slapperX-xmove);
 			}
 			else if(slapperX < ballx+xmove) {
-				slapperX = slapper.bound(MainActivity.PADDLE_WIDTH/2, MainActivity.CAMERA_WIDTH - MainActivity.PADDLE_WIDTH/2, slapperX+xmove);
+				slapperX = slapper.bound(slapperX+xmove);
 			}	
 		}	
-		
+				
 		slapper.setSlapperX(slapperX);
 		slapper.setSlapperY(slapperY);
 		
