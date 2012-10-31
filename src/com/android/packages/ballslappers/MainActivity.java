@@ -369,12 +369,14 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			/* Setting Up the Game */
 		
 		this.numPlayerLives = NUM_LIVES;
-		showPlayerLives(this.mLivesFont, this.numPlayerLives);
+		//showPlayerLives(this.mLivesFont, this.numPlayerLives);
 		
 		for (int i = 0; i < NUM_SLAPPERS; i++) { 
 			this.numComputerLives[i] = NUM_LIVES; 
-			showComputerLives(this.mLivesFont, this.numComputerLives[i],i);
-			}
+			//showComputerLives(this.mLivesFont, this.numComputerLives[i],i);
+		}
+		
+		showLives(this.mLivesFont, NUM_LIVES, numComputerLives);
 		
 		// Localized Player and paints
 		
@@ -541,11 +543,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	            return true;
 			case PAUSE_MENU_RESTART:
 				// restart the game, for now just reset the ball
-				this.ballReset();
-				// reset the players lives
-				for(int i = 0; i<NUM_SLAPPERS-1; i++){
-				this.resetLives(i);
-				}
+				this.resetGame();
 	            // remove the menu
 	            this.mScene.clearChildScene();
 	            
@@ -928,25 +926,28 @@ protected MenuScene createSoundMenuScene() {
 		return unitVector.nor();
 	}
 	
-	private void showPlayerLives(Font font, int numLives) {
-		this.playerLives = new Text((int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT-(CAMERA_HEIGHT*.1)),
-				font, ("Lives: " + numLives), "Lives: X".length(), this.getVertexBufferObjectManager());
+	private void showPlayerLives(Font font, int numLives, int pX, int pY) {
+		this.playerLives = new Text(pX, pY, font,
+				("Player Lives: " + numLives), "Players Lives: X".length(), this.getVertexBufferObjectManager());
 		this.mScene.attachChild(playerLives);
 	}
 	
-	private void showComputerLives(Font font, int numLives, int count) {
-		double loc;
-		//if (count == 0){ loc = .01; } else if (count == 1) { loc =.81;} else if (count==2) {  }
-		this.computerLives[count] = new Text((int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.06),
-				font, ("Lives: " + numLives), "Lives: X".length(), this.getVertexBufferObjectManager());
-		this.mScene.attachChild(computerLives[count]);
+	private void showLives(Font font, int numPlayerLives, int[] numComputerLives) {
+		switch(NUM_SLAPPERS) {
+			case 3: {
+				showPlayerLives(font, numPlayerLives, -300, -600);
+				for(int i = 1; i < NUM_SLAPPERS; i++) {
+					this.computerLives[i-1] = new Text(-300, -600 + (50*i),
+							font, ("Computer" + (i-1) + " Lives: " + numComputerLives[i]), "ComputerX Lives: X".length(), this.getVertexBufferObjectManager());
+					this.mScene.attachChild(computerLives[i-1]);
+				}
+			}
+		}
 	}
 	
-	private void resetLives(int count) {
-		this.numComputerLives[count] = NUM_LIVES;
-		this.numPlayerLives = NUM_LIVES;
-		playerLives.setText("Lives: " + numPlayerLives);
-		computerLives[count].setText("Lives: " + numComputerLives[count]);
+	private void resetComputerLives(int computerNum) {
+		this.numComputerLives[computerNum] = NUM_LIVES;
+		computerLives[computerNum].setText("Computer" + computerNum + " Lives: " + numComputerLives[computerNum]);
 	}
 	
 	/*
@@ -954,8 +955,10 @@ protected MenuScene createSoundMenuScene() {
 	 */
 	protected void resetGame() {
 		this.ballReset();
+		this.numPlayerLives = NUM_LIVES;
+		playerLives.setText("Player Lives: " + numPlayerLives);
 		for (int i = 0; i < NUM_SLAPPERS-1; i++) {
-		this.resetLives(i);
+			this.resetComputerLives(i);
 		}
 		//this.resetPaddles(); // This needs to be a thing
 	}
@@ -986,10 +989,7 @@ protected MenuScene createSoundMenuScene() {
         this.getEngine().registerUpdateHandler(timerHandler = new TimerHandler(BALL_RESET_DELAY, new ITimerCallback()
         {                      
             public void onTimePassed(final TimerHandler pTimerHandler)
-            {			
-                mScene.setIgnoreUpdate(false);
-    			// if someone just lost then reset
-
+            {
     			if(resuming) {
     				if(gameResetMessage.hasParent())
     					mScene.detachChild(gameResetMessage);
@@ -1098,7 +1098,7 @@ protected MenuScene createSoundMenuScene() {
 							|| userAData.equals("groundBody") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the ground");
 						outOfBounds = true;
-						playerLives.setText("Lives: " + --numPlayerLives);
+						playerLives.setText("Player Lives: " + --numPlayerLives);
 						
 						if(numPlayerLives == 0) {
 							gameOver = true;
@@ -1109,7 +1109,7 @@ protected MenuScene createSoundMenuScene() {
 							|| userAData.equals("roofBody") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the roof");
 						outOfBounds = true;
-						computerLives[0].setText("Lives: " + --numComputerLives[0]);
+						computerLives[0].setText("Computer0 Lives: " + --numComputerLives[0]);
 						
 						if(numComputerLives[0] == 0) {
 							gameOver = true;
@@ -1120,7 +1120,7 @@ protected MenuScene createSoundMenuScene() {
 							|| userAData.equals("leftBody") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the left");
 						outOfBounds = true;
-						computerLives[1].setText("Lives: " + --numComputerLives[1]);
+						computerLives[1].setText("Computer1 Lives: " + --numComputerLives[1]);
 						
 						if(numComputerLives[1] == 0) {
 							gameOver = true;
@@ -1131,7 +1131,7 @@ protected MenuScene createSoundMenuScene() {
 							|| userAData.equals("rightBody") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the right");
 						outOfBounds = true;
-						computerLives[2].setText("Lives: " + --numComputerLives[2]);
+						computerLives[2].setText("Computer2 Lives: " + --numComputerLives[2]);
 						
 						if(numComputerLives[2] == 0) {
 							gameOver = true;
@@ -1144,7 +1144,8 @@ protected MenuScene createSoundMenuScene() {
 							|| userAData.equals("btri") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the ground");
 						outOfBounds = true;
-						playerLives.setText("Lives: " + --numPlayerLives);
+						//playerLives.setText("Player Lives: " + --numPlayerLives);
+						--numPlayerLives;
 						
 						if(numPlayerLives == 0) {
 							gameOver = true;
@@ -1155,7 +1156,8 @@ protected MenuScene createSoundMenuScene() {
 							|| userAData.equals("rtri") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the roof");
 						outOfBounds = true;
-						computerLives[0].setText("Lives: " + --numComputerLives[0]);
+						//computerLives[0].setText("Computer0 Lives: " + --numComputerLives[0]);
+						--numComputerLives[0];
 						
 						if(numComputerLives[0] == 0) {
 							gameOver = true;
@@ -1166,7 +1168,8 @@ protected MenuScene createSoundMenuScene() {
 							|| userAData.equals("ltri") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the left");
 						outOfBounds = true;
-						computerLives[1].setText("Lives: " + --numComputerLives[1]);
+						//computerLives[1].setText("Computer1 Lives: " + --numComputerLives[1]);
+						--numComputerLives[1];
 						
 						if(numComputerLives[1] == 0) {
 							gameOver = true;
@@ -1179,7 +1182,7 @@ protected MenuScene createSoundMenuScene() {
 							|| userAData.equals("rtri") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the ground");
 						outOfBounds = true;
-						playerLives.setText("Lives: " + --numPlayerLives);
+						playerLives.setText("Player Lives: " + --numPlayerLives);
 						
 						if(numPlayerLives == 0) {
 							gameOver = true;
@@ -1190,7 +1193,7 @@ protected MenuScene createSoundMenuScene() {
 							|| userAData.equals("roofBody") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the roof");
 						outOfBounds = true;
-						computerLives[0].setText("Lives: " + --numComputerLives[0]);
+						computerLives[0].setText("Computer Lives: " + --numComputerLives[0]);
 						
 						if(numComputerLives[0] == 0) {
 							gameOver = true;
