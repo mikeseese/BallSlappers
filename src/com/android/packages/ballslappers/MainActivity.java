@@ -1138,14 +1138,12 @@ protected MenuScene createSoundMenuScene() {
 			boundaryCollision(userAData, userBData);
 		}
 		
-		/* THIS WHOLE FUNCTION NEEDS TO BE REWRITTEN */
 		public Vector2 paddleCollision(Body ballB, Body slapperB, Vector2 t) {
 			// if the slapper is at an angle then this function doesn't take into consideration the y distance at all?
 			Vector2 e = new Vector2();
 			e = t;
 			float c = 0, d = 0;
 			
-			// for n == 4, this goes the wrong direction for the top AI slapper
 			c = (slapperB.getPosition().x - ballB.getPosition().x)*-10;
 			Log.i("paddleCollision(): temp.x",""+ c);
 				
