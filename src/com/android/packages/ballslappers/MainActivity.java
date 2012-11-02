@@ -901,18 +901,18 @@ protected MenuScene createSoundMenuScene() {
 			 * make it seem like it's accurately bouncing
 			 * this is just temporary because it won't be an issue when the trajectory of the ball is 
 			 * dependent solely on the position it hits the paddle */
-			int tempYVel;
-			if (ballBody.getPosition().y > CAMERA_HEIGHT / (2 * PIXEL_TO_METER_RATIO_DEFAULT)) {
-				Log.i("Ball stuck", "stuck on ground");
-				tempYVel = -1;
-			}
-			else {
-				Log.i("Ball stuck", "stuck on roof");
-				tempYVel = 1;
-			}
+				int tempYVel;
+				if (ballBody.getPosition().y > CAMERA_HEIGHT / (2 * PIXEL_TO_METER_RATIO_DEFAULT)) {
+					Log.i("Ball stuck", "stuck on ground");
+					tempYVel = -1;
+				}
+				else {
+					Log.i("Ball stuck", "stuck on roof");
+					tempYVel = 1;
+				}
 			
-			ballBody.setLinearVelocity(new Vector2(ballBody.getLinearVelocity().x, tempYVel));				
-		}
+				ballBody.setLinearVelocity(new Vector2(ballBody.getLinearVelocity().x, tempYVel));				
+			}
 		
 		if(timerCountOn) {
 			if(timerHandler != null) {
@@ -1102,21 +1102,42 @@ protected MenuScene createSoundMenuScene() {
 				if(userAData.equals("ballBody") && userBData.equals(aiBody[j])
 						|| userAData.equals(aiBody[j]) && userBData.equals("ballBody")) {
 					Log.i("Contact Made", "Ball contacted the paddle");
-					aiSlapper[j].setHit(true);
+					aiSlapper[j].setHit(true);	// what's the point of this?
 					temp = paddleCollision(ballBody,aiBody[j],temp);
+					
+					//Log.i("ballVelocity before collision", ballBody.getLinearVelocity().x + ", " + ballBody.getLinearVelocity().y);
 					ballBody.setLinearVelocity(temp.x, temp.y+ballBody.getLinearVelocity().y);
-					ballBody.getPosition();
-					if (ballAngleDiff!=1){
-					ballAngleDiff = 1;
+					//Log.i("ballVelocity after collision", ballBody.getLinearVelocity().x + ", " + ballBody.getLinearVelocity().y);
+					
+					if (ballAngleDiff!=1) {
+						ballAngleDiff = 1;
 					}
-					else
-					{
+					else {
 						ballAngleDiff = Math.random()/10;
 					}
 				}
 			}
 			
 			boundaryCollision(userAData, userBData);
+		}
+		
+		/* THIS WHOLE FUNCTION NEEDS TO BE REWRITTEN */
+		public Vector2 paddleCollision(Body ballB, Body slapperB, Vector2 t) {
+			// if the slapper is at an angle then this function doesn't take into consideration the y distance at all?
+			Vector2 e = new Vector2();
+			e = t;
+			float c = 0, d = 0;
+			
+			// for n == 4, this goes the wrong direction for the top AI slapper
+			c = (slapperB.getPosition().x - ballB.getPosition().x)*-10;
+			Log.i("paddleCollision(): temp.x",""+ c);
+				
+			d =  1;//a.getLinearVelocity().y;
+			
+			e.x = c;
+			e.y = d;
+			
+			return e;
 		}
 		
 		public void boundaryCollision(Object userAData, Object userBData) {
@@ -1210,19 +1231,6 @@ protected MenuScene createSoundMenuScene() {
 		public void postSolve(Contact contact, ContactImpulse impulse) {
 			// TODO Auto-generated method stub
 
-		}
-		
-		public Vector2 paddleCollision(Body a, Body b, Vector2 t) {
-			Vector2 e = new Vector2();
-			e = t;
-			float c = 0,d=0;
-				c = (b.getPosition().x - a.getPosition().x)*-10;
-				Log.i("temp = ",""+ c);
-				
-				d =  1;//a.getLinearVelocity().y;
-			e.x = c;
-			e.y = d;
-			return e;
 		}
 	}
 }
