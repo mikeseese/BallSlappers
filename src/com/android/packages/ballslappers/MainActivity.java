@@ -366,11 +366,9 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			/* Setting Up the Game */
 		
 		this.numPlayerLives = NUM_LIVES;
-		//showPlayerLives(this.mLivesFont, this.numPlayerLives);
 		
 		for (int i = 0; i < NUM_SLAPPERS; i++) { 
 			this.numComputerLives[i] = NUM_LIVES; 
-			//showComputerLives(this.mLivesFont, this.numComputerLives[i],i);
 		}
 		
 		showLives(this.mLivesFont, NUM_LIVES, numComputerLives);
@@ -965,6 +963,7 @@ protected MenuScene createSoundMenuScene() {
 				this.computerLives[0] = new Text((int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.1), font,
 						("Computer0 Lives: " + numComputerLives[0]), "ComputerX Lives: X".length(), this.getVertexBufferObjectManager());
 				this.mScene.attachChild(computerLives[0]);
+				break;
 			}
 			case 3: {
 				showPlayerLives(font, numPlayerLives, -300, -600);
@@ -973,14 +972,16 @@ protected MenuScene createSoundMenuScene() {
 							("Computer" + (i-1) + " Lives: " + numComputerLives[i]), "ComputerX Lives: X".length(), this.getVertexBufferObjectManager());
 					this.mScene.attachChild(computerLives[i-1]);
 				}
+				break;
 			}
 			default: {// 4 player
 				showPlayerLives(font, numPlayerLives, (int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.06));
 				for(int i = 1; i < NUM_SLAPPERS; i++) {
 					this.computerLives[i-1] = new Text((int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.06) + (50*(i)), font,
-							("Computer" + (i-1) + "Lives: " + numComputerLives[i-1]), "ComputerX Lives: X".length(), this.getVertexBufferObjectManager());
+							("Computer" + (i-1) + " Lives: " + numComputerLives[i-1]), "ComputerX Lives: X".length(), this.getVertexBufferObjectManager());
 					this.mScene.attachChild(computerLives[i-1]);
 				}
+				break;
 			}
 		}
 	}
