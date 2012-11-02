@@ -42,6 +42,7 @@ import org.andengine.opengl.texture.ITexture;
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
+import org.andengine.opengl.texture.atlas.bitmap.BuildableBitmapTextureAtlas;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.texture.region.TextureRegion;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
@@ -113,7 +114,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	//Ball Constants
 	public float ballAngle = 0;
 	public double ballAngleDiff = .001;
-	public static final int BALL_SIZE = 15;
+	public static float BALL_RADIUS;
 	public static final int BALL_RESET_DELAY = 3; // in seconds
 		
 	//Pause Menu
@@ -182,7 +183,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     
     //Texture Regions
     private ITextureRegion mBgTexture;
-    private TiledTextureRegion mBallTextureRegion;
+    private ITextureRegion mBallTextureRegion;
     private TiledTextureRegion mPaddleTextureRegion;
     private TiledTextureRegion mAITextureRegion;
     private TiledTextureRegion mCollisionTextureRegion;
@@ -300,13 +301,17 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         this.mEngine.getTextureManager().loadTexture(this.mSoundMenuSettingsBitmapTextureAtlas); 
         
         //Ball Textures
-        texChoice = "orange_ball.png";
-        this.mBallBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 64, 128, 
+        texChoice = "ball.png";
+        this.mBallBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 68, 68, 		// 68 x 68 is the size of the image
         													  TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
-
-        this.mBallTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBallBitmapTextureAtlas, 
-        																			this, texChoice, 0, 32, 2, 1); // 64x32
+        
+        //this.mBallTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBallBitmapTextureAtlas, 
+        	//																		this, texChoice, 0, 32, 2, 1); // 64x32
+        
+        this.mBallTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mBallBitmapTextureAtlas, this, texChoice, 0, 0);
+        MainActivity.BALL_RADIUS = mBallTextureRegion.getWidth() / 2;
+        
         this.mEngine.getTextureManager().loadTexture(this.mBallBitmapTextureAtlas);
         
         //Paddle Textures (not used anymore)
