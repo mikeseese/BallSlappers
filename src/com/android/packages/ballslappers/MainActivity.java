@@ -974,6 +974,14 @@ protected MenuScene createSoundMenuScene() {
 					this.mScene.attachChild(computerLives[i-1]);
 				}
 			}
+			default: {// 4 player
+				showPlayerLives(font, numPlayerLives, (int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.06));
+				for(int i = 1; i < NUM_SLAPPERS; i++) {
+					this.computerLives[i-1] = new Text((int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.06) + (50*(i)), font,
+							("Computer" + (i-1) + "Lives: " + numComputerLives[i-1]), "ComputerX Lives: X".length(), this.getVertexBufferObjectManager());
+					this.mScene.attachChild(computerLives[i-1]);
+				}
+			}
 		}
 	}
 	
