@@ -462,7 +462,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
 		if(this.mPhysicsWorld != null) {
 			if(fingerDown) {
-				//Log.i("paddle.x", Float.toString(paddleBody.getPosition().x));
 				float nextX = pSceneTouchEvent.getX() - diffX;
 				nextX = playerSlapperShape.bound(nextX);
 				Vector2 v = new Vector2(nextX/PIXEL_TO_METER_RATIO_DEFAULT, (CAMERA_HEIGHT - PADDLE_HEIGHT - 5)/PIXEL_TO_METER_RATIO_DEFAULT);
@@ -842,7 +841,6 @@ protected MenuScene createSoundMenuScene() {
     	ballBody.setTransform(start_position, 0f);
 		Vector2 unit = getUnitVector();
 		ballBody.setLinearVelocity(getRandomVelocity()*unit.x, getRandomVelocity() * unit.y+5);
-		//Log.i("ballBodyVelocity", ballBody.getLinearVelocity().toString());
 	}
 
 	public void onUpdate(final float pSecondsElapsed) {
@@ -920,11 +918,17 @@ protected MenuScene createSoundMenuScene() {
 	
 	private void showLives(Font font, int numPlayerLives, int[] numComputerLives) {
 		switch(NUM_SLAPPERS) {
+			case 2: {
+				showPlayerLives(font, numPlayerLives, (int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.06));
+				this.computerLives[0] = new Text((int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.1), font,
+						("Computer0 Lives: " + numComputerLives[0]), "ComputerX Lives: X".length(), this.getVertexBufferObjectManager());
+				this.mScene.attachChild(computerLives[0]);
+			}
 			case 3: {
 				showPlayerLives(font, numPlayerLives, -300, -600);
 				for(int i = 1; i < NUM_SLAPPERS; i++) {
-					this.computerLives[i-1] = new Text(-300, -600 + (50*i),
-							font, ("Computer" + (i-1) + " Lives: " + numComputerLives[i]), "ComputerX Lives: X".length(), this.getVertexBufferObjectManager());
+					this.computerLives[i-1] = new Text(-300, -600 + (50*i), font,
+							("Computer" + (i-1) + " Lives: " + numComputerLives[i]), "ComputerX Lives: X".length(), this.getVertexBufferObjectManager());
 					this.mScene.attachChild(computerLives[i-1]);
 				}
 			}
@@ -941,12 +945,12 @@ protected MenuScene createSoundMenuScene() {
 	 */
 	protected void resetGame() {
 		this.ballReset();
+		this.clearBooleans();
 		this.numPlayerLives = NUM_LIVES;
 		playerLives.setText("Player Lives: " + numPlayerLives);
 		for (int i = 0; i < NUM_SLAPPERS-1; i++) {
 			this.resetComputerLives(i);
 		}
-		//this.resetPaddles(); // This needs to be a thing
 	}
 
 	private void setLoserMessage(String loserMessage) {
@@ -959,11 +963,9 @@ protected MenuScene createSoundMenuScene() {
 	
 	private void startTimer() {
 		if(timerCountOn) {
-			Log.i("timerCountOn", "True");
 			return;
 		}
 		else {
-			Log.i("timerCountOn", "False -> Setting true");
 			this.timerCountOn = true;
 		}
 		
@@ -981,8 +983,6 @@ protected MenuScene createSoundMenuScene() {
     					mScene.detachChild(gameResetMessage);
     				if(countDownTimer.hasParent())
     					mScene.detachChild(countDownTimer);
-    				
-    				ballBody.setActive(true);
     			}
     			else if(gameOver || gameStarting) {
     				resetGame();
@@ -990,13 +990,16 @@ protected MenuScene createSoundMenuScene() {
     					mScene.detachChild(gameResetMessage);
     				if(countDownTimer.hasParent())
     					mScene.detachChild(countDownTimer);
-    				
-    				ballBody.setActive(true);
     			}
-    			else {
+    			else { // Coming back from someone losing a life but game still going
     				ballReset();
+    				if(gameResetMessage.hasParent())
+    					mScene.detachChild(gameResetMessage);
+    				if(countDownTimer.hasParent())
+    					mScene.detachChild(countDownTimer);
     			}
-    			
+				
+				ballBody.setActive(true);
 				clearBooleans();
             }
         }));
@@ -1010,6 +1013,7 @@ protected MenuScene createSoundMenuScene() {
 		this.timerCountOn = false;
 		this.gameStarting = false;
 		this.resuming = false;
+		this.gameOver = false;
 	}
 
 	/* 
@@ -1055,7 +1059,6 @@ protected MenuScene createSoundMenuScene() {
 				}
 			}
 			
-			//ai ball redoodoo
 			for (int j = 0; j<NUM_SLAPPERS-1; j++) {
 				if(userAData.equals("ballBody") && userBData.equals(aiBody[j])
 						|| userAData.equals(aiBody[j]) && userBData.equals("ballBody")) {
@@ -1090,6 +1093,9 @@ protected MenuScene createSoundMenuScene() {
 							gameOver = true;
 							setLoserMessage("You lose. ");
 						}
+						else {
+							setLoserMessage(""); // No one lost we just reset the ball
+						}
 					}
 					else if(userAData.equals("ballBody") && userBData.equals("roofBody")
 							|| userAData.equals("roofBody") && userBData.equals("ballBody")) {
@@ -1100,6 +1106,9 @@ protected MenuScene createSoundMenuScene() {
 						if(numComputerLives[0] == 0) {
 							gameOver = true;
 							setLoserMessage("Computer0 loses. ");
+						}
+						else {
+							setLoserMessage(""); // No one lost we just reset the ball
 						}
 					}
 					else if(userAData.equals("ballBody") && userBData.equals("leftBody")
@@ -1112,6 +1121,9 @@ protected MenuScene createSoundMenuScene() {
 							gameOver = true;
 							setLoserMessage("Computer1 loses. ");
 						}
+						else {
+							setLoserMessage(""); // No one lost we just reset the ball
+						}
 					}
 					else if(userAData.equals("ballBody") && userBData.equals("rightBody")
 							|| userAData.equals("rightBody") && userBData.equals("ballBody")) {
@@ -1123,6 +1135,9 @@ protected MenuScene createSoundMenuScene() {
 							gameOver = true;
 							setLoserMessage("Computer2 loses. ");
 						}
+						else {
+							setLoserMessage(""); // No one lost we just reset the ball
+						}
 					}
 					break;
 				case 3:
@@ -1130,42 +1145,48 @@ protected MenuScene createSoundMenuScene() {
 							|| userAData.equals("btri") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the ground");
 						outOfBounds = true;
-						//playerLives.setText("Player Lives: " + --numPlayerLives);
-						--numPlayerLives;
+						playerLives.setText("Player Lives: " + --numPlayerLives);
 						
 						if(numPlayerLives == 0) {
 							gameOver = true;
 							setLoserMessage("You lose. ");
+						}
+						else {
+							setLoserMessage(""); // No one lost we just reset the ball
 						}
 					}
 					else if(userAData.equals("ballBody") && userBData.equals("rtri")
 							|| userAData.equals("rtri") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the roof");
 						outOfBounds = true;
-						//computerLives[0].setText("Computer0 Lives: " + --numComputerLives[0]);
-						--numComputerLives[0];
+						computerLives[0].setText("Computer0 Lives: " + --numComputerLives[0]);
 						
 						if(numComputerLives[0] == 0) {
 							gameOver = true;
 							setLoserMessage("Computer0 loses. ");
+						}
+						else {
+							setLoserMessage(""); // No one lost we just reset the ball
 						}
 					}
 					else if(userAData.equals("ballBody") && userBData.equals("ltri")
 							|| userAData.equals("ltri") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the left");
 						outOfBounds = true;
-						//computerLives[1].setText("Computer1 Lives: " + --numComputerLives[1]);
-						--numComputerLives[1];
+						computerLives[1].setText("Computer1 Lives: " + --numComputerLives[1]);
 						
 						if(numComputerLives[1] == 0) {
 							gameOver = true;
 							setLoserMessage("Computer1 loses. ");
 						}
+						else {
+							setLoserMessage(""); // No one lost we just reset the ball
+						}
 					}
 					break;
 				default:
-					if(userAData.equals("ballBody") && userBData.equals("rtri")
-							|| userAData.equals("rtri") && userBData.equals("ballBody")) {
+					if(userAData.equals("ballBody") && userBData.equals("groundBody")
+							|| userAData.equals("groundBody") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the ground");
 						outOfBounds = true;
 						playerLives.setText("Player Lives: " + --numPlayerLives);
@@ -1173,6 +1194,9 @@ protected MenuScene createSoundMenuScene() {
 						if(numPlayerLives == 0) {
 							gameOver = true;
 							setLoserMessage("You lose. ");
+						}
+						else {
+							setLoserMessage(""); // No one lost we just reset the ball
 						}
 					}
 					else if(userAData.equals("ballBody") && userBData.equals("roofBody")
@@ -1184,6 +1208,9 @@ protected MenuScene createSoundMenuScene() {
 						if(numComputerLives[0] == 0) {
 							gameOver = true;
 							setLoserMessage("The Computer loses. ");
+						}
+						else {
+							setLoserMessage(""); // No one lost we just reset the ball
 						}
 					}
 					
@@ -1211,7 +1238,6 @@ protected MenuScene createSoundMenuScene() {
 			e = t;
 			float c = 0,d=0;
 				c = (b.getPosition().x - a.getPosition().x)*-10;
-				Log.i("temp = ",""+ c);
 				
 				d =  1;//a.getLinearVelocity().y;
 			e.x = c;
