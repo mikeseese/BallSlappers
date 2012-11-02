@@ -30,6 +30,8 @@ public class AI {
 		float ymove = (float)(speed*Math.sin(orientation));
 		float slapperX = slapper.getSlapperX();
 		float slapperY = slapper.getSlapperY();
+		Log.i("ball X,Y", Float.toString(ballx) + ", " + Float.toString(bally));
+		Log.i("slapper X,Y", Float.toString(slapperX) + ", " + Float.toString(slapperY));
 		
 		if(orientation !=0) { //if it is not horizontal then it should move based on y axis solely
 			if(slapperY > bally - ymove) {
