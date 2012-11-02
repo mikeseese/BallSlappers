@@ -10,7 +10,7 @@ import com.badlogic.gdx.physics.box2d.Body;
 public class AI {
 	/* Vector2 for the position the ball should move to */
 	private Vector2 newAIPos = new Vector2();
-	private static final float speed = 7;
+	private static final float speed = 20;
 	private Slapper slapper;
 	
 	public AI(Slapper s) {
@@ -55,11 +55,11 @@ public class AI {
 			}			
 		}
 		else if (orientation==0) {	//if it is horizontal it should move based on x axis only
-			if(slapperX > ballx - xmove) {
-				slapperX = slapper.bound(slapperX-xmove);
+			if(slapperX + slapper.getWidth()/2 < ballx - MainActivity.BALL_RADIUS) { // slapper needs to move to the right
+				slapperX = slapper.bound(slapperX + xmove);
 			}
-			else if(slapperX < ballx+xmove) {
-				slapperX = slapper.bound(slapperX+xmove);
+			else if(slapperX - slapper.getWidth()/2 > ballx + MainActivity.BALL_RADIUS) { // slapper needs to move to the left
+				slapperX = slapper.bound(slapperX - xmove);
 			}	
 		}	
 				
