@@ -76,7 +76,7 @@ public class Slapper extends Rectangle {
 	public float bound(float number) {
 		if (MainActivity.NUM_SLAPPERS == 4) {
 			if (orientation == 0) {
-				float low = MainActivity.CAMERA_WIDTH/4 + MainActivity.bumperSideLength/2 + this.width/2;
+				float low = (MainActivity.CAMERA_WIDTH - MainActivity.bumperSideLength*2 - MainActivity.sideLength)/2 + MainActivity.bumperSideLength + this.width/2;
 				float high = low + MainActivity.sideLength - this.width;
 				if(number < low)
 					number = low;
