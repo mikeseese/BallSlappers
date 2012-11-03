@@ -213,7 +213,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	FixtureDef[] aiDef = new FixtureDef[4];
 	
 	//Misc.
-	private Random randomNumGen = new Random();
+	public static Random randomNumGen = new Random();
 
 	
 	/* *****************************************************
@@ -302,7 +302,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         
         //Ball Textures
         texChoice = "ball.png";
-        this.mBallBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 68, 68, 		// 68 x 68 is the size of the image
+        this.mBallBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 44, 44, 		// 68 x 68 is the size of the image
         													  TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
         
@@ -420,7 +420,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				}
 			}
 			
-			aiSlapper[i] = new Slapper(CAMERA_WIDTH/2 - PADDLE_WIDTH/2, SLAPPER_WALL_BUFFER, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(), (float) orient);	
+			aiSlapper[i] = new Slapper(CAMERA_WIDTH/2, SLAPPER_WALL_BUFFER, PADDLE_WIDTH, PADDLE_HEIGHT, this.getVertexBufferObjectManager(), (float) orient);	
 			aiSlapper[i].setColor(AI_SLAPPER_COLOR);
 			aiDef[i] = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 			aiBody[i] = PhysicsFactory.createBoxBody(this.mPhysicsWorld, aiSlapper[i], BodyType.KinematicBody, aiDef[i]);
@@ -438,27 +438,25 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				temp.mul(PIXEL_TO_METER_RATIO_DEFAULT);
 				aiSlapper[i].setSlapper(temp);
 			}
-			
-			if (i==0 && NUM_SLAPPERS==3){
+			else if (i==0 && NUM_SLAPPERS==3){
 				temp.set((float) 43.53/PIXEL_TO_METER_RATIO_DEFAULT, (float)((MainActivity.CAMERA_HEIGHT-652.065)/PIXEL_TO_METER_RATIO_DEFAULT));
 				aiBody[i].setTransform(temp, (float) ((Math.PI*2)/3));
 				temp.mul(PIXEL_TO_METER_RATIO_DEFAULT);
 				aiSlapper[i].setSlapper(temp);
-				}
-				else if (i==1 && NUM_SLAPPERS==3) {
+			}
+			else if (i==1 && NUM_SLAPPERS==3) {
 				temp.set((float) 756.47/PIXEL_TO_METER_RATIO_DEFAULT, (float)((MainActivity.CAMERA_HEIGHT-652.065)/PIXEL_TO_METER_RATIO_DEFAULT));
 				aiBody[i].setTransform(temp, (float) (Math.PI/3));
 				temp.mul(PIXEL_TO_METER_RATIO_DEFAULT);
-
 				aiSlapper[i].setSlapper(temp);
-				}
+			}
 			mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(aiSlapper[i], aiBody[i]));
 			this.mScene.registerUpdateHandler(new AIUpdater(aiBody[i],aiSlapper[i]));
 		}
 		
 		// initialize the ball
-		start_position = new Vector2(CAMERA_WIDTH/(2*PIXEL_TO_METER_RATIO_DEFAULT), 
-				 					CAMERA_HEIGHT/(2*PIXEL_TO_METER_RATIO_DEFAULT));
+		start_position = new Vector2((CAMERA_WIDTH/2)/PIXEL_TO_METER_RATIO_DEFAULT, 
+				 					(CAMERA_HEIGHT/2 - fingerBuffer/2)/PIXEL_TO_METER_RATIO_DEFAULT);
 		final FixtureDef ballDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
         ball = new Sprite(CAMERA_WIDTH/2, CAMERA_HEIGHT/2, this.mBallTextureRegion, this.getVertexBufferObjectManager());
 		ballBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ball, BodyType.DynamicBody, ballDef);
@@ -1119,12 +1117,13 @@ protected MenuScene createSoundMenuScene() {
 				if(userAData.equals("ballBody") && userBData.equals(aiBody[j])
 						|| userAData.equals(aiBody[j]) && userBData.equals("ballBody")) {
 					Log.i("Contact Made", "Ball contacted the paddle");
+
 					aiSlapper[j].setHit(true);	// what's the point of this?
 					temp = paddleCollision(ballBody,aiBody[j],temp);
 					
-					//Log.i("ballVelocity before collision", ballBody.getLinearVelocity().x + ", " + ballBody.getLinearVelocity().y);
+					//Log.i("ballVelocity", "before: " + ballBody.getLinearVelocity().x + ", " + ballBody.getLinearVelocity().y);
 					ballBody.setLinearVelocity(temp.x, temp.y+ballBody.getLinearVelocity().y);
-					//Log.i("ballVelocity after collision", ballBody.getLinearVelocity().x + ", " + ballBody.getLinearVelocity().y);
+					//Log.i("ballVelocity", "after: " + ballBody.getLinearVelocity().x + ", " + ballBody.getLinearVelocity().y);
 					
 					if (ballAngleDiff!=1) {
 						ballAngleDiff = 1;

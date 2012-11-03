@@ -2,6 +2,8 @@ package com.android.packages.ballslappers;
 
 import static org.andengine.extension.physics.box2d.util.constants.PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT;
 
+import java.util.Random;
+
 import android.util.Log;
 
 import com.badlogic.gdx.math.Vector2;
@@ -56,9 +58,11 @@ public class AI {
 		}
 		else if (orientation==0) {	//if it is horizontal it should move based on x axis only
 			if(slapperX + slapper.getWidth()/2 < ballx - MainActivity.BALL_RADIUS) { // slapper needs to move to the right
+				Log.i("AI.update()", "needs to move right");
 				slapperX = slapper.bound(slapperX + xmove);
 			}
 			else if(slapperX - slapper.getWidth()/2 > ballx + MainActivity.BALL_RADIUS) { // slapper needs to move to the left
+				Log.i("AI.update()", "needs to move left");
 				slapperX = slapper.bound(slapperX - xmove);
 			}	
 		}	
