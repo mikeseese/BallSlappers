@@ -3,6 +3,7 @@ package com.android.packages.ballslappers;
 
 
 /*IMPORTS*/
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -52,6 +53,7 @@ import org.andengine.util.HorizontalAlign;
 import org.andengine.util.color.Color;
 
 import android.R.string;
+import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
@@ -566,7 +568,29 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
             	return true;
             case PAUSE_MENU_SOUND:
             	//bring up sound menu (music level/on/off, FX level/on/off, master volume)
-            	this.mScene.setChildScene(this.mSoundMenuScene, false, true, true);
+            	//this.mScene.setChildScene(this.mSoundMenuScene, false, true, true);
+            	if(HomeScreenActivity.SOUND_ENABLED)
+            		HomeScreenActivity.mediaPlayer.stop();
+            	else
+            	{
+            		try
+        			{
+        				HomeScreenActivity.mediaPlayer.prepare();
+        			} catch (IllegalStateException e1)
+        			{
+        				e1.printStackTrace();
+        			} catch (IOException e1)
+        			{
+        				e1.printStackTrace();
+        			}
+            		HomeScreenActivity.mediaPlayer.start();
+            	}
+            	
+            	HomeScreenActivity.SOUND_ENABLED = !HomeScreenActivity.SOUND_ENABLED;
+            	SharedPreferences.Editor e = HomeScreenActivity.settings.edit();
+            	e.putBoolean("sound_enabled", HomeScreenActivity.SOUND_ENABLED);
+            	e.commit();
+            	
             	return true;
             case HELP_MENU_HOWTOPLAY:
             	//this test just resumes

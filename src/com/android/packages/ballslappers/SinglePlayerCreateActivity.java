@@ -1,9 +1,14 @@
 package com.android.packages.ballslappers;
 
+import java.io.IOException;
+
 import com.android.packages.ballslappers.R;
+
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -13,6 +18,7 @@ import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.ToggleButton;
 
 public class SinglePlayerCreateActivity extends Activity {
 	
@@ -61,10 +67,6 @@ public class SinglePlayerCreateActivity extends Activity {
 	         }
 	     });
 	     
-	     
-	     
-	     
-	     
 	     Spinner NUMCPU = (Spinner) findViewById(R.id.CPUSelect);
 	     // Create an ArrayAdapter using the string array and a default spinner layout
 	     ArrayAdapter<CharSequence> adapter2 = ArrayAdapter.createFromResource(this,
@@ -97,6 +99,12 @@ public class SinglePlayerCreateActivity extends Activity {
 	         }
 	     });
     }
+    
+    protected void onResume(){
+    	super.onResume();
+    	ToggleButton tb = (ToggleButton) findViewById(R.id.toggleSound);
+        tb.setChecked(HomeScreenActivity.SOUND_ENABLED);
+    }
 	
 	public void minusOneLife(View view){
      	EditText editText = (EditText) findViewById(R.id.Edit_Lives_Text);
@@ -125,6 +133,13 @@ public class SinglePlayerCreateActivity extends Activity {
     }
     
     public void PlaySinglePlayer(View view){
+    	HomeScreenActivity.mediaPlayer.stop();
+    	HomeScreenActivity.mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.fightsong100);
+    	HomeScreenActivity.mediaPlayer.setLooping(true);
+    	
+    	if(HomeScreenActivity.SOUND_ENABLED)
+    		HomeScreenActivity.mediaPlayer.start();
+    	
      	EditText editText = (EditText) findViewById(R.id.Edit_Lives_Text);
      	lives = Integer.parseInt(editText.getText().toString());
      	
@@ -139,5 +154,29 @@ public class SinglePlayerCreateActivity extends Activity {
     
     public void poweruptoggle(View view) {
     	powerupsen = !powerupsen;
+    }
+    
+    public void toggleMusic(View view){
+    	if(HomeScreenActivity.SOUND_ENABLED)
+    		HomeScreenActivity.mediaPlayer.stop();
+    	else
+    	{
+    		try
+			{
+				HomeScreenActivity.mediaPlayer.prepare();
+			} catch (IllegalStateException e1)
+			{
+				e1.printStackTrace();
+			} catch (IOException e1)
+			{
+				e1.printStackTrace();
+			}
+    		HomeScreenActivity.mediaPlayer.start();
+    	}
+    	
+    	HomeScreenActivity.SOUND_ENABLED = !HomeScreenActivity.SOUND_ENABLED;
+    	SharedPreferences.Editor e = HomeScreenActivity.settings.edit();
+    	e.putBoolean("sound_enabled", HomeScreenActivity.SOUND_ENABLED);
+    	e.commit();
     }
 }

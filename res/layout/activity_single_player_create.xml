@@ -156,7 +156,7 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/bottom"
         android:layout_width="wrap_content"
-        android:layout_height="45dp"
+        android:layout_height="fill_parent"
         android:layout_marginBottom="5dp" >
 
         <ToggleButton
@@ -167,7 +167,9 @@
             android:layout_alignParentRight="true"
             android:layout_marginRight="5dp"
             android:background="@drawable/home_sound_button"
-            android:textOn="@android:string/yes" />
+            android:textOn="ON"
+            android:textOff="OFF"
+            android:onClick="toggleMusic" />
 
     </RelativeLayout>
     

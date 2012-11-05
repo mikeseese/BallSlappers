@@ -1,17 +1,50 @@
 package com.android.packages.ballslappers;
 
+import java.io.IOException;
+
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.view.Menu;
 import android.view.View;
+import android.widget.ToggleButton;
 
 public class HomeScreenActivity extends Activity {
-
+	public static boolean SOUND_ENABLED;
+	public static MediaPlayer mediaPlayer;
+	public static SharedPreferences settings;
+	public static Context mContext;
+	
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    	super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home_screen);
+        
+        settings = getPreferences(Activity.MODE_PRIVATE);
+	    SOUND_ENABLED = settings.getBoolean("sound_enabled", true);
+	    
+	    mContext = getApplicationContext();
+	    
+        mediaPlayer = MediaPlayer.create(mContext, R.raw.homescreen);
+        mediaPlayer.setLooping(true);
+	    
+	    if(HomeScreenActivity.SOUND_ENABLED)
+	    {
+	        mediaPlayer.start(); // no need to call prepare(); create() does that for you
+	    }
+	    else
+	    {
+	    	
+	    }
+    }
+    
+    protected void onResume(){
+    	super.onResume();
+    	ToggleButton tb = (ToggleButton) findViewById(R.id.toggleSound);
+        tb.setChecked(HomeScreenActivity.SOUND_ENABLED);
     }
 
     @Override
@@ -26,7 +59,7 @@ public class HomeScreenActivity extends Activity {
     }
     
     public void MultiplayerCreate(View view){
-    	Intent intent = new Intent(this, MultiplayerCreateActivity.class);
+    	Intent intent = new Intent(this, MultiplayerLobbyActivity.class);
     	startActivity(intent);
     }
     
@@ -38,5 +71,35 @@ public class HomeScreenActivity extends Activity {
     public void OptionsScreen(View view){
     	Intent intent = new Intent(this, OptionsScreenActivity.class);
     	startActivity(intent);
+    }
+    
+    public void toggleMusic(View view){
+    	if(HomeScreenActivity.SOUND_ENABLED)
+    		HomeScreenActivity.mediaPlayer.stop();
+    	else
+    	{
+    		try
+			{
+				HomeScreenActivity.mediaPlayer.prepare();
+			} catch (IllegalStateException e1)
+			{
+				e1.printStackTrace();
+			} catch (IOException e1)
+			{
+				e1.printStackTrace();
+			}
+    		HomeScreenActivity.mediaPlayer.start();
+    	}
+    	
+    	HomeScreenActivity.SOUND_ENABLED = !HomeScreenActivity.SOUND_ENABLED;
+    	SharedPreferences.Editor e = HomeScreenActivity.settings.edit();
+    	e.putBoolean("sound_enabled", HomeScreenActivity.SOUND_ENABLED);
+    	e.commit();
+    }
+    
+    protected void onDestroy(){
+    	HomeScreenActivity.mediaPlayer.release();
+    	
+    	super.onDestroy();
     }
 }

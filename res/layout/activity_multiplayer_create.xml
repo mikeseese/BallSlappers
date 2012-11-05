@@ -13,7 +13,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginTop="50dp"
-        android:layout_weight=".45"
         android:baselineAligned="false"
         android:orientation="horizontal" >
 	    
@@ -33,7 +32,8 @@
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:text="@string/No._Players"
-                android:textSize="20sp" />
+                android:textSize="20sp"
+                android:visibility="gone" />
 		    
             <TextView
                 android:layout_width="wrap_content"
@@ -75,7 +75,8 @@
                 android:id="@+id/PlayerSelect"
                 android:layout_width="wrap_content"
                 android:layout_height="60dp"
-                android:layout_gravity="center" />
+                android:layout_gravity="center"
+                android:visibility="gone" />
             
 	     	<CheckBox
                 android:id="@+id/enablePowerUps"
@@ -146,12 +147,12 @@
         android:layout_gravity="center_horizontal" >
         
         <Button
-            android:id="@+id/button1"
+            android:id="@+id/createGameBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:background="@drawable/single_player_play_button_setup"
-            android:onClick="HomeScreen" />
+            android:onClick="CreateMultiplayerGame" />
         
     </RelativeLayout>
 
@@ -160,7 +161,7 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/bottom"
         android:layout_width="wrap_content"
-        android:layout_height="45dp"
+        android:layout_height="fill_parent"
         android:layout_marginBottom="5dp" >
 
         <ToggleButton
@@ -171,7 +172,9 @@
             android:layout_alignParentRight="true"
             android:layout_marginRight="5dp"
             android:background="@drawable/home_sound_button"
-            android:textOn="@android:string/yes" />
+            android:textOn="ON"
+            android:textOff="OFF"
+            android:onClick="toggleMusic" />
 
     </RelativeLayout>
     

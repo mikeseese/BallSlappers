@@ -1,9 +1,12 @@
 package com.android.packages.ballslappers;
 
+import java.io.IOException;
+
 import com.android.packages.ballslappers.R;
 import android.os.Bundle;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -13,6 +16,7 @@ import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.ToggleButton;
 
 public class MultiplayerCreateActivity extends Activity {
 	
@@ -29,18 +33,18 @@ public class MultiplayerCreateActivity extends Activity {
         setContentView(R.layout.activity_multiplayer_create);
 	     
 	     
-	     Spinner NUMPLAYERS = (Spinner) findViewById(R.id.PlayerSelect);
-	     // Create an ArrayAdapter using the string array and a default spinner layout
-	     ArrayAdapter<CharSequence> adapter2 = ArrayAdapter.createFromResource(this,
+	    Spinner NUMPLAYERS = (Spinner) findViewById(R.id.PlayerSelect);
+	    // Create an ArrayAdapter using the string array and a default spinner layout
+	    ArrayAdapter<CharSequence> adapter2 = ArrayAdapter.createFromResource(this,
 	    		 R.array.NUMPLAYERS, android.R.layout.simple_spinner_item);
-	     // Specify the layout to use when the list of choices appears
-	     adapter2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-	     // Apply the adapter to the spinner
-	     NUMPLAYERS.setAdapter(adapter2);
+	    // Specify the layout to use when the list of choices appears
+	    adapter2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+	    // Apply the adapter to the spinner
+	    NUMPLAYERS.setAdapter(adapter2);
 	     
-	     NUMPLAYERS.setOnItemSelectedListener(new OnItemSelectedListener() {
-	    	 public void onItemSelected(AdapterView<?> arg0, View view, int pos, long id) {
-    		 	switch(pos){
+	    NUMPLAYERS.setOnItemSelectedListener(new OnItemSelectedListener() {
+	    	public void onItemSelected(AdapterView<?> arg0, View view, int pos, long id) {
+	    		switch(pos){
 	    		 	case 0:
 	    		 		numberofplayers=1;
 	    				break;
@@ -62,8 +66,13 @@ public class MultiplayerCreateActivity extends Activity {
 	    	 public void onNothingSelected(AdapterView<?> arg0) {
 
 	         }
-	     });
-	     
+	    });
+    }
+    
+    protected void onResume(){
+    	super.onResume();
+    	ToggleButton tb = (ToggleButton) findViewById(R.id.toggleSound);
+        tb.setChecked(HomeScreenActivity.SOUND_ENABLED);
     }
 	
 	public void minusOneLife(View view){
@@ -109,5 +118,29 @@ public class MultiplayerCreateActivity extends Activity {
     
     public void poweruptoggle(View view) {
     	powerupsen = !powerupsen;
+    }
+    
+    public void toggleMusic(View view){
+    	if(HomeScreenActivity.SOUND_ENABLED)
+    		HomeScreenActivity.mediaPlayer.stop();
+    	else
+    	{
+    		try
+			{
+				HomeScreenActivity.mediaPlayer.prepare();
+			} catch (IllegalStateException e1)
+			{
+				e1.printStackTrace();
+			} catch (IOException e1)
+			{
+				e1.printStackTrace();
+			}
+    		HomeScreenActivity.mediaPlayer.start();
+    	}
+    	
+    	HomeScreenActivity.SOUND_ENABLED = !HomeScreenActivity.SOUND_ENABLED;
+    	SharedPreferences.Editor e = HomeScreenActivity.settings.edit();
+    	e.putBoolean("sound_enabled", HomeScreenActivity.SOUND_ENABLED);
+    	e.commit();
     }
 }

@@ -78,7 +78,9 @@
 	            android:layout_alignParentRight="true"
 	            android:layout_marginRight="5dp"
 	            android:background="@drawable/home_sound_button"
-	            android:textOn="@android:string/yes" />
+	            android:textOn="ON"
+	            android:textOff="OFF"
+	            android:onClick="toggleMusic" />
 	
 	    </RelativeLayout>
 
