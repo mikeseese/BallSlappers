@@ -105,9 +105,9 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	//Options
 	public static int NUM_SLAPPERS = 4;
 	public static int NUM_LIVES = 1;
-	public static boolean SEESETER = false; //troll stuff
 	public static boolean POWERUPS = false; //powerups
 	public static String difficulty;
+	public static float ballSpeedDifficultyIncrease;
 
 	//Paddle Constants
 	public static final int PADDLE_WIDTH = 100;
@@ -252,6 +252,20 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		numPlayerLives = NUM_LIVES;
 		POWERUPS = bundle.getBoolean("powerupen");
 		difficulty = bundle.getString("difficulty");
+
+		if(difficulty.equalsIgnoreCase("Easy")) {
+			MainActivity.ballSpeedDifficultyIncrease = 1.01f;
+		}
+		else if(difficulty.equalsIgnoreCase("Medium")) {
+			MainActivity.ballSpeedDifficultyIncrease = 1.05f;
+		}
+		else if(difficulty.equalsIgnoreCase("Hard")){
+			MainActivity.ballSpeedDifficultyIncrease = 1.1f;
+		}
+		else {
+			MainActivity.ballSpeedDifficultyIncrease = 0.0f;
+			Log.i("Difficulty Not Set", "The difficulty did not match easy/medium/hard");
+		}
 	}
 	
 	@Override   
@@ -1127,14 +1141,8 @@ protected MenuScene createSoundMenuScene() {
 					|| userAData.equals("paddleBody") && userBData.equals("ballBody")) {
 				Log.i("Contact Made", "Ball contacted the paddle");
 				temp = paddleCollision(ballBody,paddleBody,temp);
-				ballBody.setLinearVelocity(temp.x,ballBody.getLinearVelocity().y + temp.y);
-				if (ballAngleDiff!=1){
-				ballAngleDiff = 1;
-				}
-				else
-				{
-					ballAngleDiff = Math.random()/10;
-				}
+				ballBody.setLinearVelocity(temp.x * MainActivity.ballSpeedDifficultyIncrease,
+										  (ballBody.getLinearVelocity().y + temp.y) * MainActivity.ballSpeedDifficultyIncrease);
 			}
 			
 			for (int j = 0; j<NUM_SLAPPERS-1; j++) {
@@ -1146,15 +1154,9 @@ protected MenuScene createSoundMenuScene() {
 					temp = paddleCollision(ballBody,aiBody[j],temp);
 					
 					//Log.i("ballVelocity", "before: " + ballBody.getLinearVelocity().x + ", " + ballBody.getLinearVelocity().y);
-					ballBody.setLinearVelocity(temp.x, temp.y+ballBody.getLinearVelocity().y);
+					ballBody.setLinearVelocity(temp.x * MainActivity.ballSpeedDifficultyIncrease,
+											   (temp.y+ballBody.getLinearVelocity().y) * MainActivity.ballSpeedDifficultyIncrease);
 					//Log.i("ballVelocity", "after: " + ballBody.getLinearVelocity().x + ", " + ballBody.getLinearVelocity().y);
-					
-					if (ballAngleDiff!=1) {
-						ballAngleDiff = 1;
-					}
-					else {
-						ballAngleDiff = Math.random()/10;
-					}
 				}
 			}
 			
@@ -1168,9 +1170,9 @@ protected MenuScene createSoundMenuScene() {
 			float c = 0, d = 0;
 			
 			c = (slapperB.getPosition().x - ballB.getPosition().x)*-10;
-			Log.i("paddleCollision(): temp.x",""+ c);
+			//Log.i("paddleCollision(): temp.x",""+ c);
 				
-			d =  1;//a.getLinearVelocity().y;
+			d =  1; // What is the point of this and e.y = d?
 			
 			e.x = c;
 			e.y = d;

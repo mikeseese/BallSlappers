@@ -49,7 +49,7 @@ public class SinglePlayerCreateActivity extends Activity {
 	    	 public void onItemSelected(AdapterView<?> arg0, View view, int pos, long id) {
     		 	switch(pos){
 		 			case 0:
-		 				difficultySelected = "potato";
+		 				difficultySelected = "easy";
 		 				break;
 		 			case 1:
 		 				difficultySelected = "medium";
