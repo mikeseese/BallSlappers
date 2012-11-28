@@ -94,12 +94,15 @@ public class Slapper extends Rectangle {
 		}
 		else if (MainActivity.NUM_SLAPPERS == 3) {
 			if (orientation == 0) {
-				float low = this.width/2;
-				float high = low + MainActivity.CAMERA_WIDTH - this.width;
+				float low = (float) ((MainActivity.CAMERA_WIDTH - 2*MainActivity.bumperLength * Math.sin(Math.PI / 3) - MainActivity.sideLength)/2 + MainActivity.bumperLength*Math.cos(Math.PI/3) + this.width);
+				float high = low + MainActivity.sideLength - this.width;
 				if(number < low)
 					number = low;
 				if(number > high)
 					number = high;
+			}
+			else { // orientation == Math.PI/3 || orientation == 2*Math.PI/3
+				
 			}
 		}
 		else { //if (MainActivity.NUM_SLAPPERS == 2) {

@@ -12,7 +12,7 @@ import com.badlogic.gdx.physics.box2d.Body;
 public class AI {
 	/* Vector2 for the position the ball should move to */
 	private Vector2 newAIPos = new Vector2();
-	private static final float speed = 20;
+	private static final float speed = 8;
 	private Slapper slapper;
 	
 	public AI(Slapper s) {
@@ -42,7 +42,7 @@ public class AI {
 														  // because I'm not sure what's going on with these #s below
 														  // (I think they are bounding with them)
 				
-				if (slapperY <= -518.475+40 && MainActivity.NUM_SLAPPERS == 3){
+				if (slapperY <= MainActivity.WALL_WIDTH + slapper.getSlapperWidth()/2 && MainActivity.NUM_SLAPPERS == 3){
 					slapperX= slapperX+xmove;
 					slapperY = slapperY+ymove;
 				}
@@ -50,7 +50,7 @@ public class AI {
 			else if(slapperY <bally+ymove) {
 				slapperX = slapperX+xmove;
 				slapperY = slapper.bound(slapperY+ymove);
-				if (slapperY >= 223.53-80 && MainActivity.NUM_SLAPPERS==3){
+				if (slapperY >= (MainActivity.sideLength*Math.sin(Math.PI/3) - slapper.getSlapperWidth()*Math.sin(Math.PI/3)/2 + MainActivity.WALL_WIDTH) && MainActivity.NUM_SLAPPERS==3){
 					slapperX= slapperX-xmove;
 					slapperY = slapperY-ymove;
 				}
