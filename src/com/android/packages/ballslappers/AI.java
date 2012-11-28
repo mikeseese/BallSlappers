@@ -32,8 +32,8 @@ public class AI {
 		float ymove = (float)(speed*Math.sin(orientation));
 		float slapperX = slapper.getSlapperX();
 		float slapperY = slapper.getSlapperY();
-		Log.i("ball X,Y", Float.toString(ballx) + ", " + Float.toString(bally));
-		Log.i("slapper X,Y", Float.toString(slapperX) + ", " + Float.toString(slapperY));
+		//Log.i("ball X,Y", Float.toString(ballx) + ", " + Float.toString(bally));
+		//Log.i("slapper X,Y", Float.toString(slapperX) + ", " + Float.toString(slapperY));
 		
 		if(orientation !=0) { //if it is not horizontal then it should move based on y axis solely
 			if(slapperY > bally - ymove) {
@@ -58,11 +58,11 @@ public class AI {
 		}
 		else if (orientation==0) {	//if it is horizontal it should move based on x axis only
 			if(slapperX + slapper.getWidth()/2 < ballx - MainActivity.BALL_RADIUS) { // slapper needs to move to the right
-				Log.i("AI.update()", "needs to move right");
+				//Log.i("AI.update()", "needs to move right");
 				slapperX = slapper.bound(slapperX + xmove);
 			}
 			else if(slapperX - slapper.getWidth()/2 > ballx + MainActivity.BALL_RADIUS) { // slapper needs to move to the left
-				Log.i("AI.update()", "needs to move left");
+				//Log.i("AI.update()", "needs to move left");
 				slapperX = slapper.bound(slapperX - xmove);
 			}	
 		}	
