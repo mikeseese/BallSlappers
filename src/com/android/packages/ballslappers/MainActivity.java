@@ -109,7 +109,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public static float ballSpeedDifficultyIncrease;
 
 	//Paddle Constants
-	public static final int PADDLE_WIDTH = 150;
+	public static final int PADDLE_WIDTH = 115;
 	public static final int PADDLE_HEIGHT = 20;
 	
 	//Ball Constants
@@ -441,13 +441,13 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				aiSlapper[i].setSlapper(temp);
 			}
 			else if (i==0 && NUM_SLAPPERS==3){ // left ai slapper
-				temp.set((float) ((CAMERA_WIDTH - 2*bumperLength * Math.sin(Math.PI / 3) - sideLength)/2 + 0.5*sideLength*Math.cos(Math.PI/3) - 6*WALL_WIDTH + aiSlapper[i].getSlapperWidth()*Math.cos(Math.PI/3) + SLAPPER_WALL_BUFFER*Math.cos(Math.PI/3))/PIXEL_TO_METER_RATIO_DEFAULT, (float) (0.5*sideLength*Math.sin(Math.PI/3) + SLAPPER_WALL_BUFFER*Math.sin(Math.PI/3))/PIXEL_TO_METER_RATIO_DEFAULT);
+				temp.set((float) ((CAMERA_WIDTH - 2*bumperLength * Math.cos(Math.PI / 3) - sideLength)/2 + 0.5*sideLength*Math.cos(Math.PI/3) + aiSlapper[i].getSlapperWidth()*Math.cos(Math.PI/3)/2 + WALL_WIDTH*4 - SLAPPER_WALL_BUFFER*Math.cos(Math.PI/3))/PIXEL_TO_METER_RATIO_DEFAULT, (float) (0.5*sideLength*Math.sin(Math.PI/3) - aiSlapper[i].getSlapperWidth()*Math.sin(Math.PI/3)/2 + SLAPPER_WALL_BUFFER*Math.sin(Math.PI/3))/PIXEL_TO_METER_RATIO_DEFAULT);
 				aiBody[i].setTransform(temp, (float) ((Math.PI*2)/3));
 				temp.mul(PIXEL_TO_METER_RATIO_DEFAULT);
 				aiSlapper[i].setSlapper(temp);
 			}
 			else if (i==1 && NUM_SLAPPERS==3) { // right ai slapper
-				temp.set((float) ((CAMERA_WIDTH - 2*bumperLength * Math.sin(Math.PI / 3) - sideLength)/2 + 1.5*sideLength*Math.cos(Math.PI/3) - 7*WALL_WIDTH + bumperLength + aiSlapper[i].getSlapperWidth()*Math.cos(Math.PI/3) - SLAPPER_WALL_BUFFER*Math.cos(Math.PI/3))/PIXEL_TO_METER_RATIO_DEFAULT, (float) (0.5*sideLength*Math.sin(Math.PI/3) + SLAPPER_WALL_BUFFER)/PIXEL_TO_METER_RATIO_DEFAULT);
+				temp.set((float) ((CAMERA_WIDTH - 2*bumperLength * Math.cos(Math.PI / 3) - sideLength)/2 + 1.5*sideLength*Math.cos(Math.PI/3) + bumperLength - aiSlapper[i].getSlapperWidth()*Math.cos(Math.PI/3)/2 - WALL_WIDTH*5 + SLAPPER_WALL_BUFFER*Math.cos(Math.PI/3))/PIXEL_TO_METER_RATIO_DEFAULT, (float) (0.5*sideLength*Math.sin(Math.PI/3) - aiSlapper[i].getSlapperWidth()*Math.sin(Math.PI/3)/2 + SLAPPER_WALL_BUFFER)/PIXEL_TO_METER_RATIO_DEFAULT);
 				aiBody[i].setTransform(temp, (float) (Math.PI/3));
 				temp.mul(PIXEL_TO_METER_RATIO_DEFAULT);
 				aiSlapper[i].setSlapper(temp);
@@ -472,7 +472,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
 		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
 		this.mScene.registerUpdateHandler(this);
-		
+				
 		this.gameStarting = true;
 		startTimer();
 		
@@ -824,7 +824,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 				
 				this.mScene.attachChild(boundaryShapes.get("ground"));
 				this.mScene.attachChild(boundaryShapes.get("roof"));
-				
+								
 				break;
 			}
 		}
