@@ -106,6 +106,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public static int NUM_LIVES = 1;
 	public static boolean POWERUPS = false; //powerups
 	public static final int START_SPEED = 10;
+	public static final float BALL_SPEED_INCREASE_RATE = 1.08f;
+	public static float aiSpeed;
 	public static String difficulty;
 	public static float ballSpeedDifficultyIncrease;
 
@@ -251,13 +253,13 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		difficulty = bundle.getString("difficulty");
 
 		if(difficulty.equalsIgnoreCase("Easy")) {
-			MainActivity.ballSpeedDifficultyIncrease = 1.01f;
+			MainActivity.aiSpeed = 7f; 
 		}
 		else if(difficulty.equalsIgnoreCase("Medium")) {
-			MainActivity.ballSpeedDifficultyIncrease = 1.05f;
+			MainActivity.aiSpeed = 10f; 
 		}
 		else if(difficulty.equalsIgnoreCase("Hard")){
-			MainActivity.ballSpeedDifficultyIncrease = 1.1f;
+			MainActivity.aiSpeed = 12f; 
 		}
 		else {
 			MainActivity.ballSpeedDifficultyIncrease = 0.0f;
@@ -1160,8 +1162,8 @@ protected MenuScene createSoundMenuScene() {
 					|| userAData.equals("paddleBody") && userBData.equals("ballBody")) {
 				Log.i("Contact Made", "Ball contacted the paddle");
 				temp = paddleCollision(ballBody,paddleBody,temp);
-				ballBody.setLinearVelocity(temp.x * MainActivity.ballSpeedDifficultyIncrease,
-										  (ballBody.getLinearVelocity().y + temp.y) * MainActivity.ballSpeedDifficultyIncrease);
+				ballBody.setLinearVelocity(temp.x * MainActivity.BALL_SPEED_INCREASE_RATE,
+										  (ballBody.getLinearVelocity().y + temp.y) * MainActivity.BALL_SPEED_INCREASE_RATE);
 			}
 			
 			for (int j = 0; j<NUM_SLAPPERS-1; j++) {
@@ -1173,8 +1175,8 @@ protected MenuScene createSoundMenuScene() {
 					temp = paddleCollision(ballBody,aiBody[j],temp);
 					
 					//Log.i("ballVelocity", "before: " + ballBody.getLinearVelocity().x + ", " + ballBody.getLinearVelocity().y);
-					ballBody.setLinearVelocity(temp.x * MainActivity.ballSpeedDifficultyIncrease,
-											   (temp.y+ballBody.getLinearVelocity().y) * MainActivity.ballSpeedDifficultyIncrease);
+					ballBody.setLinearVelocity(temp.x * MainActivity.BALL_SPEED_INCREASE_RATE,
+											   (temp.y+ballBody.getLinearVelocity().y) * MainActivity.BALL_SPEED_INCREASE_RATE);
 					//Log.i("ballVelocity", "after: " + ballBody.getLinearVelocity().x + ", " + ballBody.getLinearVelocity().y);
 				}
 			}
