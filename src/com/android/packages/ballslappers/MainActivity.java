@@ -105,6 +105,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public static int NUM_SLAPPERS = 4;
 	public static int NUM_LIVES = 1;
 	public static boolean POWERUPS = false; //powerups
+	public static final int START_SPEED = 10;
 	public static String difficulty;
 	public static float ballSpeedDifficultyIncrease;
 
@@ -117,7 +118,11 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public double ballAngleDiff = .001;
 	public static float BALL_RADIUS;
 	public static final int BALL_RESET_DELAY = 3; // in seconds
-		
+	
+	// Scoring System
+	public static int current_score = 0;
+	public final int AI_KILL_SCORE = 100;
+	
 	//Pause Menu
 	public static final int PAUSE_MENU_RESUME = 0;
 	public static final int PAUSE_MENU_RESTART = 1;
@@ -158,9 +163,14 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     private BitmapTextureAtlas mSoundMenuSettingsBitmapTextureAtlas;
     private ITextureRegion mSoundMenuSettingsTextureRegion;
 	
+    // GameOver Menu
+    protected MenuScene mGameOverMenuScene, mScoreMenuScene;
+    //private Bitmap
+    
     private Font mLivesFont;
     private Font mGameResetFont;
     private Text playerLives;
+    private Text currentScoreText;
     private Text[] computerLives = new Text[4];
     private Text gameResetMessage;
     private Text countDownTimer;
@@ -293,7 +303,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         this.mHelpMenuHowToPlayTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mHelpMenuHowToPlayBitmapTextureAtlas, this, "HelpMenu.png", 0, 356);
         this.mHelpMenuGoBackTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mHelpMenuGoBackBitmapTextureAtlas, this, "goBack.png", 0, 99); 
         this.mSoundMenuSettingsTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mSoundMenuSettingsBitmapTextureAtlas, this, "SoundMenu.png", 0, 356); 
-
+        
         this.mEngine.getTextureManager().loadTexture(this.mPauseMenuResumeBitmapTextureAtlas);
         this.mEngine.getTextureManager().loadTexture(this.mPauseMenuRestartBitmapTextureAtlas);
         this.mEngine.getTextureManager().loadTexture(this.mPauseMenuQuitBitmapTextureAtlas); 
@@ -364,7 +374,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		this.mPauseMenuScene = this.createPauseMenuScene();
 		this.mHelpMenuScene = this.createHelpMenuScene(); 
 		this.mSoundMenuScene = this.createSoundMenuScene();
-		
+			
 		// Initialize Physics World - No Gravity
 		this.mPhysicsWorld = new PhysicsWorld(new Vector2(0, 0), false);
 		
@@ -375,11 +385,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		
 		this.numPlayerLives = NUM_LIVES;
 		
-		for (int i = 0; i < NUM_SLAPPERS; i++) { 
-			this.numComputerLives[i] = NUM_LIVES; 
-		}
-		
-		showLives(this.mLivesFont, NUM_LIVES, numComputerLives);
+		showInfo(this.mLivesFont, NUM_LIVES);
 		
 		// Localized Player and paints		
 		if (NUM_SLAPPERS == 4) {
@@ -457,8 +463,16 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		}
 		
 		// initialize the ball
-		start_position = new Vector2((CAMERA_WIDTH/2)/PIXEL_TO_METER_RATIO_DEFAULT, 
+		switch (NUM_SLAPPERS) {
+			case 3:
+				start_position = new Vector2((CAMERA_WIDTH/2)/PIXEL_TO_METER_RATIO_DEFAULT, 
+	 							(float) (0.6*(sideLength + bumperLength)*Math.sin(Math.PI/3))/PIXEL_TO_METER_RATIO_DEFAULT);
+				break;
+			default:	
+				start_position = new Vector2((CAMERA_WIDTH/2)/PIXEL_TO_METER_RATIO_DEFAULT, 
 				 					(CAMERA_HEIGHT/2 - fingerBuffer/2)/PIXEL_TO_METER_RATIO_DEFAULT);
+				break;
+		}
 		final FixtureDef ballDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
         ball = new Sprite(CAMERA_WIDTH/2, CAMERA_HEIGHT/2, this.mBallTextureRegion, this.getVertexBufferObjectManager());
 		ballBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, ball, BodyType.DynamicBody, ballDef);
@@ -879,6 +893,37 @@ protected MenuScene createHelpMenuScene() {
     return tempMenuScene;
 }	
 
+protected MenuScene createGameOverMenuScene() {
+    final MenuScene tempMenuScene = new MenuScene(this.mCamera);
+    
+    final SpriteMenuItem howToPlayMenuItem = new SpriteMenuItem(HELP_MENU_HOWTOPLAY, this.mHelpMenuHowToPlayTextureRegion, this.getVertexBufferObjectManager());
+
+    howToPlayMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+    tempMenuScene.addMenuItem(howToPlayMenuItem);
+    tempMenuScene.setMenuAnimator(new SlideMenuAnimator());
+       
+    TextMenuItem scoreMenuItem = new TextMenuItem(10, this.mLivesFont, "SCORE: " + current_score, this.getVertexBufferObjectManager());
+    tempMenuScene.addMenuItem(scoreMenuItem);
+    
+    final SpriteMenuItem restartMenuItem = new SpriteMenuItem(PAUSE_MENU_RESTART, this.mPauseMenuRestartTextureRegion, this.getVertexBufferObjectManager());
+    restartMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+    tempMenuScene.addMenuItem(restartMenuItem);
+   
+    final SpriteMenuItem quitMenuItem = new SpriteMenuItem(PAUSE_MENU_QUIT, this.mPauseMenuQuitTextureRegion, this.getVertexBufferObjectManager());
+    quitMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+    tempMenuScene.addMenuItem(quitMenuItem);
+                  
+    final SpriteMenuItem soundMenuItem = new SpriteMenuItem(PAUSE_MENU_SOUND, this.mPauseMenuSoundTextureRegion, this.getVertexBufferObjectManager());
+    soundMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+    tempMenuScene.addMenuItem(soundMenuItem);
+    
+    tempMenuScene.buildAnimations();
+    tempMenuScene.setBackgroundEnabled(false);
+    tempMenuScene.setOnMenuItemClickListener(this);
+    
+    return tempMenuScene;
+}	
+
 protected MenuScene createSoundMenuScene() {
     final MenuScene tempMenuScene = new MenuScene(this.mCamera);
     
@@ -903,11 +948,21 @@ protected MenuScene createSoundMenuScene() {
  	private void ballReset() {
     	ballBody.setTransform(start_position, 0f);
 		Vector2 unit = getUnitVector();
-		ballBody.setLinearVelocity(getRandomVelocity()*unit.x, getRandomVelocity() * unit.y+5);
+		ballBody.setLinearVelocity(START_SPEED * unit.x, START_SPEED * unit.y);
 	}
 
 	public void onUpdate(final float pSecondsElapsed) {
 		//ballBody.setTransform(ballBody.getPosition(),ballAngle);
+		if (gameOver) {
+			//this.countDownTimer.setPosition((float)(CAMERA_WIDTH/2 - (countDownTimer.getWidth()*.5)), (float)(CAMERA_HEIGHT*.1));
+			//setResetMessage();
+			this.mGameOverMenuScene = this.createGameOverMenuScene();
+        	this.mScene.setChildScene(this.mGameOverMenuScene, false, true, true);
+			clearBooleans();
+			current_score = 0;
+			return;
+		}
+		
 		if (ballAngle == 360){ ballAngle = 0;}
 		ballAngle += ballAngleDiff;
 		
@@ -941,13 +996,7 @@ protected MenuScene createSoundMenuScene() {
 		}
 		
 		if(outOfBounds) {
-			outOfBounds = false;
-			
-			if(gameOver) {
-				this.countDownTimer.setPosition((float)(CAMERA_WIDTH/2 - (countDownTimer.getWidth()*.5)), (float)(CAMERA_HEIGHT*.1));
-				setResetMessage();
-			}
-			
+			outOfBounds = false;	
 			startTimer();
 		}
 	}
@@ -961,58 +1010,45 @@ protected MenuScene createSoundMenuScene() {
 		return ballBody.getLinearVelocity().y == 0;
 	}
 	
-	public int getRandomVelocity() {
-		int velocity = 0;
-		//while(Math.abs(velocity) < 5 || Math.abs(velocity) > 10)
-			//velocity = randomNumGen.nextInt() % 15;
-		velocity = 15;	// hard code this for now for testing purposes, (tired of having to restart)
-		return velocity;
-	}
-
 	private Vector2 getUnitVector() {
 		Vector2 unitVector = new Vector2(randomNumGen.nextFloat(), randomNumGen.nextFloat());
+		
+		if (NUM_SLAPPERS == 2 || NUM_SLAPPERS == 4) {
+			// avoid the ball going "too" horizontal
+			while (unitVector.y < 0.2f)
+				unitVector.y += 0.1f;
+		}
+		
+		int quadrant = randomNumGen.nextInt(4);
+		if (quadrant == 3) { // traditional fourth quadrant
+			unitVector.y = -unitVector.y;
+		}
+		else if (quadrant == 2) { // traditional third quadrant
+			unitVector.x = -unitVector.x;
+			unitVector.y = -unitVector.y;
+		}
+		else if (quadrant == 1) { // traditional second quadrant
+			unitVector.x = -unitVector.x;
+		}
+		
 		return unitVector.nor();
 	}
 	
 	private void showPlayerLives(Font font, int numLives, int pX, int pY) {
 		this.playerLives = new Text(pX, pY, font,
-				("Player Lives: " + numLives), "Players Lives: X".length(), this.getVertexBufferObjectManager());
+				("Lives left: " + numLives), "Players Lives: X".length(), this.getVertexBufferObjectManager());
 		this.mScene.attachChild(playerLives);
 	}
 	
-	private void showLives(Font font, int numPlayerLives, int[] numComputerLives) {
-		switch(NUM_SLAPPERS) {
-			case 2: {
-				showPlayerLives(font, numPlayerLives, (int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.06));
-				this.computerLives[0] = new Text((int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.1), font,
-						("Computer0 Lives: " + numComputerLives[0]), "ComputerX Lives: X".length(), this.getVertexBufferObjectManager());
-				this.mScene.attachChild(computerLives[0]);
-				break;
-			}
-			case 3: {
-				showPlayerLives(font, numPlayerLives, (int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.06));
-				for(int i = 1; i < NUM_SLAPPERS; i++) {
-					this.computerLives[i-1] = new Text((int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.06) + (50*(i)), font,
-							("Computer" + (i-1) + " Lives: " + numComputerLives[i]), "ComputerX Lives: X".length(), this.getVertexBufferObjectManager());
-					this.mScene.attachChild(computerLives[i-1]);
-				}
-				break;
-			}
-			default: {// 4 player
-				showPlayerLives(font, numPlayerLives, (int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.06));
-				for(int i = 1; i < NUM_SLAPPERS; i++) {
-					this.computerLives[i-1] = new Text((int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.06) + (50*(i)), font,
-							("Computer" + (i-1) + " Lives: " + numComputerLives[i-1]), "ComputerX Lives: X".length(), this.getVertexBufferObjectManager());
-					this.mScene.attachChild(computerLives[i-1]);
-				}
-				break;
-			}
-		}
+	private void showCurrentScore(Font font, int pX, int pY) {
+		currentScoreText = new Text(pX, pY, font, ("Score: " + current_score), 
+							("Score:                       ").length(), this.getVertexBufferObjectManager());
+		this.mScene.attachChild(currentScoreText);
 	}
 	
-	private void resetComputerLives(int computerNum) {
-		this.numComputerLives[computerNum] = NUM_LIVES;
-		computerLives[computerNum].setText("Computer" + computerNum + " Lives: " + numComputerLives[computerNum]);
+	private void showInfo(Font font, int numPlayerLives) {
+		showPlayerLives(font, numPlayerLives, (int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.06));
+		showCurrentScore(font, (int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.11));
 	}
 	
 	/*
@@ -1022,10 +1058,9 @@ protected MenuScene createSoundMenuScene() {
 		this.ballReset();
 		this.clearBooleans();
 		this.numPlayerLives = NUM_LIVES;
-		playerLives.setText("Player Lives: " + numPlayerLives);
-		for (int i = 0; i < NUM_SLAPPERS-1; i++) {
-			this.resetComputerLives(i);
-		}
+		playerLives.setText("Lives left: " + numPlayerLives);
+		current_score = 0;
+		currentScoreText.setText("Score: " + current_score);
 	}
 
 	private void setLoserMessage(String loserMessage) {
@@ -1059,7 +1094,8 @@ protected MenuScene createSoundMenuScene() {
     				if(countDownTimer.hasParent())
     					mScene.detachChild(countDownTimer);
     			}
-    			else if(gameOver || gameStarting) {
+    			//else if(gameOver || gameStarting) {
+    			else if (gameStarting) {
     				resetGame();
     				if(gameResetMessage.hasParent())
     					mScene.detachChild(gameResetMessage);
@@ -1170,7 +1206,7 @@ protected MenuScene createSoundMenuScene() {
 							|| userAData.equals("groundBody") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the ground");
 						outOfBounds = true;
-						playerLives.setText("Player Lives: " + --numPlayerLives);
+						playerLives.setText("Lives left: " + --numPlayerLives);
 						
 						if(numPlayerLives == 0) {
 							gameOver = true;
@@ -1184,43 +1220,22 @@ protected MenuScene createSoundMenuScene() {
 							|| userAData.equals("roofBody") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the roof");
 						outOfBounds = true;
-						computerLives[0].setText("Computer0 Lives: " + --numComputerLives[0]);
-						
-						if(numComputerLives[0] == 0) {
-							gameOver = true;
-							setLoserMessage("Computer0 loses. ");
-						}
-						else {
-							setLoserMessage(""); // No one lost we just reset the ball
-						}
+						current_score += AI_KILL_SCORE;
+						currentScoreText.setText("Score: " + current_score);
 					}
 					else if(userAData.equals("ballBody") && userBData.equals("leftBody")
 							|| userAData.equals("leftBody") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the left");
 						outOfBounds = true;
-						computerLives[1].setText("Computer1 Lives: " + --numComputerLives[1]);
-						
-						if(numComputerLives[1] == 0) {
-							gameOver = true;
-							setLoserMessage("Computer1 loses. ");
-						}
-						else {
-							setLoserMessage(""); // No one lost we just reset the ball
-						}
+						current_score += AI_KILL_SCORE;
+						currentScoreText.setText("Score: " + current_score);
 					}
 					else if(userAData.equals("ballBody") && userBData.equals("rightBody")
 							|| userAData.equals("rightBody") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the right");
 						outOfBounds = true;
-						computerLives[2].setText("Computer2 Lives: " + --numComputerLives[2]);
-						
-						if(numComputerLives[2] == 0) {
-							gameOver = true;
-							setLoserMessage("Computer2 loses. ");
-						}
-						else {
-							setLoserMessage(""); // No one lost we just reset the ball
-						}
+						current_score += AI_KILL_SCORE;
+						currentScoreText.setText("Score: " + current_score);
 					}
 					break;
 				case 3:
@@ -1228,7 +1243,7 @@ protected MenuScene createSoundMenuScene() {
 							|| userAData.equals("btri") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the ground");
 						outOfBounds = true;
-						playerLives.setText("Player Lives: " + --numPlayerLives);
+						playerLives.setText("Lives left: " + --numPlayerLives);
 						
 						if(numPlayerLives == 0) {
 							gameOver = true;
@@ -1242,29 +1257,15 @@ protected MenuScene createSoundMenuScene() {
 							|| userAData.equals("rtri") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the roof");
 						outOfBounds = true;
-						computerLives[0].setText("Computer0 Lives: " + --numComputerLives[0]);
-						
-						if(numComputerLives[0] == 0) {
-							gameOver = true;
-							setLoserMessage("Computer0 loses. ");
-						}
-						else {
-							setLoserMessage(""); // No one lost we just reset the ball
-						}
+						current_score += AI_KILL_SCORE;
+						currentScoreText.setText("Score: " + current_score);
 					}
 					else if(userAData.equals("ballBody") && userBData.equals("ltri")
 							|| userAData.equals("ltri") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the left");
 						outOfBounds = true;
-						computerLives[1].setText("Computer1 Lives: " + --numComputerLives[1]);
-						
-						if(numComputerLives[1] == 0) {
-							gameOver = true;
-							setLoserMessage("Computer1 loses. ");
-						}
-						else {
-							setLoserMessage(""); // No one lost we just reset the ball
-						}
+						current_score += AI_KILL_SCORE;
+						currentScoreText.setText("Score: " + current_score);
 					}
 					break;
 				default:
@@ -1272,7 +1273,7 @@ protected MenuScene createSoundMenuScene() {
 							|| userAData.equals("groundBody") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the ground");
 						outOfBounds = true;
-						playerLives.setText("Player Lives: " + --numPlayerLives);
+						playerLives.setText("Lives left: " + --numPlayerLives);
 						
 						if(numPlayerLives == 0) {
 							gameOver = true;
@@ -1286,15 +1287,8 @@ protected MenuScene createSoundMenuScene() {
 							|| userAData.equals("roofBody") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the roof");
 						outOfBounds = true;
-						computerLives[0].setText("Computer Lives: " + --numComputerLives[0]);
-						
-						if(numComputerLives[0] == 0) {
-							gameOver = true;
-							setLoserMessage("The Computer loses. ");
-						}
-						else {
-							setLoserMessage(""); // No one lost we just reset the ball
-						}
+						current_score += AI_KILL_SCORE;
+						currentScoreText.setText("Score: " + current_score);
 					}
 					
 					break;
