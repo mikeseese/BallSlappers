@@ -101,8 +101,13 @@ public class Slapper extends Rectangle {
 				if(number > high)
 					number = high;
 			}
-			else { // orientation == Math.PI/3 || orientation == 2*Math.PI/3
-				
+			else {
+				float low = MainActivity.WALL_WIDTH;
+				float high = (float) (low + MainActivity.sideLength*Math.sin(Math.PI/3) - this.width*Math.sin(Math.PI/3)/2);
+				if(number < low)
+					number = low;
+				if(number > high)
+					number = high;
 			}
 		}
 		else { //if (MainActivity.NUM_SLAPPERS == 2) {

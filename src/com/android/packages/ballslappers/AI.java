@@ -4,6 +4,7 @@ import static org.andengine.extension.physics.box2d.util.constants.PhysicsConsta
 
 import java.util.Random;
 
+import android.util.FloatMath;
 import android.util.Log;
 
 import com.badlogic.gdx.math.Vector2;
@@ -12,7 +13,7 @@ import com.badlogic.gdx.physics.box2d.Body;
 public class AI {
 	/* Vector2 for the position the ball should move to */
 	private Vector2 newAIPos = new Vector2();
-	private static final float speed = 8;
+	private static final float speed = 7;
 	private Slapper slapper;
 	
 	public AI(Slapper s) {
@@ -33,26 +34,25 @@ public class AI {
 		float slapperX = slapper.getSlapperX();
 		float slapperY = slapper.getSlapperY();
 		//Log.i("ball X,Y", Float.toString(ballx) + ", " + Float.toString(bally));
-		//Log.i("slapper X,Y", Float.toString(slapperX) + ", " + Float.toString(slapperY));
+		Log.i("slapper X,Y", Float.toString(slapperX) + ", " + Float.toString(slapperY));
 		
-		if(orientation !=0) { //if it is not horizontal then it should move based on y axis solely
-			if(slapperY > bally - ymove) {
-				slapperX = slapperX-xmove;
-				slapperY = slapper.bound(slapperY-ymove); // if NUM_SLAPPERS == 3 then bound just returns slapperY
-														  // because I'm not sure what's going on with these #s below
-														  // (I think they are bounding with them)
+		if (orientation != 0) { //if it is not horizontal then it should move based on y axis solely
+			if(slapperY + slapper.getWidth()*Math.abs(Math.sin(orientation))/2 < bally - MainActivity.BALL_RADIUS + 10) {
+				// needs to move down
+				float oldSlapperY = slapperY;
+				slapperY = slapper.bound(slapperY + ymove);
 				
-				if (slapperY <= MainActivity.WALL_WIDTH + slapper.getSlapperWidth()/2 && MainActivity.NUM_SLAPPERS == 3){
-					slapperX= slapperX+xmove;
-					slapperY = slapperY+ymove;
+				if (Float.compare(slapperY, oldSlapperY + ymove) == 0) { // didn't get bounded
+					slapperX = slapperX + xmove;
 				}
 			}
-			else if(slapperY <bally+ymove) {
-				slapperX = slapperX+xmove;
-				slapperY = slapper.bound(slapperY+ymove);
-				if (slapperY >= (MainActivity.sideLength*Math.sin(Math.PI/3) - slapper.getSlapperWidth()*Math.sin(Math.PI/3)/2 + MainActivity.WALL_WIDTH) && MainActivity.NUM_SLAPPERS==3){
-					slapperX= slapperX-xmove;
-					slapperY = slapperY-ymove;
+			else if(slapperY - slapper.getWidth()*Math.abs(Math.sin(orientation))/2 > bally + MainActivity.BALL_RADIUS - 10) {
+				// needs to move up
+				float oldSlapperY = slapperY;
+				slapperY = slapper.bound(slapperY - ymove);
+				
+				if (Float.compare(slapperY, oldSlapperY - ymove) == 0) { // didn't get bounded
+					slapperX = slapperX - xmove;
 				}
 			}			
 		}

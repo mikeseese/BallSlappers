@@ -39,11 +39,13 @@ import org.andengine.extension.physics.box2d.PhysicsFactory;
 import org.andengine.extension.physics.box2d.PhysicsWorld;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.font.Font;
+import org.andengine.opengl.font.FontFactory;
 import org.andengine.opengl.texture.ITexture;
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.andengine.opengl.texture.atlas.bitmap.BuildableBitmapTextureAtlas;
+import org.andengine.opengl.texture.bitmap.BitmapTexture;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.texture.region.TextureRegion;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
@@ -123,7 +125,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public static int current_score = 0;
 	public final int AI_KILL_SCORE = 100;
 	
-	//Pause Menu
+	// Pause Menu
 	public static final int PAUSE_MENU_RESUME = 0;
 	public static final int PAUSE_MENU_RESTART = 1;
 	public static final int PAUSE_MENU_QUIT = 2;
@@ -133,6 +135,10 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public static final int HELP_MENU_GOBACK = 6;
 	public static final int SOUND_MENU_SETTINGS = 7;
 	public static final int SOUND_MENU_GOBACK = 8;
+	
+	// Game Over Menu
+	public static final int GAME_OVER_MENU_MAIN = 9;
+	public static final int GAME_OVER_MENU_REPLAY = 10;
 
 	// ===========================================================
 	// FIELDS / PARAMETERS
@@ -165,19 +171,25 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	
     // GameOver Menu
     protected MenuScene mGameOverMenuScene, mScoreMenuScene;
-    //private Bitmap
+    private BitmapTextureAtlas mGameOverMenuReplayBitmapTextureAtlas;
+    private ITextureRegion mGameOverMenuReplayTextureRegion;
+    private BitmapTextureAtlas mGameOverMenuGameOverBitmapTextureAtlas;
+    private ITextureRegion mGameOverMenuGameOverTextureRegion;
+    private BitmapTextureAtlas mGameOverMenuQuitBitmapTextureAtlas;
+    private ITextureRegion mGameOverMenuQuitTextureRegion;
+    
     
     private Font mLivesFont;
     private Font mGameResetFont;
+    private Font mGameOverFont;
     private Text playerLives;
     private Text currentScoreText;
-    private Text[] computerLives = new Text[4];
+    private Text gameOverScore;
     private Text gameResetMessage;
     private Text countDownTimer;
     
     //Game UI Implementations
     private int numPlayerLives;
-    private int[] numComputerLives = new int[4]; 
     protected boolean gameOver = false;
     protected boolean gameStarting = false;
     protected boolean resuming = false;
@@ -272,16 +284,22 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 					TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         final BitmapTextureAtlas mGameResetTexture = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, 
 					TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+        final BitmapTextureAtlas mGameOverTexture = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, 
+				TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         
         this.mLivesFont = new Font(this.getFontManager(), (ITexture) mLivesTexture, 
 				   Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 35.0f, true, Color.RED);
         this.mGameResetFont = new Font(this.getFontManager(), (ITexture) mGameResetTexture, 
 				   Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 50.0f, true, Color.WHITE);
-              
+        this.mGameOverFont = new Font(this.getFontManager(), (ITexture) mGameOverTexture,
+        		   Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 65.0f, true, Color.WHITE);
+        
         this.mEngine.getTextureManager().loadTexture(mLivesTexture);
         this.mEngine.getTextureManager().loadTexture(mGameResetTexture);
+        this.mEngine.getTextureManager().loadTexture(mGameOverTexture);
         this.getFontManager().loadFont(this.mLivesFont);
         this.getFontManager().loadFont(this.mGameResetFont);
+        this.getFontManager().loadFont(this.mGameOverFont);
         
         // Pause Menu textures
         this.mPauseMenuResumeBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
@@ -312,7 +330,20 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         this.mEngine.getTextureManager().loadTexture(this.mHelpMenuHowToPlayBitmapTextureAtlas); 
         this.mEngine.getTextureManager().loadTexture(this.mHelpMenuGoBackBitmapTextureAtlas); 
         this.mEngine.getTextureManager().loadTexture(this.mSoundMenuSettingsBitmapTextureAtlas); 
+
+        // Game Over Menu textures
+        this.mGameOverMenuReplayBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
+        this.mGameOverMenuGameOverBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+        this.mGameOverMenuQuitBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         
+        this.mGameOverMenuReplayTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mGameOverMenuReplayBitmapTextureAtlas, this, "replay.png", 0, 99);
+        this.mGameOverMenuGameOverTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mGameOverMenuReplayBitmapTextureAtlas, this, "gameOver.png", 0, 356);
+        this.mGameOverMenuQuitTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mGameOverMenuQuitBitmapTextureAtlas, this, "gameOverQuit.png", 0, 99);
+        
+        this.mEngine.getTextureManager().loadTexture(this.mGameOverMenuReplayBitmapTextureAtlas);
+        this.mEngine.getTextureManager().loadTexture(this.mGameOverMenuGameOverBitmapTextureAtlas);
+        this.mEngine.getTextureManager().loadTexture(this.mGameOverMenuQuitBitmapTextureAtlas);
+
         //Ball Textures
         texChoice = "ball.png";
         this.mBallBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 44, 44, 		// 68 x 68 is the size of the image
@@ -355,7 +386,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         
         // Text for resetting the game
         // 40 is the max size for text. Currently a magic #
-		this.gameResetMessage = new Text(CAMERA_WIDTH/2, CAMERA_HEIGHT/2, this.mGameResetFont, "Game over. " + loserMessage + "Resetting.",
+		this.gameResetMessage = new Text(CAMERA_WIDTH/2, CAMERA_HEIGHT/2, this.mGameResetFont, loserMessage + "Resetting.",
 				40, this.getVertexBufferObjectManager());
 		this.countDownTimer = new Text(CAMERA_WIDTH/2, (int)(CAMERA_HEIGHT*.1), this.mGameResetFont, "Starting in: " + BALL_RESET_DELAY,
 				"Starting in: X".length(), this.getVertexBufferObjectManager());
@@ -374,6 +405,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		this.mPauseMenuScene = this.createPauseMenuScene();
 		this.mHelpMenuScene = this.createHelpMenuScene(); 
 		this.mSoundMenuScene = this.createSoundMenuScene();
+		
+		this.mGameOverMenuScene = this.createGameOverMenuScene();
 			
 		// Initialize Physics World - No Gravity
 		this.mPhysicsWorld = new PhysicsWorld(new Vector2(0, 0), false);
@@ -530,7 +563,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		if(pKeyCode == KeyEvent.KEYCODE_MENU && pEvent.getAction() == KeyEvent.ACTION_DOWN) {
 			if(this.mScene.hasChildScene()) {
 	            // set up the count down timer
-	            setLoserMessage("");
 	            this.resuming = true;
 	            startTimer();
 
@@ -554,7 +586,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	            this.mPauseMenuScene.reset();
 	            
 	            // set up the count down timer
-	            setLoserMessage("");
 	            this.resuming = true;
 	            startTimer();
 	            
@@ -566,7 +597,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	            this.mScene.clearChildScene();
 	            
 	            // set up the count down timer
-	            setLoserMessage("");
 	            this.gameStarting = true;
 	            startTimer();
 	            
@@ -616,6 +646,13 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
             	return true;
             case SOUND_MENU_GOBACK:
             	this.mScene.setChildScene(this.mPauseMenuScene, false, true, true);
+            	return true;
+            case GAME_OVER_MENU_REPLAY:
+            	this.mScene.clearChildScene();
+            	this.mGameOverMenuScene.detachChild(this.gameOverScore);
+            	this.mGameOverMenuScene.reset();
+            	resetGame();            	
+            	startTimer();
             	return true;
             default:
                 return false;
@@ -896,27 +933,20 @@ protected MenuScene createHelpMenuScene() {
 protected MenuScene createGameOverMenuScene() {
     final MenuScene tempMenuScene = new MenuScene(this.mCamera);
     
-    final SpriteMenuItem howToPlayMenuItem = new SpriteMenuItem(HELP_MENU_HOWTOPLAY, this.mHelpMenuHowToPlayTextureRegion, this.getVertexBufferObjectManager());
+    final SpriteMenuItem gameOverMenuItem = new SpriteMenuItem(GAME_OVER_MENU_MAIN, this.mGameOverMenuGameOverTextureRegion, this.getVertexBufferObjectManager());
 
-    howToPlayMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
-    tempMenuScene.addMenuItem(howToPlayMenuItem);
-    tempMenuScene.setMenuAnimator(new SlideMenuAnimator());
-       
-    TextMenuItem scoreMenuItem = new TextMenuItem(10, this.mLivesFont, "SCORE: " + current_score, this.getVertexBufferObjectManager());
-    tempMenuScene.addMenuItem(scoreMenuItem);
+    gameOverMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+    tempMenuScene.addMenuItem(gameOverMenuItem);
+    //tempMenuScene.setMenuAnimator(new SlideMenuAnimator());
     
-    final SpriteMenuItem restartMenuItem = new SpriteMenuItem(PAUSE_MENU_RESTART, this.mPauseMenuRestartTextureRegion, this.getVertexBufferObjectManager());
-    restartMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
-    tempMenuScene.addMenuItem(restartMenuItem);
+    final SpriteMenuItem replayMenuItem = new SpriteMenuItem(GAME_OVER_MENU_REPLAY, this.mGameOverMenuReplayTextureRegion, this.getVertexBufferObjectManager());
+    replayMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+    tempMenuScene.addMenuItem(replayMenuItem);
    
-    final SpriteMenuItem quitMenuItem = new SpriteMenuItem(PAUSE_MENU_QUIT, this.mPauseMenuQuitTextureRegion, this.getVertexBufferObjectManager());
+    final SpriteMenuItem quitMenuItem = new SpriteMenuItem(PAUSE_MENU_QUIT, this.mGameOverMenuQuitTextureRegion, this.getVertexBufferObjectManager());
     quitMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
     tempMenuScene.addMenuItem(quitMenuItem);
                   
-    final SpriteMenuItem soundMenuItem = new SpriteMenuItem(PAUSE_MENU_SOUND, this.mPauseMenuSoundTextureRegion, this.getVertexBufferObjectManager());
-    soundMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
-    tempMenuScene.addMenuItem(soundMenuItem);
-    
     tempMenuScene.buildAnimations();
     tempMenuScene.setBackgroundEnabled(false);
     tempMenuScene.setOnMenuItemClickListener(this);
@@ -954,11 +984,10 @@ protected MenuScene createSoundMenuScene() {
 	public void onUpdate(final float pSecondsElapsed) {
 		//ballBody.setTransform(ballBody.getPosition(),ballAngle);
 		if (gameOver) {
-			//this.countDownTimer.setPosition((float)(CAMERA_WIDTH/2 - (countDownTimer.getWidth()*.5)), (float)(CAMERA_HEIGHT*.1));
-			//setResetMessage();
-			this.mGameOverMenuScene = this.createGameOverMenuScene();
         	this.mScene.setChildScene(this.mGameOverMenuScene, false, true, true);
-			clearBooleans();
+        	this.gameOverScore = new Text(575, 345, mGameOverFont, Integer.toString(current_score), this.getVertexBufferObjectManager());
+        	this.mGameOverMenuScene.attachChild(gameOverScore);
+        	clearBooleans();
 			current_score = 0;
 			return;
 		}
@@ -1063,10 +1092,6 @@ protected MenuScene createSoundMenuScene() {
 		currentScoreText.setText("Score: " + current_score);
 	}
 
-	private void setLoserMessage(String loserMessage) {
-		this.loserMessage = loserMessage;
-	}
-	
 	private String getLosingMessage() {
 		return this.loserMessage + "Game about to start.";
 	}
@@ -1210,10 +1235,6 @@ protected MenuScene createSoundMenuScene() {
 						
 						if(numPlayerLives == 0) {
 							gameOver = true;
-							setLoserMessage("You lose. ");
-						}
-						else {
-							setLoserMessage(""); // No one lost we just reset the ball
 						}
 					}
 					else if(userAData.equals("ballBody") && userBData.equals("roofBody")
@@ -1247,10 +1268,6 @@ protected MenuScene createSoundMenuScene() {
 						
 						if(numPlayerLives == 0) {
 							gameOver = true;
-							setLoserMessage("You lose. ");
-						}
-						else {
-							setLoserMessage(""); // No one lost we just reset the ball
 						}
 					}
 					else if(userAData.equals("ballBody") && userBData.equals("rtri")
@@ -1277,10 +1294,6 @@ protected MenuScene createSoundMenuScene() {
 						
 						if(numPlayerLives == 0) {
 							gameOver = true;
-							setLoserMessage("You lose. ");
-						}
-						else {
-							setLoserMessage(""); // No one lost we just reset the ball
 						}
 					}
 					else if(userAData.equals("ballBody") && userBData.equals("roofBody")
