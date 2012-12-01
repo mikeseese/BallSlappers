@@ -57,6 +57,14 @@
                 android:gravity="center"
                 android:text="@string/Lives"
                 android:textSize="25sp" />
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="@string/Player_Name"
+                android:textSize="20sp" />
 		    
         </LinearLayout>
     
@@ -128,6 +136,14 @@
 			        android:onClick="plusOneLife" />
 			     
 		    </LinearLayout>
+		    <EditText
+		        android:id="@+id/GameName"
+		        android:layout_width="125dp"
+		        android:layout_height="60dp"
+		        android:layout_gravity="center"
+		        android:hint="@string/Player_Name"
+		        android:maxLines="1"
+		        android:scrollHorizontally="true" />
 		    
         </LinearLayout>  
         
@@ -156,7 +172,7 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/bottom"
         android:layout_width="wrap_content"
-        android:layout_height="fill_parent"
+        android:layout_height="45dp"
         android:layout_marginBottom="5dp" >
 
         <ToggleButton
@@ -167,9 +183,7 @@
             android:layout_alignParentRight="true"
             android:layout_marginRight="5dp"
             android:background="@drawable/home_sound_button"
-            android:textOn="ON"
-            android:textOff="OFF"
-            android:onClick="toggleMusic" />
+            android:textOn="@android:string/yes" />
 
     </RelativeLayout>
     
