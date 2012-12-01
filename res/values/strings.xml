@@ -6,6 +6,8 @@
     <string name="Menu_Button_Tutorial">Tutorial</string>
     <string name="Menu_Button_Options">Options</string>
     <string name="title_activity_home_screen">BallSlappers</string>
+    <string name="game_over_insert_quarter">GAME OVER: INSERT QUARTER</string>
+    <string name="High_Score">HIGH SCORES</string>
     <string name="hello_world">Hello world!</string>
     <string name="No._CPUs">No. CPUs</string>
     <string name="No._Players">No. Players</string>
@@ -55,4 +57,5 @@
         <item >4</item>
         <item >5</item>
     </string-array>
+    <string name="Player_Name">Player Name</string>
 </resources>
