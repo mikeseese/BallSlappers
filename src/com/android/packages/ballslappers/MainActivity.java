@@ -31,6 +31,8 @@ import org.andengine.entity.scene.menu.item.SpriteMenuItem;
 import org.andengine.entity.scene.menu.item.TextMenuItem;
 import org.andengine.entity.scene.menu.item.decorator.ColorMenuItemDecorator;
 import org.andengine.entity.sprite.AnimatedSprite;
+import org.andengine.entity.sprite.ButtonSprite;
+import org.andengine.entity.sprite.ButtonSprite.OnClickListener;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.util.FPSLogger;
@@ -164,6 +166,9 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     private ITextureRegion mHelpMenuGoBackTextureRegion; 
     private BitmapTextureAtlas mSoundMenuSettingsBitmapTextureAtlas;
     private ITextureRegion mSoundMenuSettingsTextureRegion;
+    private BitmapTextureAtlas mPauseButtonTextureAtlas;
+    private ITextureRegion mPauseButtonTextureRegion;
+    private ButtonSprite mPauseButton;
 	
     // GameOver Menu
     protected MenuScene mGameOverMenuScene, mScoreMenuScene;
@@ -291,20 +296,22 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         this.mPauseMenuQuitBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
         this.mPauseMenuHelpBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
         this.mPauseMenuSoundBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
-        this.mHelpMenuHowToPlayBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
-        this.mHelpMenuGoBackBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
-        this.mSoundMenuSettingsBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
+        this.mHelpMenuHowToPlayBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+        this.mHelpMenuGoBackBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+        this.mSoundMenuSettingsBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+        this.mPauseButtonTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 
-        this.mPauseMenuResumeTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuResumeBitmapTextureAtlas, this, "Resume.png", 0, 99); 
-        this.mPauseMenuRestartTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuRestartBitmapTextureAtlas, this, "Restart.png", 0, 99); 
-        this.mPauseMenuQuitTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuQuitBitmapTextureAtlas, this, "Quit.png", 0, 99); 
-        this.mPauseMenuHelpTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuHelpBitmapTextureAtlas, this, "Help.png", 0, 99); 
+        this.mPauseMenuResumeTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuResumeBitmapTextureAtlas, this, "Resume.png", 0, 99);
+        this.mPauseMenuRestartTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuRestartBitmapTextureAtlas, this, "Restart.png", 0, 99);
+        this.mPauseMenuQuitTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuQuitBitmapTextureAtlas, this, "Quit.png", 0, 99);
+        this.mPauseMenuHelpTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuHelpBitmapTextureAtlas, this, "Help.png", 0, 99);
         this.mPauseMenuSoundTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuSoundBitmapTextureAtlas, this, "Sound.png", 0, 99); 
         this.mHelpMenuHowToPlayTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mHelpMenuHowToPlayBitmapTextureAtlas, this, "HelpMenu.png", 0, 356);
         this.mHelpMenuGoBackTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mHelpMenuGoBackBitmapTextureAtlas, this, "goBack.png", 0, 99); 
         this.mSoundMenuSettingsTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mSoundMenuSettingsBitmapTextureAtlas, this, "SoundMenu.png", 0, 356); 
+        this.mPauseButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseButtonTextureAtlas, this, "pause.png", 0, 99);
         
         this.mEngine.getTextureManager().loadTexture(this.mPauseMenuResumeBitmapTextureAtlas);
         this.mEngine.getTextureManager().loadTexture(this.mPauseMenuRestartBitmapTextureAtlas);
@@ -313,7 +320,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         this.mEngine.getTextureManager().loadTexture(this.mPauseMenuSoundBitmapTextureAtlas);
         this.mEngine.getTextureManager().loadTexture(this.mHelpMenuHowToPlayBitmapTextureAtlas); 
         this.mEngine.getTextureManager().loadTexture(this.mHelpMenuGoBackBitmapTextureAtlas); 
-        this.mEngine.getTextureManager().loadTexture(this.mSoundMenuSettingsBitmapTextureAtlas); 
+        this.mEngine.getTextureManager().loadTexture(this.mSoundMenuSettingsBitmapTextureAtlas);
+        this.mEngine.getTextureManager().loadTexture(this.mPauseButtonTextureAtlas);
         
         //Ball Textures
         texChoice = "ball.png";
@@ -488,7 +496,17 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
 		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
 		this.mScene.registerUpdateHandler(this);
-				
+		
+		this.mPauseButton = new ButtonSprite((float)(CAMERA_WIDTH - (CAMERA_WIDTH*.1)), (float)(CAMERA_HEIGHT*.1),
+				this.mPauseButtonTextureRegion, this.getVertexBufferObjectManager(), new OnClickListener() {
+					public void onClick(final ButtonSprite pButtonSprite, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+						// attach the menu
+						mScene.setChildScene(mPauseMenuScene, false, true, true);
+					}
+				});
+		this.mScene.registerTouchArea(mPauseButton);
+		this.mScene.attachChild(mPauseButton);
+
 		this.gameStarting = true;
 		startTimer();
 		
