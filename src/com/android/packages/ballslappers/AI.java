@@ -13,7 +13,6 @@ import com.badlogic.gdx.physics.box2d.Body;
 public class AI {
 	/* Vector2 for the position the ball should move to */
 	private Vector2 newAIPos = new Vector2();
-	private static final float speed = 7;
 	private Slapper slapper;
 	
 	public AI(Slapper s) {
@@ -29,8 +28,8 @@ public class AI {
 		float ballx = PIXEL_TO_METER_RATIO_DEFAULT*newAIPos.x;
 		float bally = PIXEL_TO_METER_RATIO_DEFAULT*newAIPos.y;
 		float orientation = slapper.getSlapperOrientation();
-		float xmove = (float)(speed*Math.cos(orientation));
-		float ymove = (float)(speed*Math.sin(orientation));
+		float xmove = (float)(MainActivity.aiSpeed*Math.cos(orientation));
+		float ymove = (float)(MainActivity.aiSpeed*Math.sin(orientation));
 		float slapperX = slapper.getSlapperX();
 		float slapperY = slapper.getSlapperY();
 		//Log.i("ball X,Y", Float.toString(ballx) + ", " + Float.toString(bally));

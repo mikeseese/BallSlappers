@@ -31,6 +31,8 @@ import org.andengine.entity.scene.menu.item.SpriteMenuItem;
 import org.andengine.entity.scene.menu.item.TextMenuItem;
 import org.andengine.entity.scene.menu.item.decorator.ColorMenuItemDecorator;
 import org.andengine.entity.sprite.AnimatedSprite;
+import org.andengine.entity.sprite.ButtonSprite;
+import org.andengine.entity.sprite.ButtonSprite.OnClickListener;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.util.FPSLogger;
@@ -108,6 +110,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public static int NUM_LIVES = 1;
 	public static boolean POWERUPS = false; //powerups
 	public static final int START_SPEED = 10;
+	public static final float BALL_SPEED_INCREASE_RATE = 1.08f;
+	public static float aiSpeed;
 	public static String difficulty;
 	public static float ballSpeedDifficultyIncrease;
 
@@ -169,6 +173,9 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     private ITextureRegion mHelpMenuGoBackTextureRegion; 
     private BitmapTextureAtlas mSoundMenuSettingsBitmapTextureAtlas;
     private ITextureRegion mSoundMenuSettingsTextureRegion;
+    private BitmapTextureAtlas mPauseButtonTextureAtlas;
+    private ITextureRegion mPauseButtonTextureRegion;
+    private ButtonSprite mPauseButton;
 	
     // GameOver Menu
     protected MenuScene mGameOverMenuScene, mScoreMenuScene;
@@ -268,13 +275,13 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		difficulty = bundle.getString("difficulty");
 
 		if(difficulty.equalsIgnoreCase("Easy")) {
-			MainActivity.ballSpeedDifficultyIncrease = 1.01f;
+			MainActivity.aiSpeed = 7f; 
 		}
 		else if(difficulty.equalsIgnoreCase("Medium")) {
-			MainActivity.ballSpeedDifficultyIncrease = 1.05f;
+			MainActivity.aiSpeed = 10f; 
 		}
 		else if(difficulty.equalsIgnoreCase("Hard")){
-			MainActivity.ballSpeedDifficultyIncrease = 1.1f;
+			MainActivity.aiSpeed = 12f; 
 		}
 		else {
 			MainActivity.ballSpeedDifficultyIncrease = 0.0f;
@@ -312,20 +319,22 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         this.mPauseMenuQuitBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
         this.mPauseMenuHelpBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
         this.mPauseMenuSoundBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
-        this.mHelpMenuHowToPlayBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
-        this.mHelpMenuGoBackBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
-        this.mSoundMenuSettingsBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
+        this.mHelpMenuHowToPlayBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+        this.mHelpMenuGoBackBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+        this.mSoundMenuSettingsBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+        this.mPauseButtonTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 
-        this.mPauseMenuResumeTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuResumeBitmapTextureAtlas, this, "Resume.png", 0, 99); 
-        this.mPauseMenuRestartTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuRestartBitmapTextureAtlas, this, "Restart.png", 0, 99); 
-        this.mPauseMenuQuitTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuQuitBitmapTextureAtlas, this, "Quit.png", 0, 99); 
-        this.mPauseMenuHelpTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuHelpBitmapTextureAtlas, this, "Help.png", 0, 99); 
+        this.mPauseMenuResumeTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuResumeBitmapTextureAtlas, this, "Resume.png", 0, 99);
+        this.mPauseMenuRestartTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuRestartBitmapTextureAtlas, this, "Restart.png", 0, 99);
+        this.mPauseMenuQuitTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuQuitBitmapTextureAtlas, this, "Quit.png", 0, 99);
+        this.mPauseMenuHelpTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuHelpBitmapTextureAtlas, this, "Help.png", 0, 99);
         this.mPauseMenuSoundTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuSoundBitmapTextureAtlas, this, "Sound.png", 0, 99); 
         this.mHelpMenuHowToPlayTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mHelpMenuHowToPlayBitmapTextureAtlas, this, "HelpMenu.png", 0, 356);
         this.mHelpMenuGoBackTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mHelpMenuGoBackBitmapTextureAtlas, this, "goBack.png", 0, 99); 
         this.mSoundMenuSettingsTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mSoundMenuSettingsBitmapTextureAtlas, this, "SoundMenu.png", 0, 356); 
+        this.mPauseButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseButtonTextureAtlas, this, "pause.png", 0, 99);
         
         this.mEngine.getTextureManager().loadTexture(this.mPauseMenuResumeBitmapTextureAtlas);
         this.mEngine.getTextureManager().loadTexture(this.mPauseMenuRestartBitmapTextureAtlas);
@@ -334,6 +343,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         this.mEngine.getTextureManager().loadTexture(this.mPauseMenuSoundBitmapTextureAtlas);
         this.mEngine.getTextureManager().loadTexture(this.mHelpMenuHowToPlayBitmapTextureAtlas); 
         this.mEngine.getTextureManager().loadTexture(this.mHelpMenuGoBackBitmapTextureAtlas); 
+        this.mEngine.getTextureManager().loadTexture(this.mSoundMenuSettingsBitmapTextureAtlas);
+        this.mEngine.getTextureManager().loadTexture(this.mPauseButtonTextureAtlas);
         this.mEngine.getTextureManager().loadTexture(this.mSoundMenuSettingsBitmapTextureAtlas); 
 
         // Game Over Menu textures
@@ -532,7 +543,17 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
 		this.mScene.registerUpdateHandler(this.mPhysicsWorld);
 		this.mScene.registerUpdateHandler(this);
-				
+		
+		this.mPauseButton = new ButtonSprite((float)(CAMERA_WIDTH - (CAMERA_WIDTH*.1)), (float)(CAMERA_HEIGHT*.1),
+				this.mPauseButtonTextureRegion, this.getVertexBufferObjectManager(), new OnClickListener() {
+					public void onClick(final ButtonSprite pButtonSprite, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+						// attach the menu
+						mScene.setChildScene(mPauseMenuScene, false, true, true);
+					}
+				});
+		this.mScene.registerTouchArea(mPauseButton);
+		this.mScene.attachChild(mPauseButton);
+
 		this.gameStarting = true;
 		startTimer();
 		
@@ -1218,8 +1239,8 @@ protected MenuScene createSoundMenuScene() {
 					|| userAData.equals("paddleBody") && userBData.equals("ballBody")) {
 				Log.i("Contact Made", "Ball contacted the paddle");
 				temp = paddleCollision(ballBody,paddleBody,temp);
-				ballBody.setLinearVelocity(temp.x * MainActivity.ballSpeedDifficultyIncrease,
-										  (ballBody.getLinearVelocity().y + temp.y) * MainActivity.ballSpeedDifficultyIncrease);
+				ballBody.setLinearVelocity(temp.x * MainActivity.BALL_SPEED_INCREASE_RATE,
+										  (ballBody.getLinearVelocity().y + temp.y) * MainActivity.BALL_SPEED_INCREASE_RATE);
 			}
 			
 			for (int j = 0; j<NUM_SLAPPERS-1; j++) {
@@ -1231,8 +1252,8 @@ protected MenuScene createSoundMenuScene() {
 					temp = paddleCollision(ballBody,aiBody[j],temp);
 					
 					//Log.i("ballVelocity", "before: " + ballBody.getLinearVelocity().x + ", " + ballBody.getLinearVelocity().y);
-					ballBody.setLinearVelocity(temp.x * MainActivity.ballSpeedDifficultyIncrease,
-											   (temp.y+ballBody.getLinearVelocity().y) * MainActivity.ballSpeedDifficultyIncrease);
+					ballBody.setLinearVelocity(temp.x * MainActivity.BALL_SPEED_INCREASE_RATE,
+											   (temp.y+ballBody.getLinearVelocity().y) * MainActivity.BALL_SPEED_INCREASE_RATE);
 					//Log.i("ballVelocity", "after: " + ballBody.getLinearVelocity().x + ", " + ballBody.getLinearVelocity().y);
 				}
 			}
