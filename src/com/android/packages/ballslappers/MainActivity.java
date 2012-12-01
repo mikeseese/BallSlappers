@@ -139,6 +139,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	// Game Over Menu
 	public static final int GAME_OVER_MENU_MAIN = 9;
 	public static final int GAME_OVER_MENU_REPLAY = 10;
+	public static final int GAME_OVER_MENU_SAVE = 11;
 
 	// ===========================================================
 	// FIELDS / PARAMETERS
@@ -177,7 +178,11 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     private ITextureRegion mGameOverMenuGameOverTextureRegion;
     private BitmapTextureAtlas mGameOverMenuQuitBitmapTextureAtlas;
     private ITextureRegion mGameOverMenuQuitTextureRegion;
-    
+    private BitmapTextureAtlas mGameOverMenuSaveBitmapTextureAtlas;
+    private ITextureRegion mGameOverMenuSaveScoreTextureRegion;  
+    private BitmapTextureAtlas mGameOverMenuHighScoreBitmapTextureAtlas;
+    private ITextureRegion mGameOverMenuHighScoreTextureRegion;
+    private Sprite gameOverHighScoreMessage;
     
     private Font mLivesFont;
     private Font mGameResetFont;
@@ -335,15 +340,23 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         this.mGameOverMenuReplayBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
         this.mGameOverMenuGameOverBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         this.mGameOverMenuQuitBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+        this.mGameOverMenuSaveBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+        this.mGameOverMenuHighScoreBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         
         this.mGameOverMenuReplayTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mGameOverMenuReplayBitmapTextureAtlas, this, "replay.png", 0, 99);
         this.mGameOverMenuGameOverTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mGameOverMenuReplayBitmapTextureAtlas, this, "gameOver.png", 0, 356);
         this.mGameOverMenuQuitTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mGameOverMenuQuitBitmapTextureAtlas, this, "gameOverQuit.png", 0, 99);
+        this.mGameOverMenuSaveScoreTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mGameOverMenuSaveBitmapTextureAtlas, this, "gameOverSaveScore.png", 0, 99);
+        this.mGameOverMenuHighScoreTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mGameOverMenuHighScoreBitmapTextureAtlas, this, "highScore.png", 0, 99);
         
         this.mEngine.getTextureManager().loadTexture(this.mGameOverMenuReplayBitmapTextureAtlas);
         this.mEngine.getTextureManager().loadTexture(this.mGameOverMenuGameOverBitmapTextureAtlas);
         this.mEngine.getTextureManager().loadTexture(this.mGameOverMenuQuitBitmapTextureAtlas);
-
+        this.mEngine.getTextureManager().loadTexture(this.mGameOverMenuSaveBitmapTextureAtlas);
+        this.mEngine.getTextureManager().loadTexture(this.mGameOverMenuHighScoreBitmapTextureAtlas);
+        
+		this.gameOverHighScoreMessage = new Sprite(285, 200, this.mGameOverMenuHighScoreTextureRegion, this.getVertexBufferObjectManager());
+        
         //Ball Textures
         texChoice = "ball.png";
         this.mBallBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 44, 44, 		// 68 x 68 is the size of the image
@@ -650,9 +663,14 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
             case GAME_OVER_MENU_REPLAY:
             	this.mScene.clearChildScene();
             	this.mGameOverMenuScene.detachChild(this.gameOverScore);
+            	if (this.mGameOverMenuScene.getChildIndex(this.gameOverHighScoreMessage) != -1)
+            		this.mGameOverMenuScene.detachChild(this.gameOverHighScoreMessage);
             	this.mGameOverMenuScene.reset();
             	resetGame();            	
             	startTimer();
+            	return true;
+            case GAME_OVER_MENU_SAVE:
+            	// TODO: go to high score activity
             	return true;
             default:
                 return false;
@@ -939,6 +957,13 @@ protected MenuScene createGameOverMenuScene() {
     tempMenuScene.addMenuItem(gameOverMenuItem);
     //tempMenuScene.setMenuAnimator(new SlideMenuAnimator());
     
+    int lowest_high_score = 0;
+    if (current_score > lowest_high_score) {
+    	final SpriteMenuItem saveScoreMenuItem = new SpriteMenuItem(GAME_OVER_MENU_SAVE, this.mGameOverMenuSaveScoreTextureRegion, this.getVertexBufferObjectManager());
+    	saveScoreMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+    	tempMenuScene.addMenuItem(saveScoreMenuItem);
+    }
+    
     final SpriteMenuItem replayMenuItem = new SpriteMenuItem(GAME_OVER_MENU_REPLAY, this.mGameOverMenuReplayTextureRegion, this.getVertexBufferObjectManager());
     replayMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
     tempMenuScene.addMenuItem(replayMenuItem);
@@ -984,8 +1009,16 @@ protected MenuScene createSoundMenuScene() {
 	public void onUpdate(final float pSecondsElapsed) {
 		//ballBody.setTransform(ballBody.getPosition(),ballAngle);
 		if (gameOver) {
+			this.mGameOverMenuScene = this.createGameOverMenuScene();
         	this.mScene.setChildScene(this.mGameOverMenuScene, false, true, true);
-        	this.gameOverScore = new Text(575, 345, mGameOverFont, Integer.toString(current_score), this.getVertexBufferObjectManager());
+        	int lowest_high_score = 0;
+        	if (current_score > lowest_high_score) {
+        		this.mGameOverMenuScene.attachChild(this.gameOverHighScoreMessage);
+            	this.gameOverScore = new Text(575, 310, mGameOverFont, Integer.toString(current_score), this.getVertexBufferObjectManager());
+        	}
+        	else {
+            	this.gameOverScore = new Text(575, 345, mGameOverFont, Integer.toString(current_score), this.getVertexBufferObjectManager());
+        	}
         	this.mGameOverMenuScene.attachChild(gameOverScore);
         	clearBooleans();
 			current_score = 0;
