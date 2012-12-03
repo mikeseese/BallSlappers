@@ -32,7 +32,8 @@
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:text="@string/No._CPUs"
-                android:textSize="25sp" />
+                android:textSize="25sp"
+                android:textColor="#feff10" />
 		    
             <TextView
                 android:layout_width="wrap_content"
@@ -40,7 +41,8 @@
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:text="@string/Difficulty"
-                android:textSize="25sp" />
+                android:textSize="25sp"
+                android:textColor="#feff10" />
 		    
             <TextView
                 android:layout_width="wrap_content"
@@ -48,7 +50,8 @@
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:text="@string/Power_Ups"
-                android:textSize="25sp" />
+                android:textSize="25sp"
+                android:textColor="#feff10" />
 		    
             <TextView
                 android:layout_width="wrap_content"
@@ -56,7 +59,8 @@
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:text="@string/Lives"
-                android:textSize="25sp" />
+                android:textSize="25sp"
+                android:textColor="#feff10" />
             
             <TextView
                 android:layout_width="wrap_content"
@@ -64,7 +68,8 @@
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:text="@string/Player_Name"
-                android:textSize="20sp" />
+                android:textSize="20sp"
+                android:textColor="#feff10" />
 		    
         </LinearLayout>
     
