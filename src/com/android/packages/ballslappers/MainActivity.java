@@ -57,10 +57,15 @@ import org.andengine.util.HorizontalAlign;
 import org.andengine.util.color.Color;
 
 import android.R.string;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Debug;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.widget.Toast;
@@ -249,6 +254,16 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	
 	//Misc.
 	public static Random randomNumGen = new Random();
+	
+	private final BroadcastReceiver Receiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+		    String state = intent.getStringExtra(TelephonyManager.EXTRA_STATE);
+		    if (state.equals(TelephonyManager.EXTRA_STATE_RINGING)) {
+            	mScene.setChildScene(mPauseMenuScene, false, true, true);
+		    }
+		}
+	};
 
 	
 	/* *****************************************************
@@ -287,6 +302,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			MainActivity.ballSpeedDifficultyIncrease = 0.0f;
 			Log.i("Difficulty Not Set", "The difficulty did not match easy/medium/hard");
 		}
+		
+		registerReceiver(Receiver, new IntentFilter(TelephonyManager.ACTION_PHONE_STATE_CHANGED));
 	}
 	
 	@Override   
@@ -634,6 +651,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	            this.gameStarting = true;
 	            startTimer();
 	            
+	            current_score=0;
+	            
 	            this.mPauseMenuScene.reset();
 	            return true;
             case PAUSE_MENU_QUIT:
@@ -687,11 +706,18 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
             	if (this.mGameOverMenuScene.getChildIndex(this.gameOverHighScoreMessage) != -1)
             		this.mGameOverMenuScene.detachChild(this.gameOverHighScoreMessage);
             	this.mGameOverMenuScene.reset();
+	            current_score=0;
             	resetGame();            	
             	startTimer();
             	return true;
             case GAME_OVER_MENU_SAVE:
-            	// TODO: go to high score activity
+            	Bundle bundle = new Bundle();
+            	bundle.putString("difficulty", difficulty);
+            	bundle.putInt("score", current_score);
+            	Intent intent = new Intent(this, HighScoresActivity.class);
+            	intent.putExtras(bundle);
+            	startActivity(intent);
+            	finish();
             	return true;
             default:
                 return false;
@@ -978,7 +1004,7 @@ protected MenuScene createGameOverMenuScene() {
     tempMenuScene.addMenuItem(gameOverMenuItem);
     //tempMenuScene.setMenuAnimator(new SlideMenuAnimator());
     
-    int lowest_high_score = 0;
+    int lowest_high_score = HomeScreenActivity.settings.getInt("highscore_scores_" + difficulty + "_9", 0);
     if (current_score > lowest_high_score) {
     	final SpriteMenuItem saveScoreMenuItem = new SpriteMenuItem(GAME_OVER_MENU_SAVE, this.mGameOverMenuSaveScoreTextureRegion, this.getVertexBufferObjectManager());
     	saveScoreMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
@@ -1032,7 +1058,7 @@ protected MenuScene createSoundMenuScene() {
 		if (gameOver) {
 			this.mGameOverMenuScene = this.createGameOverMenuScene();
         	this.mScene.setChildScene(this.mGameOverMenuScene, false, true, true);
-        	int lowest_high_score = 0;
+            int lowest_high_score = HomeScreenActivity.settings.getInt("highscore_scores_" + difficulty + "_9", 0);
         	if (current_score > lowest_high_score) {
         		this.mGameOverMenuScene.attachChild(this.gameOverHighScoreMessage);
             	this.gameOverScore = new Text(575, 310, mGameOverFont, Integer.toString(current_score), this.getVertexBufferObjectManager());
@@ -1042,7 +1068,6 @@ protected MenuScene createSoundMenuScene() {
         	}
         	this.mGameOverMenuScene.attachChild(gameOverScore);
         	clearBooleans();
-			current_score = 0;
 			return;
 		}
 		

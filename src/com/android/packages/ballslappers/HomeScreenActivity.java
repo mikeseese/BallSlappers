@@ -18,6 +18,43 @@ public class HomeScreenActivity extends Activity {
 	public static SharedPreferences settings;
 	public static Context mContext;
 	
+	public void initScores() {
+		SharedPreferences.Editor e = settings.edit();
+		String difficulty = "easy";
+		
+		while(true)
+		{
+			int size = settings.getInt("highscore_scores_"+difficulty+"_size", 0);
+			if(size == 0)
+			{
+				e.putInt("highscore_scores_"+difficulty+"_size", 9);
+			}
+			size = settings.getInt("highscore_names_"+difficulty+"_size", 0);
+			if(size == 0)
+			{
+				e.putInt("highscore_names_"+difficulty+"_size", 9);
+			}
+			for(int i = 0; i < 10; i++)
+			{
+				int score = settings.getInt("highscore_scores_"+difficulty+"_"+i, 0);
+				if(score == 0)
+				{
+					e.putInt("highscore_scores_"+difficulty+"_"+i, score);
+					e.putString("highscore_names_"+difficulty+"_"+i, "slap");
+				}
+			}
+			
+			if(difficulty.equals("easy"))
+				difficulty = "medium";
+			else if(difficulty.equals("medium"))
+				difficulty = "hard";
+			else if(difficulty.equals("hard"))
+				break;
+		}
+		
+		e.commit();
+	}
+	
     @Override
     public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
@@ -39,6 +76,8 @@ public class HomeScreenActivity extends Activity {
 	    {
 	    	
 	    }
+	    
+	    initScores();
     }
     
     protected void onResume(){

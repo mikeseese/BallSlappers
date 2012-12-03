@@ -37,16 +37,6 @@
 	        android:background="@drawable/home_single_player_button"
 	        android:onClick="SinglePlayerCreate" />
 	
-	    <Button
-	        android:id="@+id/tutorialButton"
-	        style="@color/TransparentColor"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:layout_margin="@dimen/Dim10"
-	        android:layout_marginBottom="73dp"
-	        android:background="@drawable/home_tutorial_button"
-	        android:onClick="TutorialScreen" />
-	
 	   		</LinearLayout>
 		
 	    <RelativeLayout

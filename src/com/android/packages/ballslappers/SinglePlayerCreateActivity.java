@@ -98,6 +98,12 @@ public class SinglePlayerCreateActivity extends Activity {
 
 	         }
 	     });
+	     
+
+		 difficulty.setSelection(HomeScreenActivity.settings.getInt("difficulty", 0));
+		 ((EditText) findViewById(R.id.Edit_Lives_Text)).setText(HomeScreenActivity.settings.getInt("numberLives", 1)+"");
+		 NUMCPU.setSelection(HomeScreenActivity.settings.getInt("cpunumber", 1) - 1);
+		 ((EditText) findViewById(R.id.GameName)).setText(HomeScreenActivity.settings.getString("userName", null));
     }
     
     protected void onResume(){
@@ -125,12 +131,6 @@ public class SinglePlayerCreateActivity extends Activity {
      	lives = tempLives + 1;
      	editText.setText(String.valueOf(lives));
     }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.activity_single_player_create, menu);
-        return true;
-    }
     
     public void PlaySinglePlayer(View view){
     	HomeScreenActivity.mediaPlayer.stop();
@@ -143,10 +143,22 @@ public class SinglePlayerCreateActivity extends Activity {
      	EditText editText = (EditText) findViewById(R.id.Edit_Lives_Text);
      	lives = Integer.parseInt(editText.getText().toString());
      	
+     	EditText gameName = (EditText) findViewById(R.id.GameName);
+     	String name = gameName.getText().toString();
+     	
+
+    	SharedPreferences.Editor e = HomeScreenActivity.settings.edit();
+    	e.putInt("difficulty", ((Spinner) findViewById(R.id.DifficultySelect)).getSelectedItemPosition());
+    	e.putInt("numberLives", lives);
+    	e.putInt("cpunumber", numberofcpu);
+    	e.putString("userName", name);
+    	e.commit();
+     	
     	Bundle bundle = new Bundle();
     	bundle.putString("difficulty", difficultySelected);
     	bundle.putInt("numberLives", lives);
     	bundle.putInt("cpunumber", numberofcpu);
+    	bundle.putString("userName", name);
     	Intent intent = new Intent(this, MainActivity.class);
     	intent.putExtras(bundle);
     	startActivity(intent);//, bundle);
