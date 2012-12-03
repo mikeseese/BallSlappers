@@ -78,12 +78,9 @@ public class HighScoresActivity extends Activity {
         ArrayList<String> highScoreNames = loadNames("highscore_names_" + difficulty, getApplicationContext());
         ArrayList<Integer> highScoreScores = loadScores("highscore_scores_" + difficulty, getApplicationContext());
 
-		ListView high_names = (ListView) findViewById(R.id.high_names);
-		ListView high_scores = (ListView) findViewById(R.id.high_scores);
-        ArrayAdapter<String> nameAdapter = new ArrayAdapter<String>(HighScoresActivity.this, android.R.layout.simple_list_item_1);
-        ArrayAdapter<String> scoreAdapter = new ArrayAdapter<String>(HighScoresActivity.this, android.R.layout.simple_list_item_1);
-        high_names.setAdapter(nameAdapter);
-        high_scores.setAdapter(scoreAdapter);
+		ListView highview = (ListView) findViewById(R.id.highscores);
+        ArrayAdapter<String> Adapter = new ArrayAdapter<String>(HighScoresActivity.this, android.R.layout.simple_list_item_1);
+        highview.setAdapter(Adapter);
 
         /*highScoreNames.add("aaa");
         highScoreNames.add("bbb");
@@ -99,20 +96,18 @@ public class HighScoresActivity extends Activity {
         int size = highScoreNames.size();
         for(int i = 0; i < size; i++)
         {
-        	nameAdapter.add(highScoreNames.get(i));
+        	Adapter.add(highScoreNames.get(i) + ": " + highScoreScores.get(i));
         	if(score > highScoreScores.get(i) && !done)
         	{
         		pos = i;
         		done = true;
         	}
-        	scoreAdapter.add(highScoreScores.get(i) + "");
         }
         if(pos != -1)
         {
         	highScoreScores.add(pos, score);
         	highScoreNames.add(pos, name);
-        	nameAdapter.insert(name, pos);
-        	scoreAdapter.insert(score+"", pos);
+        	Adapter.insert(name +": " + score, pos);
 
         	//nameAdapter.remove(nameAdapter.getItem(10));
         	//nameAdapter.remove(scoreAdapter.getItem(10));
@@ -120,6 +115,10 @@ public class HighScoresActivity extends Activity {
 
         saveNames(highScoreNames, "highscore_names_" + difficulty, getApplicationContext());
         saveScores(highScoreScores, "highscore_scores_" + difficulty, getApplicationContext());
+    }
+    
+    public void option(View v) {
+    	finish();
     }
     
     protected void onResume(){
