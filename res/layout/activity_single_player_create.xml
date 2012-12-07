@@ -179,15 +179,16 @@
         android:layout_marginBottom="5dp" >
 
         <ToggleButton
-            android:id="@+id/toggleSound"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentRight="true"
-            android:layout_marginRight="5dp"
-            android:background="@drawable/home_sound_button"
-            android:textOn="@android:string/yes"
-            android:onClick="toggleMusic" />
+	            android:id="@+id/toggleSound"
+	            android:layout_width="40dp"
+	            android:layout_height="40dp"
+	            android:layout_alignParentBottom="true"
+	            android:layout_alignParentRight="true"
+	            android:layout_marginRight="5dp"
+	            android:textOff=""
+	            android:textOn=""
+	            android:background="@drawable/toggle_sound_background"
+	        	android:onClick="toggleMusic" />
             
     </RelativeLayout>
 
