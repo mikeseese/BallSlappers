@@ -1,7 +1,5 @@
 package com.android.packages.ballslappers;
 
-
-
 /*IMPORTS*/
 import java.io.IOException;
 import java.util.HashMap;
@@ -11,7 +9,6 @@ import javax.microedition.khronos.opengles.GL10;
 /*AndEngine Imports*/
 import static org.andengine.extension.physics.box2d.util.constants.PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT;
 import org.andengine.engine.camera.Camera;
-import org.andengine.engine.camera.hud.HUD;
 import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.engine.handler.timer.ITimerCallback;
 import org.andengine.engine.handler.timer.TimerHandler;
@@ -61,14 +58,15 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ReceiverCallNotAllowedException;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Debug;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.widget.Toast;
 
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
@@ -138,14 +136,9 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	
 	// Pause Menu
 	public static final int PAUSE_MENU_RESUME = 0;
-	public static final int PAUSE_MENU_RESTART = 1;
-	public static final int PAUSE_MENU_QUIT = 2;
-	public static final int PAUSE_MENU_HELP = 3;
-	public static final int PAUSE_MENU_SOUND = 4;
-	public static final int HELP_MENU_HOWTOPLAY = 5;
-	public static final int HELP_MENU_GOBACK = 6;
-	public static final int SOUND_MENU_SETTINGS = 7;
-	public static final int SOUND_MENU_GOBACK = 8;
+	public static final int PAUSE_MENU_RESTART = PAUSE_MENU_RESUME + 1;
+	public static final int PAUSE_MENU_QUIT = PAUSE_MENU_RESTART + 1;
+	public static final int PAUSE_MENU_SOUND = PAUSE_MENU_QUIT + 1;
 	
 	// Game Over Menu
 	public static final int GAME_OVER_MENU_MAIN = 9;
@@ -163,7 +156,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	private Camera mCamera;
 	
 	// Pause Menu
-	protected MenuScene mPauseMenuScene, mHelpMenuScene, mSoundMenuScene;
+	protected MenuScene mPauseMenuScene;
 	private BitmapTextureAtlas mPauseMenuResumeBitmapTextureAtlas;
     private ITextureRegion mPauseMenuResumeTextureRegion;
     private BitmapTextureAtlas mPauseMenuRestartBitmapTextureAtlas; 
@@ -171,15 +164,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     private BitmapTextureAtlas mPauseMenuQuitBitmapTextureAtlas;
     private ITextureRegion mPauseMenuQuitTextureRegion; 
     private BitmapTextureAtlas mPauseMenuHelpBitmapTextureAtlas;
-    private ITextureRegion mPauseMenuHelpTextureRegion;
     private BitmapTextureAtlas mPauseMenuSoundBitmapTextureAtlas;
     private ITextureRegion mPauseMenuSoundTextureRegion; 
-    private BitmapTextureAtlas mHelpMenuHowToPlayBitmapTextureAtlas; 
-    private ITextureRegion mHelpMenuHowToPlayTextureRegion; 
-    private BitmapTextureAtlas mHelpMenuGoBackBitmapTextureAtlas;
-    private ITextureRegion mHelpMenuGoBackTextureRegion; 
-    private BitmapTextureAtlas mSoundMenuSettingsBitmapTextureAtlas;
-    private ITextureRegion mSoundMenuSettingsTextureRegion;
     private BitmapTextureAtlas mPauseButtonTextureAtlas;
     private ITextureRegion mPauseButtonTextureRegion;
     private ButtonSprite mPauseButton;
@@ -280,20 +266,18 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		@Override
 		public void onReceive(Context context, Intent intent) {
 		    String state = intent.getStringExtra(TelephonyManager.EXTRA_STATE);
-		    if (state.equals(TelephonyManager.EXTRA_STATE_RINGING)) {
-            	mScene.setChildScene(mPauseMenuScene, false, true, true);
-		    }
-		}
+	        if (state != null) {
+	        	if (state.equals(TelephonyManager.EXTRA_STATE_RINGING))
+	        		mScene.setChildScene(mPauseMenuScene, false, true, true);
+	        }
+	    }
 	};
-
-	
+		
 	/* *****************************************************
 	 * Creating the android scene / environment for gameplay
 	 *******************************************************/
 
 	public EngineOptions onCreateEngineOptions() {
-		Toast.makeText(this, "Let the battle begin...", Toast.LENGTH_SHORT).show();
-
 		CAMERA_WIDTH = 800 * 1.5f;
 		CAMERA_HEIGHT = 480 * 1.5f;
 		mCamera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
@@ -302,12 +286,13 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	}
 
 	public void onCreate(Bundle savedInstanceState){
+    	Log.i("method", "onCreate");
 		super.onCreate(savedInstanceState);
 		Bundle bundle = getIntent().getExtras();
 		NUM_SLAPPERS= bundle.getInt("cpunumber")+1;
 		NUM_LIVES = bundle.getInt("numberLives");
 		numPlayerLives = NUM_LIVES;
-		POWERUPS = bundle.getBoolean("powerupen");
+		POWERUPS = bundle.getBoolean("powerupsen");
 		difficulty = bundle.getString("difficulty");
 		easterEgg = bundle.getString("Bermudez");
 		
@@ -324,8 +309,9 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			MainActivity.ballSpeedDifficultyIncrease = 0.0f;
 			Log.i("Difficulty Not Set", "The difficulty did not match easy/medium/hard");
 		}
-		
-		registerReceiver(Receiver, new IntentFilter(TelephonyManager.ACTION_PHONE_STATE_CHANGED));
+
+		IntentFilter receiverIntentFilter = new IntentFilter(TelephonyManager.ACTION_PHONE_STATE_CHANGED);
+		registerReceiver(Receiver, receiverIntentFilter);
 	}
 	
 	@Override   
@@ -358,9 +344,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         this.mPauseMenuQuitBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
         this.mPauseMenuHelpBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
         this.mPauseMenuSoundBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
-        this.mHelpMenuHowToPlayBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-        this.mHelpMenuGoBackBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-        this.mSoundMenuSettingsBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         this.mPauseButtonTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
@@ -368,11 +351,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         this.mPauseMenuResumeTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuResumeBitmapTextureAtlas, this, "Resume.png", 0, 99);
         this.mPauseMenuRestartTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuRestartBitmapTextureAtlas, this, "Restart.png", 0, 99);
         this.mPauseMenuQuitTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuQuitBitmapTextureAtlas, this, "Quit.png", 0, 99);
-        this.mPauseMenuHelpTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuHelpBitmapTextureAtlas, this, "Help.png", 0, 99);
         this.mPauseMenuSoundTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseMenuSoundBitmapTextureAtlas, this, "Sound.png", 0, 99); 
-        this.mHelpMenuHowToPlayTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mHelpMenuHowToPlayBitmapTextureAtlas, this, "HelpMenu.png", 0, 356);
-        this.mHelpMenuGoBackTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mHelpMenuGoBackBitmapTextureAtlas, this, "goBack.png", 0, 99); 
-        this.mSoundMenuSettingsTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mSoundMenuSettingsBitmapTextureAtlas, this, "SoundMenu.png", 0, 356); 
         this.mPauseButtonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mPauseButtonTextureAtlas, this, "pause.png", 0, 99);
         
         this.mEngine.getTextureManager().loadTexture(this.mPauseMenuResumeBitmapTextureAtlas);
@@ -380,11 +359,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         this.mEngine.getTextureManager().loadTexture(this.mPauseMenuQuitBitmapTextureAtlas); 
         this.mEngine.getTextureManager().loadTexture(this.mPauseMenuHelpBitmapTextureAtlas); 
         this.mEngine.getTextureManager().loadTexture(this.mPauseMenuSoundBitmapTextureAtlas);
-        this.mEngine.getTextureManager().loadTexture(this.mHelpMenuHowToPlayBitmapTextureAtlas); 
-        this.mEngine.getTextureManager().loadTexture(this.mHelpMenuGoBackBitmapTextureAtlas); 
-        this.mEngine.getTextureManager().loadTexture(this.mSoundMenuSettingsBitmapTextureAtlas);
         this.mEngine.getTextureManager().loadTexture(this.mPauseButtonTextureAtlas);
-        this.mEngine.getTextureManager().loadTexture(this.mSoundMenuSettingsBitmapTextureAtlas); 
 
         // Game Over Menu textures
         this.mGameOverMenuReplayBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR_PREMULTIPLYALPHA); 
@@ -408,9 +383,9 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		this.gameOverHighScoreMessage = new Sprite(285, 200, this.mGameOverMenuHighScoreTextureRegion, this.getVertexBufferObjectManager());
         
         //Ball Textures
-		texChoice = "Bermudez.png";
+		texChoice = "ball.png";
         if (easterEgg == "Bermudez") { 
-        texChoice = "ball.png";
+        texChoice = "Bermudez.png";
         }
         this.mBallBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 44, 44, 		// 68 x 68 is the size of the image
         													  TextureOptions.BILINEAR_PREMULTIPLYALPHA);
@@ -453,10 +428,10 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		
         
         //BG Textures
-        this.mBgBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(),1024, 512, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-        BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
-        this.mBgTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mBgBitmapTextureAtlas, this, "bg1.png", 0, 0);
-        this.mEngine.getTextureManager().loadTexture(this.mBgBitmapTextureAtlas);
+//        this.mBgBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(),1024, 512, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+//        BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
+//        this.mBgTexture = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mBgBitmapTextureAtlas, this, "bg1.png", 0, 0);
+//        this.mEngine.getTextureManager().loadTexture(this.mBgBitmapTextureAtlas);
         
         // Text for resetting the game
         // 40 is the max size for text. Currently a magic #
@@ -477,8 +452,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		MainActivity.mScene.setOnSceneTouchListener(this);
 		
 		this.mPauseMenuScene = this.createPauseMenuScene();
-		this.mHelpMenuScene = this.createHelpMenuScene(); 
-		this.mSoundMenuScene = this.createSoundMenuScene();
 		
 		this.mGameOverMenuScene = this.createGameOverMenuScene();
 			
@@ -491,8 +464,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			/* Setting Up the Game */
 		
 		this.numPlayerLives = NUM_LIVES;
-		
-		showInfo(this.mLivesFont, NUM_LIVES);
+		MainActivity.current_score = 0;
+		showInfo();
 		
 		// Localized Player and paints		
 		if (NUM_SLAPPERS == 4) {
@@ -605,7 +578,9 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		MainActivity.mScene.attachChild(mPauseButton);
 
 		this.gameStarting = true;
-		createPowerUps();
+		this.startTimer();
+		if (POWERUPS)
+			createPowerUps();
     	
 		return MainActivity.mScene;
 	}
@@ -657,7 +632,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
             	MainActivity.mScene.setChildScene(this.mPauseMenuScene, false, true, true);
             }
             return true;
-        } else {
+        } 
+		else {
         	return super.onKeyDown(pKeyCode, pEvent);
         }
     }
@@ -692,27 +668,12 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
                 // end the current activity (MainActivity)
                 this.finish();
                 return true;
-            case PAUSE_MENU_HELP:
-            	//bring up the help menu
-            	MainActivity.mScene.setChildScene(this.mHelpMenuScene, false, true, true);
-            	return true;
             case PAUSE_MENU_SOUND:
-            	//bring up sound menu (music level/on/off, FX level/on/off, master volume)
-            	//this.mScene.setChildScene(this.mSoundMenuScene, false, true, true);
-            	if(HomeScreenActivity.SOUND_ENABLED)
-            		HomeScreenActivity.mediaPlayer.stop();
+            	if(HomeScreenActivity.SOUND_ENABLED) {
+            		HomeScreenActivity.mediaPlayer.pause();
+				}
             	else
             	{
-            		try
-        			{
-        				HomeScreenActivity.mediaPlayer.prepare();
-        			} catch (IllegalStateException e1)
-        			{
-        				e1.printStackTrace();
-        			} catch (IOException e1)
-        			{
-        				e1.printStackTrace();
-        			}
             		HomeScreenActivity.mediaPlayer.start();
             	}
             	
@@ -721,17 +682,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
             	e.putBoolean("sound_enabled", HomeScreenActivity.SOUND_ENABLED);
             	e.commit();
             	
-            	return true;
-            case HELP_MENU_HOWTOPLAY:
-            	//this test just resumes
-            	MainActivity.mScene.clearChildScene();
-	            this.mPauseMenuScene.reset();
-            	return true;
-            case HELP_MENU_GOBACK:
-            	MainActivity.mScene.setChildScene(this.mPauseMenuScene, false, true, true);
-            	return true;
-            case SOUND_MENU_GOBACK:
-            	MainActivity.mScene.setChildScene(this.mPauseMenuScene, false, true, true);
             	return true;
             case GAME_OVER_MENU_REPLAY:
             	MainActivity.mScene.clearChildScene();
@@ -756,14 +706,63 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
                 return false;
             }
     }
+    
+    @Override
+    public void finish() {
+    	HomeScreenActivity.mediaPlayer.stop();
+    	HomeScreenActivity.mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.homescreen);
+    	HomeScreenActivity.mediaPlayer.setLooping(true);
+    	
+    	try {
+    		unregisterReceiver(Receiver);
+    	} catch (Exception e) {
+    		// let's just ignore it... bleh
+    	}
+    	
+    	super.finish();
+    }
+
+    @Override
+    public void onResume() {
+    	Log.i("method", "onResume");
+    	IntentFilter receiverIntentFilter = new IntentFilter(TelephonyManager.ACTION_PHONE_STATE_CHANGED);
+		registerReceiver(Receiver, receiverIntentFilter);
+    	
+		if (HomeScreenActivity.SOUND_ENABLED)
+			HomeScreenActivity.mediaPlayer.start();
+		
+    	this.onResumeGame();
+		super.onResume();
+    }
+    @Override
+    public void onPause() {
+    	Log.i("method", "onPause");
+    	if (MainActivity.mScene != null && !MainActivity.mScene.hasChildScene()) {
+    		MainActivity.mScene.setChildScene(this.mPauseMenuScene, false, true, true);
+		}
 	
+		if (HomeScreenActivity.mediaPlayer.isPlaying())
+			HomeScreenActivity.mediaPlayer.pause();
+				
+		try {
+			unregisterReceiver(Receiver);
+		} catch (Exception e){
+			// let's just ignore it... bleh
+		}
+	    	
+		this.onPauseGame();
+		super.onPause();
+    }
+    
 	@Override
 	public void onResumeGame() {
+    	Log.i("method", "onResumeGame");
 		super.onResumeGame();
 	}
 
 	@Override
 	public void onPauseGame() {
+    	Log.i("method", "onPauseGame");
 		super.onPauseGame();
 	}
 
@@ -994,10 +993,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         quitMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
         tempMenuScene.addMenuItem(quitMenuItem);
                
-        final SpriteMenuItem helpMenuItem = new SpriteMenuItem(PAUSE_MENU_HELP, this.mPauseMenuHelpTextureRegion, this.getVertexBufferObjectManager());
-        helpMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
-        tempMenuScene.addMenuItem(helpMenuItem);
-           
         final SpriteMenuItem soundMenuItem = new SpriteMenuItem(PAUSE_MENU_SOUND, this.mPauseMenuSoundTextureRegion, this.getVertexBufferObjectManager());
         soundMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
         tempMenuScene.addMenuItem(soundMenuItem);
@@ -1009,25 +1004,6 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         return tempMenuScene;
 }
 	
-protected MenuScene createHelpMenuScene() {
-    final MenuScene tempMenuScene = new MenuScene(this.mCamera);
-    
-    final SpriteMenuItem howToPlayMenuItem = new SpriteMenuItem(HELP_MENU_HOWTOPLAY, this.mHelpMenuHowToPlayTextureRegion, this.getVertexBufferObjectManager());
-    final SpriteMenuItem goBackMenuItem = new SpriteMenuItem(HELP_MENU_GOBACK, this.mHelpMenuGoBackTextureRegion, this.getVertexBufferObjectManager());
-
-    howToPlayMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
-    goBackMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
-    tempMenuScene.addMenuItem(howToPlayMenuItem);
-    tempMenuScene.addMenuItem(goBackMenuItem);
-    tempMenuScene.setMenuAnimator(new SlideMenuAnimator());
-              
-    tempMenuScene.buildAnimations();
-    tempMenuScene.setBackgroundEnabled(false);
-    tempMenuScene.setOnMenuItemClickListener(this);
-    
-    return tempMenuScene;
-}	
-
 protected MenuScene createGameOverMenuScene() {
     final MenuScene tempMenuScene = new MenuScene(this.mCamera);
     
@@ -1059,25 +1035,6 @@ protected MenuScene createGameOverMenuScene() {
     return tempMenuScene;
 }	
 
-protected MenuScene createSoundMenuScene() {
-    final MenuScene tempMenuScene = new MenuScene(this.mCamera);
-    
-    final SpriteMenuItem settingsMenuItem = new SpriteMenuItem(SOUND_MENU_SETTINGS, this.mSoundMenuSettingsTextureRegion, this.getVertexBufferObjectManager());
-    final SpriteMenuItem goBackMenuItem = new SpriteMenuItem(HELP_MENU_GOBACK, this.mHelpMenuGoBackTextureRegion, this.getVertexBufferObjectManager());
-
-    settingsMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
-    goBackMenuItem.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
-    tempMenuScene.addMenuItem(settingsMenuItem);
-    tempMenuScene.addMenuItem(goBackMenuItem);
-    tempMenuScene.setMenuAnimator(new SlideMenuAnimator());
-          
-    tempMenuScene.buildAnimations();
-    tempMenuScene.setBackgroundEnabled(false);
-    tempMenuScene.setOnMenuItemClickListener(this);
-    
-    return tempMenuScene;
-}
-	
 	/* Functions for fun */
 	
  	private void ballReset() {
@@ -1217,20 +1174,22 @@ protected MenuScene createSoundMenuScene() {
 	}
 	
 	private void showPlayerLives(Font font, int numLives, int pX, int pY) {
+		MainActivity.mScene.detachChild(playerLives);
 		this.playerLives = new Text(pX, pY, font,
 				("Lives left: " + numLives), "Players Lives: X".length(), this.getVertexBufferObjectManager());
 		MainActivity.mScene.attachChild(playerLives);
 	}
 	
 	private void showCurrentScore(Font font, int pX, int pY) {
+		MainActivity.mScene.detachChild(currentScoreText);
 		currentScoreText = new Text(pX, pY, font, ("Score: " + current_score), 
 							("Score:                       ").length(), this.getVertexBufferObjectManager());
 		MainActivity.mScene.attachChild(currentScoreText);
 	}
 	
-	private void showInfo(Font font, int numPlayerLives) {
-		showPlayerLives(font, numPlayerLives, (int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.06));
-		showCurrentScore(font, (int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.11));
+	private void showInfo() {
+		showPlayerLives(this.mLivesFont, this.numPlayerLives, (int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.06));
+		showCurrentScore(this.mLivesFont, (int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.11));
 	}
 	
 	/*
@@ -1242,7 +1201,7 @@ protected MenuScene createSoundMenuScene() {
 		this.numPlayerLives = NUM_LIVES;
 		playerLives.setText("Lives left: " + numPlayerLives);
 		current_score = 0;
-		currentScoreText.setText("Score: " + current_score);
+		showInfo();
 	}
 
 	private String getLosingMessage() {
@@ -1342,8 +1301,8 @@ protected MenuScene createSoundMenuScene() {
 										  (ballBody.getLinearVelocity().y + temp.y) * MainActivity.BALL_SPEED_INCREASE_RATE);
 				++hit;
 				if (POWERUPS && hit ==3){
-				createPowerUps();
-				MainActivity.hit = 0;
+					createPowerUps();
+					MainActivity.hit = 0;
 				}
 			}
 			
@@ -1363,7 +1322,7 @@ protected MenuScene createSoundMenuScene() {
 					if (POWERUPS && hit ==3){
 						createPowerUps();
 						MainActivity.hit = 0;
-						}
+					}
 				}
 			}
 			
