@@ -2,9 +2,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-	android:background="#434343" >
-	
+    android:background="#434343"
+    android:orientation="vertical" >
+
     <LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
@@ -15,7 +15,7 @@
         android:layout_marginTop="50dp"
         android:baselineAligned="false"
         android:orientation="horizontal" >
-	    
+
         <LinearLayout
             xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:tools="http://schemas.android.com/tools"
@@ -25,54 +25,53 @@
             android:layout_marginTop="5dp"
             android:layout_weight=".45"
             android:orientation="vertical" >
-		    
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="60dp"
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:text="@string/No._CPUs"
-                android:textSize="25sp"
-                android:textColor="#feff10" />
-		    
+                android:textColor="#feff10"
+                android:textSize="25sp" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="60dp"
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:text="@string/Difficulty"
-                android:textSize="25sp"
-                android:textColor="#feff10" />
-		    
+                android:textColor="#feff10"
+                android:textSize="25sp" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="60dp"
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:text="@string/Power_Ups"
-                android:textSize="25sp"
-                android:textColor="#feff10" />
-		    
+                android:textColor="#feff10"
+                android:textSize="25sp" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="60dp"
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:text="@string/Lives"
-                android:textSize="25sp"
-                android:textColor="#feff10" />
-            
+                android:textColor="#feff10"
+                android:textSize="25sp" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="60dp"
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:text="@string/Player_Name"
-                android:textSize="20sp"
-                android:textColor="#feff10" />
-		    
+                android:textColor="#feff10"
+                android:textSize="20sp" />
         </LinearLayout>
-    
+
         <LinearLayout
             xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:tools="http://schemas.android.com/tools"
@@ -82,86 +81,85 @@
             android:layout_marginTop="5dp"
             android:layout_weight=".45"
             android:orientation="vertical" >
-            
+
             <Spinner
                 android:id="@+id/CPUSelect"
                 android:layout_width="wrap_content"
                 android:layout_height="60dp"
                 android:layout_gravity="center" />
-            
+
             <Spinner
                 android:id="@+id/DifficultySelect"
                 android:layout_width="wrap_content"
                 android:layout_height="60dp"
                 android:layout_gravity="center" />
-            
+
             <CheckBox
                 android:id="@+id/enablePowerUps"
                 android:layout_width="wrap_content"
                 android:layout_height="60dp"
                 android:layout_gravity="center" />
-            
+
             <LinearLayout
-		         xmlns:android="http://schemas.android.com/apk/res/android"
-		         xmlns:tools="http://schemas.android.com/tools"
-		         android:id="@+id/Lives_Counter"
-		         android:layout_width="wrap_content"
-		         android:layout_height="60dp"
-		         android:layout_gravity="center"
-		         android:orientation="horizontal" >
-		
-		     	<Button
-		     	    android:id="@+id/Minus_Lives"
-		     	    android:layout_width="30dp"
-		     	    android:layout_height="30dp"
-		     	    android:layout_gravity="center"
-		     	    android:gravity="center"
-		     	    android:text="@string/Minus_Lives"
-		     	    android:textSize="12sp"
-		     	    android:onClick="minusOneLife" />
-		     	
-		     	<EditText
-		     	    android:id="@+id/Edit_Lives_Text"
-		     	    android:layout_width="60dp"
-		     	    android:layout_height="45dp"
-		     	    android:layout_gravity="center"
-		     	    android:gravity="center"
-		     	    android:inputType="number"
-		     	    android:maxLength="2"
-		     	    android:text="@string/One" />
-				 
-			    <Button
-			        android:id="@+id/Plus_Lives"
-			        android:layout_width="30dp"
-			        android:layout_height="30dp"
-			        android:layout_gravity="center"
-			        android:gravity="center"
-			        android:text="@string/Plus_Lives"
-			        android:textSize="12sp"
-			        android:onClick="plusOneLife" />
-			     
-		    </LinearLayout>
-		    <EditText
-		        android:id="@+id/GameName"
-		        android:layout_width="125dp"
-		        android:layout_height="60dp"
-		        android:layout_gravity="center"
-		        android:hint="@string/Player_Name"
-		        android:maxLines="1"
-		        android:scrollHorizontally="true" />
-		    
-        </LinearLayout>  
-        
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:id="@+id/Lives_Counter"
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:layout_gravity="center"
+                android:orientation="horizontal" >
+
+                <Button
+                    android:id="@+id/Minus_Lives"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:onClick="minusOneLife"
+                    android:text="@string/Minus_Lives"
+                    android:textSize="12sp" />
+
+                <EditText
+                    android:id="@+id/Edit_Lives_Text"
+                    android:layout_width="60dp"
+                    android:layout_height="45dp"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:maxLength="2"
+                    android:text="@string/One" />
+
+                <Button
+                    android:id="@+id/Plus_Lives"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:onClick="plusOneLife"
+                    android:text="@string/Plus_Lives"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <EditText
+                android:id="@+id/GameName"
+                android:layout_width="125dp"
+                android:layout_height="60dp"
+                android:layout_gravity="center"
+                android:hint="@string/Player_Name"
+                android:maxLines="1"
+                android:scrollHorizontally="true" />
+        </LinearLayout>
     </LinearLayout>
-    
+
     <RelativeLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/center"
         android:layout_width="wrap_content"
-        android:layout_height="150dp"
-        android:layout_gravity="center_horizontal" >
-        
+        android:layout_height="59dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="0.34" >
+
         <Button
             android:id="@+id/button1"
             android:layout_width="wrap_content"
@@ -169,7 +167,6 @@
             android:layout_centerInParent="true"
             android:background="@drawable/single_player_play_button_setup"
             android:onClick="PlaySinglePlayer" />
-        
     </RelativeLayout>
 
     <RelativeLayout
@@ -188,8 +185,9 @@
             android:layout_alignParentRight="true"
             android:layout_marginRight="5dp"
             android:background="@drawable/home_sound_button"
-            android:textOn="@android:string/yes" />
-
+            android:textOn="@android:string/yes"
+            android:onClick="toggleMusic" />
+            
     </RelativeLayout>
-    
+
 </LinearLayout>
