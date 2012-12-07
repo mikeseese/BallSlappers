@@ -33,8 +33,7 @@ public class SinglePlayerCreateActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_single_player_create);
-        
-        
+                
 	     Spinner difficulty = (Spinner) findViewById(R.id.DifficultySelect);
 	     // Create an ArrayAdapter using the string array and a default spinner layout
 	     ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
@@ -99,10 +98,13 @@ public class SinglePlayerCreateActivity extends Activity {
 	         }
 	     });
 	     
+	     Log.i("onCreate()", "singlePlayerCreateActivity");
 		 difficulty.setSelection(HomeScreenActivity.settings.getInt("difficulty", 0));
 		 ((EditText) findViewById(R.id.Edit_Lives_Text)).setText(HomeScreenActivity.settings.getInt("numberLives", 1)+"");
 		 NUMCPU.setSelection(HomeScreenActivity.settings.getInt("cpunumber", 1) - 1);
 		 ((EditText) findViewById(R.id.GameName)).setText(HomeScreenActivity.settings.getString("userName", null));
+         powerupsen = HomeScreenActivity.settings.getBoolean("powerupsen", false);
+         ((CheckBox) findViewById(R.id.enablePowerUps)).setChecked(powerupsen);
     }
     
 	@Override
@@ -163,6 +165,7 @@ public class SinglePlayerCreateActivity extends Activity {
     	e.putInt("numberLives", lives);
     	e.putInt("cpunumber", numberofcpu);
     	e.putString("userName", name);
+        e.putBoolean("powerupsen", powerupsen);
     	e.commit();
      	
     	Bundle bundle = new Bundle();
@@ -170,6 +173,7 @@ public class SinglePlayerCreateActivity extends Activity {
     	bundle.putInt("numberLives", lives);
     	bundle.putInt("cpunumber", numberofcpu);
     	bundle.putString("userName", name);
+        bundle.putBoolean("powerups", powerupsen);
     	Intent intent = new Intent(this, MainActivity.class);
     	intent.putExtras(bundle);
     	startActivity(intent);//, bundle);
