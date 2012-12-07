@@ -80,10 +80,22 @@ public class HomeScreenActivity extends Activity {
 	    initScores();
     }
     
-    protected void onResume(){
+    @Override
+    public void onResume(){
+    	if (HomeScreenActivity.SOUND_ENABLED == true)
+			HomeScreenActivity.mediaPlayer.start();
+    	
     	super.onResume();
     	ToggleButton tb = (ToggleButton) findViewById(R.id.toggleSound);
         tb.setChecked(HomeScreenActivity.SOUND_ENABLED);
+    }
+    
+    @Override
+    public void onPause() {
+    	if (HomeScreenActivity.mediaPlayer.isPlaying())
+    		HomeScreenActivity.mediaPlayer.pause();
+    	
+    	super.onPause();
     }
 
     @Override
@@ -114,20 +126,10 @@ public class HomeScreenActivity extends Activity {
     
     public void toggleMusic(View view){
     	if(HomeScreenActivity.SOUND_ENABLED)
-    		HomeScreenActivity.mediaPlayer.stop();
+    		HomeScreenActivity.mediaPlayer.pause();
     	else
     	{
-    		try
-			{
-				HomeScreenActivity.mediaPlayer.prepare();
-			} catch (IllegalStateException e1)
-			{
-				e1.printStackTrace();
-			} catch (IOException e1)
-			{
-				e1.printStackTrace();
-			}
-    		HomeScreenActivity.mediaPlayer.start();
+       		HomeScreenActivity.mediaPlayer.start();
     	}
     	
     	HomeScreenActivity.SOUND_ENABLED = !HomeScreenActivity.SOUND_ENABLED;

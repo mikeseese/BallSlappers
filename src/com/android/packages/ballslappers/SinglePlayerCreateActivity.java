@@ -99,19 +99,30 @@ public class SinglePlayerCreateActivity extends Activity {
 	         }
 	     });
 	     
-
 		 difficulty.setSelection(HomeScreenActivity.settings.getInt("difficulty", 0));
 		 ((EditText) findViewById(R.id.Edit_Lives_Text)).setText(HomeScreenActivity.settings.getInt("numberLives", 1)+"");
 		 NUMCPU.setSelection(HomeScreenActivity.settings.getInt("cpunumber", 1) - 1);
 		 ((EditText) findViewById(R.id.GameName)).setText(HomeScreenActivity.settings.getString("userName", null));
     }
     
-    protected void onResume(){
+	@Override
+    public void onResume(){
+    	if (HomeScreenActivity.SOUND_ENABLED == true)
+			HomeScreenActivity.mediaPlayer.start();
+    	
     	super.onResume();
     	ToggleButton tb = (ToggleButton) findViewById(R.id.toggleSound);
         tb.setChecked(HomeScreenActivity.SOUND_ENABLED);
     }
-	
+    
+    @Override
+    public void onPause() {
+    	if (HomeScreenActivity.mediaPlayer.isPlaying())
+    		HomeScreenActivity.mediaPlayer.pause();
+    	
+    	super.onPause();
+    }
+		
 	public void minusOneLife(View view){
      	EditText editText = (EditText) findViewById(R.id.Edit_Lives_Text);
      	tempLives = Integer.parseInt(editText.getText().toString());
@@ -169,20 +180,11 @@ public class SinglePlayerCreateActivity extends Activity {
     }
     
     public void toggleMusic(View view){
-    	if(HomeScreenActivity.SOUND_ENABLED)
-    		HomeScreenActivity.mediaPlayer.stop();
+    	if(HomeScreenActivity.SOUND_ENABLED) {
+    		HomeScreenActivity.mediaPlayer.pause();
+		}
     	else
     	{
-    		try
-			{
-				HomeScreenActivity.mediaPlayer.prepare();
-			} catch (IllegalStateException e1)
-			{
-				e1.printStackTrace();
-			} catch (IOException e1)
-			{
-				e1.printStackTrace();
-			}
     		HomeScreenActivity.mediaPlayer.start();
     	}
     	
