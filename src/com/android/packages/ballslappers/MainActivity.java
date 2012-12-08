@@ -1252,13 +1252,13 @@ protected MenuScene createGameOverMenuScene() {
 	
 	private void showPlayerLives(Font font, int numLives, int pX, int pY) {
 		MainActivity.mScene.detachChild(playerLives);
-		this.playerLives = new Text(pX, pY, font, Integer.toString(numLives), "XXXX".length(), this.getVertexBufferObjectManager());
+		this.playerLives = new Text(pX, pY, font, Integer.toString(numLives), Integer.toString(numLives).length(), this.getVertexBufferObjectManager());
 		MainActivity.mScene.attachChild(playerLives);
 	}
 	
 	private void showCurrentScore(Font font, int pX, int pY) {
 		MainActivity.mScene.detachChild(currentScoreText);
-		currentScoreText = new Text(pX, pY, font, Integer.toString(current_score), ("XXXXXXXXX").length(), this.getVertexBufferObjectManager());
+		currentScoreText = new Text(pX, pY, font, Integer.toString(current_score), Integer.toString(current_score).length(), this.getVertexBufferObjectManager());
 		MainActivity.mScene.attachChild(currentScoreText);
 	}
 	
