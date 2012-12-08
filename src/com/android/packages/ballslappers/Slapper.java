@@ -20,6 +20,7 @@ public class Slapper extends Rectangle {
 	private float width;
 	private float height;
 	private float orientation = 0; //(float) (Math.PI/2) in rad
+	private float low, high;
 	public boolean hit = false;
 
 	public Slapper(float pX, float pY, float pWidth, float pHeight, VertexBufferObjectManager vertexBufferObjectManager, float orientation) {
@@ -29,6 +30,32 @@ public class Slapper extends Rectangle {
 		this.orientation = orientation;
 		this.width = pWidth;
 		this.height = pHeight;
+		switch (MainActivity.NUM_SLAPPERS) {
+			case 4:
+				if (orientation == 0) {
+					low = (MainActivity.CAMERA_WIDTH - MainActivity.bumperSideLength*2 - MainActivity.sideLength)/2 + MainActivity.bumperSideLength + this.width/2;
+					high = low + MainActivity.sideLength - this.width;
+				}
+				else { // orientation == Math.PI/2
+					low = MainActivity.bumperSideLength + this.width/2;
+					high = low + MainActivity.sideLength - this.width;
+				}
+				break;
+			case 3:
+				if (orientation == 0) {
+					low = (float) ((MainActivity.CAMERA_WIDTH - 2*MainActivity.bumperLength * Math.cos(Math.PI / 3) - MainActivity.sideLength)/2 + MainActivity.bumperLength*Math.cos(Math.PI/3) + this.width/2);
+					high = low + MainActivity.sideLength - this.width;
+				}
+				else {
+					low = MainActivity.WALL_WIDTH;
+					high = (float) (low + MainActivity.sideLength*Math.sin(Math.PI/3) - this.width*Math.sin(Math.PI/3)/2);
+				}
+				break;
+			default:
+				low = this.getSlapperWidth()/2 + (float)MainActivity.WALL_WIDTH;
+				high = low + (float)MainActivity.CAMERA_WIDTH - this.getSlapperWidth() - 2*(float)MainActivity.WALL_WIDTH;
+				break;
+		}
 	}
 
 	public float getSlapperX() {
@@ -79,57 +106,10 @@ public class Slapper extends Rectangle {
 
 	// keeps the paddle from going into and past the wall
 	public float bound(float number) {
-		if (MainActivity.NUM_SLAPPERS == 4) {
-			if (orientation == 0) {
-				float low = (MainActivity.CAMERA_WIDTH - MainActivity.bumperSideLength*2 - MainActivity.sideLength)/2 + MainActivity.bumperSideLength + this.width/2;
-				float high = low + MainActivity.sideLength - this.width;
-				if(number < low)
-					number = low;
-				if(number > high)
-					number = high;
-			}
-			else { // orientation == Math.PI/2
-				float low = MainActivity.bumperSideLength + this.width/2;
-				float high = low + MainActivity.sideLength - this.width;
-				if(number < low)
-					number = low;
-				if(number > high)
-					number = high;
-			}
-		}
-		else if (MainActivity.NUM_SLAPPERS == 3) {
-			if (orientation == 0) {
-				float low = (float) ((MainActivity.CAMERA_WIDTH - 2*MainActivity.bumperLength * Math.cos(Math.PI / 3) - MainActivity.sideLength)/2 + MainActivity.bumperLength*Math.cos(Math.PI/3) + this.width/2);
-				float high = low + MainActivity.sideLength - this.width;
-				if(number < low)
-					number = low;
-				if(number > high)
-					number = high;
-			}
-			else {
-				float low = MainActivity.WALL_WIDTH;
-				float high = (float) (low + MainActivity.sideLength*Math.sin(Math.PI/3) - this.width*Math.sin(Math.PI/3)/2);
-				if(number < low)
-					number = low;
-				if(number > high)
-					number = high;
-			}
-		}
-		else { //if (MainActivity.NUM_SLAPPERS == 2) {
-			if (orientation == 0) {
-				//Log.i("slapper.bound()", "entered");
-				Log.i("number before", Float.toString(number));
-				float low = this.getSlapperWidth()/2 + (float)MainActivity.WALL_WIDTH;
-				float high = low + (float)MainActivity.CAMERA_WIDTH - this.getSlapperWidth() - 2*(float)MainActivity.WALL_WIDTH;
-				Log.i("low", Float.toString(low));
-				//Log.i("high", Float.toString(high));
-				if(number < low)
-					number = low;
-				if(number > high)
-					number = high;
-				Log.i("number after", Float.toString(number));
-			}
-		}
+		if (number < low)
+			number = low;
+		else if (number > high)
+			number = high;
 		return number;
 	}
 } 
