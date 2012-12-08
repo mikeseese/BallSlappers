@@ -62,6 +62,11 @@ public class Slapper extends Rectangle {
 	public float getSlapperWidth() {
 		return width;
 	}
+	
+	public void setSlapperWidth(float width) {
+		this.width = width;
+		super.setWidth(width);
+	}
 
 	public float getSlapperHeight() {
 		return height;
@@ -112,12 +117,17 @@ public class Slapper extends Rectangle {
 		}
 		else { //if (MainActivity.NUM_SLAPPERS == 2) {
 			if (orientation == 0) {
-				float low = this.width/2;
-				float high = low + MainActivity.CAMERA_WIDTH - this.width;
+				//Log.i("slapper.bound()", "entered");
+				Log.i("number before", Float.toString(number));
+				float low = this.getSlapperWidth()/2 + (float)MainActivity.WALL_WIDTH;
+				float high = low + (float)MainActivity.CAMERA_WIDTH - this.getSlapperWidth() - 2*(float)MainActivity.WALL_WIDTH;
+				Log.i("low", Float.toString(low));
+				//Log.i("high", Float.toString(high));
 				if(number < low)
 					number = low;
 				if(number > high)
 					number = high;
+				Log.i("number after", Float.toString(number));
 			}
 		}
 		return number;

@@ -2,7 +2,11 @@ package com.android.packages.ballslappers;
 
 /*IMPORTS*/
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
 
 import javax.microedition.khronos.opengles.GL10;
@@ -26,6 +30,7 @@ import org.andengine.entity.scene.menu.item.SpriteMenuItem;
 import org.andengine.entity.sprite.ButtonSprite;
 import org.andengine.entity.sprite.ButtonSprite.OnClickListener;
 import org.andengine.entity.sprite.Sprite;
+import org.andengine.entity.sprite.TiledSprite;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.util.FPSLogger;
 import org.andengine.extension.physics.box2d.PhysicsConnector;
@@ -37,6 +42,7 @@ import org.andengine.opengl.texture.ITexture;
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
+import org.andengine.opengl.texture.atlas.bitmap.BuildableBitmapTextureAtlas;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
@@ -180,7 +186,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     private Text playerLives;
     private Text currentScoreText;
     private Text gameOverScore;
-    private Text gameResetMessage;
+    private Sprite gameStartingMessage;
     private Text countDownTimer;
     
     //Game UI Implementations
@@ -196,16 +202,18 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     private BitmapTextureAtlas mPaddleBitmapTextureAtlas;
     private BitmapTextureAtlas mAIBitmapTextureAtlas;
     private BitmapTextureAtlas mBallBitmapTextureAtlas;
-    private BitmapTextureAtlas[] mPowerBitmapTextureAtlas = new BitmapTextureAtlas[5];
+    private BitmapTextureAtlas mPowerBitmapTextureAtlas;
     private BitmapTextureAtlas mBgBitmapTextureAtlas;
+    private BitmapTextureAtlas mGameStartingTextureAtlas;
     
     //Texture Regions
     private ITextureRegion mBgTexture;
     private ITextureRegion mBallTextureRegion;
-    private ITextureRegion[] mPowerTextureRegion = new ITextureRegion[5];
+    private TiledTextureRegion mPowerTextureRegion;
     private TiledTextureRegion mPaddleTextureRegion;
     private TiledTextureRegion mAITextureRegion;
     private TiledTextureRegion mBgTextureRegion;
+    private ITextureRegion mGameStartingTextureRegion;
     
     //Boundaries and parameters
     private HashMap<String, Rectangle> boundaryShapes;
@@ -218,22 +226,38 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	static Body ballBody;
 	static Sprite ball;
 	
-	//PowerUps & Things
-		public static Vector2 vPos;
-		static Body powerBody;
-		static Sprite powerBall;
+	//PowerUps
+	public static Vector2 vPos;
+	static Body powerBody;
+	static TiledSprite powerBall;
+	public static enum PowerUp { 
+		NONE, OBSTACLES, SLOW_DOWN, SPEED_UP, INCREASE_WIDTH, DECREASE_WIDTH, DOUBLE_XP, PLUS_LIFE;
 		
+		private static final List<PowerUp> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
+		private static final int SIZE = VALUES.size();
+		private static final Random RANDOM = new Random();
 		
-		static boolean isSpawned = false;
-		
-		public static final float powerUpRATE = 1.3f;
-		public static final float powerDownRATE = .5f;
-		public static int randPowerUp = 0;
-		
-		static Slapper[] obstacle = new Slapper[100];
-		public static int obsCount = 0; public static int actualObs = 0;
-		private static Body[] obsBody = new Body[10];
-		static FixtureDef obsDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
+		public static PowerUp randomPowerUp()  {
+		    return VALUES.get(RANDOM.nextInt(SIZE));
+		}
+	}
+	static PowerUp currentPowerUp = PowerUp.NONE;
+	static PhysicsConnector powerBallBodyConnector;
+	static int OBSTACLE_HEIGHT = 20;
+	static int OBSTACLE_WIDTH = 20;
+	static boolean needToAddObstacle = false;
+	static boolean needToIncreaseWidth = false;
+	static boolean needToDecreaseWidth = false;
+	static boolean doubleXPFlag = false;
+	static boolean needToUpdateInfo = false;
+	
+	static boolean isSpawned = false;
+	
+	public static final float powerUpRATE = 1.3f;
+	public static final float powerDownRATE = .5f;
+	
+	static ArrayList<Obstacle> obstacles = new ArrayList<Obstacle>();
+	static FixtureDef obstacleFixtureDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
 	
 	//User Paddle and Parameters
     static Slapper playerSlapperShape;
@@ -280,7 +304,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		NUM_SLAPPERS= bundle.getInt("cpunumber")+1;
 		NUM_LIVES = bundle.getInt("numberLives");
 		numPlayerLives = NUM_LIVES;
-		POWERUPS = bundle.getBoolean("powerupsen");
+		POWERUPS = bundle.getBoolean("powerups");
 		difficulty = bundle.getString("difficulty");
 		easterEgg = bundle.getString("Bermudez");
 		
@@ -288,10 +312,10 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			MainActivity.aiSpeed = 7f; 
 		}
 		else if(difficulty.equalsIgnoreCase("Medium")) {
-			MainActivity.aiSpeed = 10f; 
+			MainActivity.aiSpeed = 14f; 
 		}
 		else if(difficulty.equalsIgnoreCase("Hard")){
-			MainActivity.aiSpeed = 12f; 
+			MainActivity.aiSpeed = 21f; 
 		}
 		else {
 			MainActivity.ballSpeedDifficultyIncrease = 0.0f;
@@ -387,34 +411,12 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         this.mEngine.getTextureManager().loadTexture(this.mBallBitmapTextureAtlas);
         
       //Power Up Textures
-        
-        
-        for (int i = 0; i<3; i++) {
-        	switch(i+1) {
-        	case 1:
-        		texChoice = "speed1.png";
-        		break;
-        	case 2:
-        		texChoice = "slow1.png";
-        		break;
-        	case 3:
-        		texChoice = "obstacle1.png";
-        		break;
-        	case 4:
-        		texChoice = "bullet1.png";
-        		break;
-        	}
-        this.mPowerBitmapTextureAtlas[i] = new BitmapTextureAtlas(this.getTextureManager(), 44, 44, 		// 68 x 68 is the size of the image
-        													  TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
-        
-        this.mPowerTextureRegion[i] = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mPowerBitmapTextureAtlas[i], this, texChoice, 0, 0);
-        MainActivity.BALL_RADIUS = mPowerTextureRegion[i].getWidth() / 2;
-        
-        this.mEngine.getTextureManager().loadTexture(this.mPowerBitmapTextureAtlas[i]);
-        }
+        this.mPowerBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 344, 43, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		this.mPowerTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mPowerBitmapTextureAtlas, this, "powerups.png", 0, 0, 8, 1);
+        this.mEngine.getTextureManager().loadTexture(mPowerBitmapTextureAtlas);
 		
-        
+		
         //BG Textures
 //        this.mBgBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(),1024, 512, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 //        BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
@@ -423,10 +425,15 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         
         // Text for resetting the game
         // 40 is the max size for text. Currently a magic #
-		this.gameResetMessage = new Text(CAMERA_WIDTH/2, CAMERA_HEIGHT/2, this.mGameResetFont, loserMessage + "Resetting.",
-				40, this.getVertexBufferObjectManager());
-		this.countDownTimer = new Text(CAMERA_WIDTH/2, (int)(CAMERA_HEIGHT*.1), this.mGameResetFont, "Starting in: " + BALL_RESET_DELAY,
-				"Starting in: X".length(), this.getVertexBufferObjectManager());
+		//this.gameResetMessage = new Text(CAMERA_WIDTH/2, CAMERA_HEIGHT/2, this.mGameResetFont, loserMessage + "Resetting.",
+				//40, this.getVertexBufferObjectManager());
+        this.mGameStartingTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(),1024, 512, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+        BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
+      	this.mGameStartingTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.mGameStartingTextureAtlas, this, "gameStarting.png", 0, 0);
+        this.mEngine.getTextureManager().loadTexture(this.mGameStartingTextureAtlas);
+        this.gameStartingMessage = new Sprite(CAMERA_WIDTH/2 - this.mGameStartingTextureRegion.getWidth()/2, (int)(CAMERA_HEIGHT*.15), this.mGameStartingTextureRegion, this.getVertexBufferObjectManager());
+		this.countDownTimer = new Text(this.gameStartingMessage.getInitialX() + this.gameStartingMessage.getWidth() - 95, this.gameStartingMessage.getInitialY() + this.gameStartingMessage.getHeight()/2 - 25, this.mGameOverFont, Integer.toString(BALL_RESET_DELAY),
+				"2".length(), this.getVertexBufferObjectManager());
 	}
 
 	@Override
@@ -567,8 +574,16 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
 		this.gameStarting = true;
 		this.startTimer();
-		if (POWERUPS)
-			createPowerUps();
+			
+		if (POWERUPS) {
+			final FixtureDef pDef = PhysicsFactory.createFixtureDef(0, 0.0f, 0.0f);
+ 	        powerBall = new TiledSprite(start_position.x*PIXEL_TO_METER_RATIO_DEFAULT, start_position.y*PIXEL_TO_METER_RATIO_DEFAULT, this.mPowerTextureRegion, this.getVertexBufferObjectManager());
+ 	 		powerBody = PhysicsFactory.createBoxBody(MainActivity.mPhysicsWorld, powerBall, BodyType.KinematicBody, pDef);
+ 	        powerBody.setUserData("powerBody");
+ 			MainActivity.mScene.attachChild(powerBall);
+ 	 		powerBallBodyConnector = new PhysicsConnector(powerBall, powerBody);
+ 			mPhysicsWorld.registerPhysicsConnector(powerBallBodyConnector);
+		}
     	
 		return MainActivity.mScene;
 	}
@@ -608,13 +623,15 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	@Override
 	public boolean onKeyDown(final int pKeyCode, final KeyEvent pEvent) {
 		if(pKeyCode == KeyEvent.KEYCODE_MENU && pEvent.getAction() == KeyEvent.ACTION_DOWN) {
-			if(MainActivity.mScene.hasChildScene()) {
+			if(MainActivity.mScene.hasChildScene() && MainActivity.mScene.getChildScene() == this.mPauseMenuScene) {
 	            // set up the count down timer
 	            this.resuming = true;
 	            startTimer();
 
 				// remove the menu
 	            this.mPauseMenuScene.back();
+            } else if (MainActivity.mScene.hasChildScene() && MainActivity.mScene.getChildScene() == this.mGameOverMenuScene){
+            	// do nothing
             } else {
             	// attach the menu
             	MainActivity.mScene.setChildScene(this.mPauseMenuScene, false, true, true);
@@ -754,9 +771,9 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		super.onPauseGame();
 	}
 
-	// ===========================================================
-	// Methods
-	// ===========================================================
+	public static PhysicsWorld getmPhysicsWorld() {
+		return mPhysicsWorld;
+	}
 
 	protected HashMap<String, Rectangle> createBoundaryShapes() {
 		HashMap<String, Rectangle> boundaries = new HashMap<String, Rectangle>();
@@ -1026,8 +1043,6 @@ protected MenuScene createGameOverMenuScene() {
 	/* Functions for fun */
 	
  	private void ballReset() {
-    	
- 		
  		ballBody.setTransform(start_position, 0f);
 		Vector2 unit = getUnitVector();
 		ballBody.setLinearVelocity(START_SPEED * unit.x, START_SPEED * unit.y);
@@ -1035,46 +1050,73 @@ protected MenuScene createGameOverMenuScene() {
 
  	
  	//Power Up methods	
- 	 	public void createPowerUps() {
- 	 		final FixtureDef pDef = PhysicsFactory.createFixtureDef(0, 0.0f, 0.0f);
- 	 		randPowerUp=2;
- 	        powerBall = new Sprite(CAMERA_WIDTH/2, CAMERA_HEIGHT/2, this.mPowerTextureRegion[randPowerUp], this.getVertexBufferObjectManager());
- 			powerBody = PhysicsFactory.createBoxBody(MainActivity.mPhysicsWorld, powerBall, BodyType.KinematicBody, pDef);
- 			powerBody.setUserData("powerBody");
- 			MainActivity.mScene.attachChild(powerBall);
- 			mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(powerBall, powerBody));
- 			++randPowerUp;
- 	 	}
- 	 	
- 	 	
- 	 	
- 	 	
- 	 	public void createObstacle() {
- 	 		obstacle[obsCount-1] = new Slapper((float)(Math.random()*600),(float) (Math.random()*300), 20, 20, this.getVertexBufferObjectManager(), (float) Math.random());	
- 			obstacle[obsCount-1].setColor(AI_SLAPPER_COLOR);
- 			obsBody[obsCount-1] = PhysicsFactory.createBoxBody(MainActivity.mPhysicsWorld, obstacle[obsCount-1], BodyType.KinematicBody, obsDef);
- 			obsBody[obsCount-1].setUserData(obsBody[obsCount-1]);
- 			mScene.attachChild(obstacle[obsCount-1]);
- 			actualObs++;
- 	 	}
- 	 	
+ 	private void changePowerUp() {
+ 		Log.i("method", "changePowerUp()");
+ 		currentPowerUp = PowerUp.randomPowerUp();
+ 		if (currentPowerUp != PowerUp.DOUBLE_XP)
+ 			doubleXPFlag = false;
+        powerBall.setCurrentTileIndex(currentPowerUp.ordinal());
+        Log.i("changePowerUp()", Integer.toString(currentPowerUp.ordinal()));
+ 	}
  	
+ 	private void resetPowerUp() {
+ 		currentPowerUp = PowerUp.NONE;
+ 		doubleXPFlag = false;
+ 		powerBall.setCurrentTileIndex(currentPowerUp.ordinal());
+ 	}
  	
+ 	private void removeObstacles() {
+ 		for (Obstacle obstacle : obstacles) {
+			mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(obstacle));
+			mPhysicsWorld.destroyBody(obstacle.getBody());
+			mScene.detachChild(obstacle);
+			//obstacles.remove(obstacle); // produces java.util.ConcurrentModificationException
+		}
+ 		obstacles.clear();
+ 	}
+ 	
+ 	private void addObstacle() {
+ 		switch (NUM_SLAPPERS) {
+ 			case 4: 
+ 				// nothing for now
+ 				break;
+ 			case 3:
+ 				// nothing for now
+ 				break;
+ 			default:
+ 				Log.i("addObstacle()", "case 2");
+ 				float randomXMultiple = randomNumGen.nextFloat();
+ 				float randomYMultiple = randomNumGen.nextFloat();
+ 				Obstacle obstacle = new Obstacle(CAMERA_WIDTH*randomXMultiple, CAMERA_HEIGHT*randomYMultiple, OBSTACLE_WIDTH, OBSTACLE_HEIGHT, obstacleFixtureDef, this.getVertexBufferObjectManager());
+ 				obstacles.add(obstacle);
+ 				mScene.attachChild(obstacle);
+ 				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(obstacle, obstacle.getBody()));
+ 				break;
+ 		}
+ 	}
+ 	
+ 	private void updatePlayerSlapper(int width) {
+ 		/* remove the body then remake it with the new width
+ 		 * don't think there's another way to do this
+ 		 */		
+ 		mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(playerSlapperShape));
+		mPhysicsWorld.destroyBody(paddleBody);
+		mScene.detachChild(playerSlapperShape);
+		
+		float tempX = playerSlapperShape.getX();
+		float tempY = playerSlapperShape.getY();
+		float orientation = playerSlapperShape.getSlapperOrientation();
+		playerSlapperShape = new Slapper(tempX, tempY, width, PADDLE_HEIGHT, this.getVertexBufferObjectManager(), orientation);
+		
+ 		final FixtureDef playerDef = PhysicsFactory.createFixtureDef(0, 1.0f, 0.0f);
+		paddleBody = PhysicsFactory.createBoxBody(MainActivity.mPhysicsWorld, playerSlapperShape, BodyType.KinematicBody, playerDef);
+		paddleBody.setUserData("paddleBody");
+		MainActivity.mScene.attachChild(playerSlapperShape);
+		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(playerSlapperShape, paddleBody));
+ 	}
+ 	 	
 	public void onUpdate(final float pSecondsElapsed) {
-		
-		while(actualObs<obsCount) {
-			createObstacle();
-		}
-		while(actualObs>obsCount) {
-			mScene.detachChild(obstacle[obsCount-1]);
- 			actualObs--;
-		}
-		//PowerUps
-	
-		
-		//ballBody.setTransform(ballBody.getPosition(),ballAngle);
 		if (gameOver) {
-			obsCount = 0;
 			this.mGameOverMenuScene = this.createGameOverMenuScene();
         	MainActivity.mScene.setChildScene(this.mGameOverMenuScene, false, true, true);
             int lowest_high_score = HomeScreenActivity.settings.getInt("highscore_scores_" + difficulty + "_9", 0);
@@ -1090,36 +1132,55 @@ protected MenuScene createGameOverMenuScene() {
 			return;
 		}
 		
+		if (needToAddObstacle) {
+			addObstacle();
+			needToAddObstacle = false;
+		}
+		if (needToDecreaseWidth) {
+			int tempWidth = (int) (0.75*playerSlapperShape.getWidth());
+			// only allow the width to be decreased twice
+			if (tempWidth < PADDLE_WIDTH * (.75*.75))
+				tempWidth = (int) (PADDLE_WIDTH * (.75*.75));
+			updatePlayerSlapper(tempWidth);
+			needToDecreaseWidth = false;
+		}
+		if (needToIncreaseWidth) {
+			int tempWidth = (int) (1.25*playerSlapperShape.getWidth());
+			// only allow the width to be increased twice
+			if (tempWidth > PADDLE_WIDTH * (1.25*1.25))
+				tempWidth = (int) (PADDLE_WIDTH * (1.25*1.25));
+			updatePlayerSlapper(tempWidth);
+			needToIncreaseWidth = false;
+		}
+		if (needToUpdateInfo) {
+			showInfo();
+		}
+		
 		if (ballAngle == 360){ ballAngle = 0;}
 		ballAngle += ballAngleDiff;
 		
-		for (int j = 0; j<NUM_SLAPPERS-1; j++) {
-		
-		}
-			if (ballStuck()) {
-			/* keep the x velocity the same but alter the y velocity in the appropriate direction to
-			 * make it seem like it's accurately bouncing
-			 * this is just temporary because it won't be an issue when the trajectory of the ball is 
-			 * dependent solely on the position it hits the paddle */
-				int tempYVel;
-				if (ballBody.getPosition().y > CAMERA_HEIGHT / (2 * PIXEL_TO_METER_RATIO_DEFAULT)) {
-					Log.i("Ball stuck", "stuck on ground");
-					tempYVel = -1;
-				}
-				else {
-					Log.i("Ball stuck", "stuck on roof");
-					tempYVel = 1;
-				}
-			
-				ballBody.setLinearVelocity(new Vector2(ballBody.getLinearVelocity().x, tempYVel));				
+		if (ballStuck()) {
+		/* keep the x velocity the same but alter the y velocity in the appropriate direction to
+		 * make it seem like it's accurately bouncing
+		 * this is just temporary because it won't be an issue when the trajectory of the ball is 
+		 * dependent solely on the position it hits the paddle */
+			int tempYVel;
+			if (ballBody.getPosition().y > CAMERA_HEIGHT / (2 * PIXEL_TO_METER_RATIO_DEFAULT)) {
+				Log.i("Ball stuck", "stuck on ground");
+				tempYVel = -1;
 			}
+			else {
+				Log.i("Ball stuck", "stuck on roof");
+				tempYVel = 1;
+			}
+		
+			ballBody.setLinearVelocity(new Vector2(ballBody.getLinearVelocity().x, tempYVel));				
+		}
 		
 		if(timerCountOn) {
 			if(timerHandler != null) {
 				setTimerMessage();
 			}
-			
-			setResetMessage();
 		}
 		
 		if(outOfBounds) {
@@ -1180,6 +1241,16 @@ protected MenuScene createGameOverMenuScene() {
 		showCurrentScore(this.mLivesFont, (int)(CAMERA_WIDTH*.01), (int)(CAMERA_HEIGHT*.11));
 	}
 	
+	private void updateScore() {
+		if (doubleXPFlag)
+			current_score += 2*AI_KILL_SCORE;
+		else
+			current_score += AI_KILL_SCORE;
+		
+		currentScoreText.setText("Score: " + current_score);
+		showInfo();
+	}
+	
 	/*
 	 * Naive way to reset the game.
 	 */
@@ -1189,13 +1260,14 @@ protected MenuScene createGameOverMenuScene() {
 		this.numPlayerLives = NUM_LIVES;
 		playerLives.setText("Lives left: " + numPlayerLives);
 		current_score = 0;
+		if (POWERUPS) {
+			resetPowerUp();
+			removeObstacles();		
+			updatePlayerSlapper(PADDLE_WIDTH);
+		}
 		showInfo();
 	}
 
-	private String getLosingMessage() {
-		return this.loserMessage + "Game about to start.";
-	}
-	
 	private void startTimer() {
 		if(timerCountOn) {
 			return;
@@ -1204,8 +1276,8 @@ protected MenuScene createGameOverMenuScene() {
 			this.timerCountOn = true;
 		}
 		
-		if(!gameResetMessage.hasParent())
-			MainActivity.mScene.attachChild(gameResetMessage);
+		if(!gameStartingMessage.hasParent())
+			MainActivity.mScene.attachChild(gameStartingMessage);
 		if(!countDownTimer.hasParent())
 			MainActivity.mScene.attachChild(countDownTimer);
 		
@@ -1214,23 +1286,28 @@ protected MenuScene createGameOverMenuScene() {
             public void onTimePassed(final TimerHandler pTimerHandler)
             {
     			if(resuming) {
-    				if(gameResetMessage.hasParent())
-    					mScene.detachChild(gameResetMessage);
+    				if(gameStartingMessage.hasParent())
+    					mScene.detachChild(gameStartingMessage);
     				if(countDownTimer.hasParent())
     					mScene.detachChild(countDownTimer);
     			}
     			//else if(gameOver || gameStarting) {
     			else if (gameStarting) {
     				resetGame();
-    				if(gameResetMessage.hasParent())
-    					mScene.detachChild(gameResetMessage);
+    				if(gameStartingMessage.hasParent())
+    					mScene.detachChild(gameStartingMessage);
     				if(countDownTimer.hasParent())
     					mScene.detachChild(countDownTimer);
     			}
     			else { // Coming back from someone losing a life but game still going
     				ballReset();
-    				if(gameResetMessage.hasParent())
-    					mScene.detachChild(gameResetMessage);
+    				if (POWERUPS) {
+    					removeObstacles();
+    					updatePlayerSlapper(PADDLE_WIDTH);
+    					resetPowerUp();
+    				}
+    				if(gameStartingMessage.hasParent())
+    					mScene.detachChild(gameStartingMessage);
     				if(countDownTimer.hasParent())
     					mScene.detachChild(countDownTimer);
     			}
@@ -1257,15 +1334,7 @@ protected MenuScene createGameOverMenuScene() {
 	 * startTimer() before calling this method
 	 */
 	private void setTimerMessage() {
-		this.countDownTimer.setText("Starting in: " + (int)(3-timerHandler.getTimerSecondsElapsed()));
-		this.countDownTimer.setPosition((float)(CAMERA_WIDTH/2 - (countDownTimer.getWidth()*.5)), (float)(CAMERA_HEIGHT*.1));
-		this.countDownTimer.setHorizontalAlign(HorizontalAlign.CENTER);
-	}
-	
-	private void setResetMessage() {
-		this.gameResetMessage.setText(getLosingMessage());
-		this.gameResetMessage.setPosition((float)(CAMERA_WIDTH/2 - gameResetMessage.getWidth()*.5), CAMERA_HEIGHT/2);
-		this.gameResetMessage.setHorizontalAlign(HorizontalAlign.CENTER);
+		this.countDownTimer.setText("" + (int)(3-timerHandler.getTimerSecondsElapsed()));
 	}
 	
 	// ===========================================================
@@ -1276,7 +1345,7 @@ protected MenuScene createGameOverMenuScene() {
 		Vector2 temp = new Vector2(0,0);
 		public void beginContact(Contact contact) {
 			Body bodyA = contact.getFixtureA().getBody();
-			Body bodyB = contact.getFixtureB().getBody();
+			Body bodyB = contact.getFixtureB().getBody(); // TODO
 			Object userAData = bodyA.getUserData();
 			Object userBData = bodyB.getUserData();
 					
@@ -1287,9 +1356,11 @@ protected MenuScene createGameOverMenuScene() {
 				temp = paddleCollision(ballBody,paddleBody,temp);
 				ballBody.setLinearVelocity(temp.x * MainActivity.BALL_SPEED_INCREASE_RATE,
 										  (ballBody.getLinearVelocity().y + temp.y) * MainActivity.BALL_SPEED_INCREASE_RATE);
+				
 				++hit;
-				if (POWERUPS && hit ==3){
-					createPowerUps();
+				Log.i("hit", Integer.toString(hit));
+				if (POWERUPS && hit >= 1){
+					changePowerUp();
 					MainActivity.hit = 0;
 				}
 			}
@@ -1306,9 +1377,11 @@ protected MenuScene createGameOverMenuScene() {
 					ballBody.setLinearVelocity(temp.x * MainActivity.BALL_SPEED_INCREASE_RATE,
 											   (temp.y+ballBody.getLinearVelocity().y) * MainActivity.BALL_SPEED_INCREASE_RATE);
 					//Log.i("ballVelocity", "after: " + ballBody.getLinearVelocity().x + ", " + ballBody.getLinearVelocity().y);
+					
 					++hit;
-					if (POWERUPS && hit ==3){
-						createPowerUps();
+					Log.i("hit", Integer.toString(hit));
+					if (POWERUPS && hit >= 1){
+						changePowerUp();
 						MainActivity.hit = 0;
 					}
 				}
@@ -1338,24 +1411,35 @@ protected MenuScene createGameOverMenuScene() {
 		public void powerUpCollision(Object userAData, Object userBData) {
 			if(userAData.equals("ballBody") && userBData.equals("powerBody")
 					|| userAData.equals("powerBody") && userBData.equals("ballBody")) {
-				switch(2) {
-					case 0: //SpeedUp
+				switch(currentPowerUp) {
+					//NONE, OBSTACLES, SLOW_DOWN, SPEED_UP, INCREASE_WIDTH, DECREASE_WIDTH, DOUBLE_XP, PLUS_LIFE
+					case SPEED_UP: //SpeedUp
 						ballBody.setLinearVelocity(ballBody.getLinearVelocity().x * MainActivity.powerUpRATE,
 								  (ballBody.getLinearVelocity().y) * MainActivity.powerUpRATE);
-			 		
-
 			 	 		break;
-					case 1: //SpeedDown
+					case SLOW_DOWN: //SpeedDown
 						ballBody.setLinearVelocity(ballBody.getLinearVelocity().x * MainActivity.powerDownRATE,
 								  (ballBody.getLinearVelocity().y) * MainActivity.powerDownRATE);
-						
-
 						break;
-					case 2:
-						++obsCount;
-						
+					case OBSTACLES:
+						needToAddObstacle = true;
 						break;
-		
+					case INCREASE_WIDTH:
+						needToIncreaseWidth = true;
+						break;
+					case DECREASE_WIDTH:
+						needToDecreaseWidth = true;
+						break;
+					case DOUBLE_XP:
+						doubleXPFlag = true;
+						break;
+					case PLUS_LIFE:
+						numPlayerLives++;
+						needToUpdateInfo = true;
+						break;
+					default: // case NONE:
+						// nothing
+						break;
 				}
 			
 			}
@@ -1378,22 +1462,19 @@ protected MenuScene createGameOverMenuScene() {
 							|| userAData.equals("roofBody") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the roof");
 						outOfBounds = true;
-						current_score += AI_KILL_SCORE;
-						currentScoreText.setText("Score: " + current_score);
+						updateScore();
 					}
 					else if(userAData.equals("ballBody") && userBData.equals("leftBody")
 							|| userAData.equals("leftBody") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the left");
 						outOfBounds = true;
-						current_score += AI_KILL_SCORE;
-						currentScoreText.setText("Score: " + current_score);
+						updateScore();
 					}
 					else if(userAData.equals("ballBody") && userBData.equals("rightBody")
 							|| userAData.equals("rightBody") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the right");
 						outOfBounds = true;
-						current_score += AI_KILL_SCORE;
-						currentScoreText.setText("Score: " + current_score);
+						updateScore();
 					}
 					break;
 				case 3:
@@ -1411,15 +1492,13 @@ protected MenuScene createGameOverMenuScene() {
 							|| userAData.equals("rtri") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the roof");
 						outOfBounds = true;
-						current_score += AI_KILL_SCORE;
-						currentScoreText.setText("Score: " + current_score);
+						updateScore();
 					}
 					else if(userAData.equals("ballBody") && userBData.equals("ltri")
 							|| userAData.equals("ltri") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the left");
 						outOfBounds = true;
-						current_score += AI_KILL_SCORE;
-						currentScoreText.setText("Score: " + current_score);
+						updateScore();
 					}
 					break;
 				default:
@@ -1437,8 +1516,7 @@ protected MenuScene createGameOverMenuScene() {
 							|| userAData.equals("roofBody") && userBData.equals("ballBody")) {
 						Log.i("Contact Made", "Ball contacted the roof");
 						outOfBounds = true;
-						current_score += AI_KILL_SCORE;
-						currentScoreText.setText("Score: " + current_score);
+						updateScore();
 					}
 					
 					break;
