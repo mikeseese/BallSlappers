@@ -1272,8 +1272,6 @@ protected MenuScene createGameOverMenuScene() {
 			current_score += 2*AI_KILL_SCORE;
 		else
 			current_score += AI_KILL_SCORE;
-		
-		currentScoreText.setText("Score: " + current_score);
 		showInfo();
 	}
 	
