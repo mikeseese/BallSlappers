@@ -12,6 +12,9 @@ import java.util.Random;
 import javax.microedition.khronos.opengles.GL10;
 /*AndEngine Imports*/
 import static org.andengine.extension.physics.box2d.util.constants.PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT;
+
+import org.andengine.engine.Engine;
+import org.andengine.engine.FixedStepEngine;
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.engine.handler.timer.ITimerCallback;
@@ -298,6 +301,11 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		mCamera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
 
 		return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED, new FillResolutionPolicy(), mCamera);
+	}
+	
+	@Override                                                        
+	public Engine onCreateEngine(final EngineOptions pEngineOptions) {
+	        return new FixedStepEngine(pEngineOptions, 60); // 60 FPS (hopefully...)
 	}
 
 	public void onCreate(Bundle savedInstanceState){
@@ -1385,10 +1393,10 @@ protected MenuScene createGameOverMenuScene() {
 					aiSlapper[j].setHit(true);	// what's the point of this?
 					temp = paddleCollision(ballBody,aiBody[j],temp);
 					
-					////Log.i("ballVelocity", "before: " + ballBody.getLinearVelocity().x + ", " + ballBody.getLinearVelocity().y);
+					//Log.i("ballVelocity", "before: " + ballBody.getLinearVelocity().x + ", " + ballBody.getLinearVelocity().y);
 					ballBody.setLinearVelocity(temp.x * MainActivity.BALL_SPEED_INCREASE_RATE,
 											   (temp.y+ballBody.getLinearVelocity().y) * MainActivity.BALL_SPEED_INCREASE_RATE);
-					////Log.i("ballVelocity", "after: " + ballBody.getLinearVelocity().x + ", " + ballBody.getLinearVelocity().y);
+					//Log.i("ballVelocity", "after: " + ballBody.getLinearVelocity().x + ", " + ballBody.getLinearVelocity().y);
 					
 					++hit;
 					//Log.i("hit", Integer.toString(hit));
@@ -1410,7 +1418,7 @@ protected MenuScene createGameOverMenuScene() {
 			float c = 0, d = 0;
 			
 			c = (slapperB.getPosition().x - ballB.getPosition().x)*-10;
-			////Log.i("paddleCollision(): temp.x",""+ c);
+			//Log.i("paddleCollision(): temp.x",""+ c);
 				
 			d =  1; // What is the point of this and e.y = d?
 			
@@ -1424,12 +1432,11 @@ protected MenuScene createGameOverMenuScene() {
 			if(userAData.equals("ballBody") && userBData.equals("powerBody")
 					|| userAData.equals("powerBody") && userBData.equals("ballBody")) {
 				switch(currentPowerUp) {
-					//NONE, OBSTACLES, SLOW_DOWN, SPEED_UP, INCREASE_WIDTH, DECREASE_WIDTH, DOUBLE_XP, PLUS_LIFE
-					case SPEED_UP: //SpeedUp
+					case SPEED_UP:
 						ballBody.setLinearVelocity(ballBody.getLinearVelocity().x * MainActivity.powerUpRATE,
 								  (ballBody.getLinearVelocity().y) * MainActivity.powerUpRATE);
 			 	 		break;
-					case SLOW_DOWN: //SpeedDown
+					case SLOW_DOWN:
 						ballBody.setLinearVelocity(ballBody.getLinearVelocity().x * MainActivity.powerDownRATE,
 								  (ballBody.getLinearVelocity().y) * MainActivity.powerDownRATE);
 						break;
