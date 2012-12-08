@@ -595,6 +595,11 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		showInfo();
 		
 		if (POWERUPS) {
+			/* TODO: figure out where to place this
+			 *     --- in center
+			 *     --- two powerBalls to the sides
+			 *     --- etc?
+			 */
 			final FixtureDef pDef = PhysicsFactory.createFixtureDef(0, 0.0f, 0.0f);
  	        powerBall = new TiledSprite(start_position.x*PIXEL_TO_METER_RATIO_DEFAULT, start_position.y*PIXEL_TO_METER_RATIO_DEFAULT, this.mPowerTextureRegion, this.getVertexBufferObjectManager());
  	 		powerBody = PhysicsFactory.createBoxBody(MainActivity.mPhysicsWorld, powerBall, BodyType.KinematicBody, pDef);
@@ -1100,13 +1105,13 @@ protected MenuScene createGameOverMenuScene() {
  	private void addObstacle() {
  		switch (NUM_SLAPPERS) {
  			case 4: 
- 				// nothing for now
+ 				// TODO nothing for now
  				break;
  			case 3:
- 				// nothing for now
+ 				// TODO nothing for now
  				break;
  			default:
- 				//Log.i("addObstacle()", "case 2");
+ 				// TODO fix this so obstacles aren't so close to paddles
  				float randomXMultiple = randomNumGen.nextFloat();
  				float randomYMultiple = randomNumGen.nextFloat();
  				Obstacle obstacle = new Obstacle(CAMERA_WIDTH*randomXMultiple, CAMERA_HEIGHT*randomYMultiple, OBSTACLE_WIDTH, OBSTACLE_HEIGHT, obstacleFixtureDef, this.getVertexBufferObjectManager());
