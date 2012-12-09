@@ -31,6 +31,7 @@ public class SinglePlayerCreateActivity extends Activity {
 	
 	@Override
     public void onCreate(Bundle savedInstanceState) {
+		SharedPreferences prefs = HomeScreenActivity.settings;
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_single_player_create);
                 
@@ -99,11 +100,11 @@ public class SinglePlayerCreateActivity extends Activity {
 	     });
 	     
 	     Log.i("onCreate()", "singlePlayerCreateActivity");
-		 difficulty.setSelection(HomeScreenActivity.settings.getInt("difficulty", 0));
-		 ((EditText) findViewById(R.id.Edit_Lives_Text)).setText(HomeScreenActivity.settings.getInt("numberLives", 1)+"");
-		 NUMCPU.setSelection(HomeScreenActivity.settings.getInt("cpunumber", 1) - 1);
-		 ((EditText) findViewById(R.id.GameName)).setText(HomeScreenActivity.settings.getString("userName", null));
-         powerupsen = HomeScreenActivity.settings.getBoolean("powerupsen", false);
+		 difficulty.setSelection(prefs.getInt("difficulty", 0));
+		 ((EditText) findViewById(R.id.Edit_Lives_Text)).setText(prefs.getInt("numberLives", 1)+"");
+		 NUMCPU.setSelection(prefs.getInt("cpunumber", 1) - 1);
+		 ((EditText) findViewById(R.id.GameName)).setText(prefs.getString("userName", null));
+         powerupsen = prefs.getBoolean("powerupsen", false);
          ((CheckBox) findViewById(R.id.enablePowerUps)).setChecked(powerupsen);
     }
     

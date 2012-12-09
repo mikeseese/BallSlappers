@@ -24,7 +24,8 @@ public class AIUpdater implements IUpdateHandler {
 	}
 
 	public void onUpdate(float pSecondsElapsed) {
-		aibody.setTransform(ai.update(MainActivity.ballBody, slapper), o);
+		if (!MainActivity.gameStartingMessage.hasParent()) 
+			aibody.setTransform(ai.update(MainActivity.ballBody, slapper), o);
 	}
 
 	public void reset() {

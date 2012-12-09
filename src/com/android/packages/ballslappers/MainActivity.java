@@ -191,7 +191,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
     private Text playerLives;
     private Text currentScoreText;
     private Text gameOverScore;
-    private Sprite gameStartingMessage;
+    static Sprite gameStartingMessage;
     private Sprite infoBox;
     private Text countDownTimer;
     
@@ -625,7 +625,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
 	public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
 		if(MainActivity.mPhysicsWorld != null) {
-			if(fingerDown) {
+			if(fingerDown && !gameStartingMessage.hasParent()) {
 				float nextX = pSceneTouchEvent.getX() - diffX;
 				nextX = playerSlapperShape.bound(nextX);
 				Vector2 v;
@@ -808,6 +808,9 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
 	public static PhysicsWorld getmPhysicsWorld() {
 		return mPhysicsWorld;
+	}
+	public static Scene getmScene() {
+		return mScene;
 	}
 
 	protected HashMap<String, Rectangle> createBoundaryShapes() {
