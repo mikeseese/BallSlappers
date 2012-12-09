@@ -13,6 +13,7 @@
         android:theme="@style/AppTheme">
         
         <activity android:name="HomeScreenActivity"
+            android:label="@string/title_activity_home_screen"
             android:screenOrientation="portrait" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -21,8 +22,11 @@
         </activity>
         
         <activity android:name="SinglePlayerCreateActivity"
+            android:label="@string/title_activity_single_player_create"
             android:screenOrientation="portrait" >
-            
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.ballslappers.SinglePlayerCreateActivity" />
         </activity>
         
         <activity
@@ -31,11 +35,14 @@
             android:screenOrientation="portrait" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.example.ballslappers.HomeScreenActivity" />
+                android:value="com.example.ballslappers.MultiplayerCreateActivity" />
         </activity>
         
-        <activity android:name="MainActivity">
-            
+        <activity android:name="MainActivity"
+            android:screenOrientation="landscape" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.ballslappers.MainActivity" />
         </activity>
         
         <activity android:name="MultiplayerLobbyActivity">
