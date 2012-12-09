@@ -253,8 +253,12 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	}
 	static PowerUp currentPowerUp = PowerUp.NONE;
 	static PhysicsConnector powerBallBodyConnector;
-	static int OBSTACLE_HEIGHT = 20;
-	static int OBSTACLE_WIDTH = 20;
+	static int numObstacles = 0;
+	static int MAX_NUM_OBSTACLES = 8;
+	static int MIN_OBSTACLE_HEIGHT = 10;
+	static int MIN_OBSTACLE_WIDTH = 10;
+	static int MAX_OBSTACLE_HEIGHT = 25;
+	static int MAX_OBSTACLE_WIDTH = 25;
 	static boolean needToAddObstacle = false;
 	static boolean needToIncreaseWidth = false;
 	static boolean needToDecreaseWidth = false;
@@ -605,7 +609,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			 *     --- etc?
 			 */
 			final FixtureDef pDef = PhysicsFactory.createFixtureDef(0, 0.0f, 0.0f);
- 	        powerBall = new TiledSprite(start_position.x*PIXEL_TO_METER_RATIO_DEFAULT, start_position.y*PIXEL_TO_METER_RATIO_DEFAULT, this.mPowerTextureRegion, this.getVertexBufferObjectManager());
+ 	        powerBall = new TiledSprite(start_position.x*PIXEL_TO_METER_RATIO_DEFAULT - mPowerTextureRegion.getWidth()/2, start_position.y*PIXEL_TO_METER_RATIO_DEFAULT - mPowerTextureRegion.getHeight()/2, this.mPowerTextureRegion, this.getVertexBufferObjectManager());
  	 		powerBody = PhysicsFactory.createBoxBody(MainActivity.mPhysicsWorld, powerBall, BodyType.KinematicBody, pDef);
  	        powerBody.setUserData("powerBody");
  			MainActivity.mScene.attachChild(powerBall);
@@ -1092,6 +1096,8 @@ protected MenuScene createGameOverMenuScene() {
  	
  	private void resetPowerUp() {
  		currentPowerUp = PowerUp.NONE;
+ 		MainActivity.hit = 0;
+ 		MainActivity.numObstacles = 0;
  		doubleXPFlag = false;
  		powerBall.setCurrentTileIndex(currentPowerUp.ordinal());
  	}
@@ -1107,23 +1113,48 @@ protected MenuScene createGameOverMenuScene() {
  	}
  	
  	private void addObstacle() {
+ 		if (numObstacles >= MAX_NUM_OBSTACLES)
+ 			return;
+ 		
+ 		numObstacles++;
+ 		
+ 		float randomXMultiple = randomNumGen.nextFloat();
+		float randomYMultiple = randomNumGen.nextFloat();
+		float tempXPos = 0.0f, tempYPos = 0.0f;
+		Obstacle obstacle = null;
+		
  		switch (NUM_SLAPPERS) {
  			case 4: 
- 				// TODO nothing for now
+ 				tempXPos = sideLength*randomXMultiple + (CAMERA_WIDTH - bumperSideLength*2 - sideLength)/2 + bumperSideLength;
+ 				tempYPos = sideLength*randomYMultiple + bumperSideLength;				
  				break;
  			case 3:
- 				// TODO nothing for now
+ 				tempYPos = (float) (sideLength*Math.sin(Math.PI/3)*randomYMultiple);
+ 				if (tempYPos < 100)
+ 					tempYPos = 100;
+ 				boolean addFlag = randomNumGen.nextBoolean();
+ 				if (addFlag) 
+ 					tempXPos = (float) (CAMERA_WIDTH - 2*bumperLength * Math.sin(Math.PI / 3) - sideLength)/2 + (float) (bumperLength * Math.sin(Math.PI / 3) + sideLength/2) + (tempYPos/2)*randomYMultiple;
+ 				else
+ 					tempXPos = (float) (CAMERA_WIDTH - 2*bumperLength * Math.sin(Math.PI / 3) - sideLength)/2 + (float) (bumperLength * Math.sin(Math.PI / 3) + sideLength/2) - (tempYPos/2)*randomYMultiple;
  				break;
  			default:
- 				// TODO fix this so obstacles aren't so close to paddles
- 				float randomXMultiple = randomNumGen.nextFloat();
- 				float randomYMultiple = randomNumGen.nextFloat();
- 				Obstacle obstacle = new Obstacle(CAMERA_WIDTH*randomXMultiple, CAMERA_HEIGHT*randomYMultiple, OBSTACLE_WIDTH, OBSTACLE_HEIGHT, obstacleFixtureDef, this.getVertexBufferObjectManager());
- 				obstacles.add(obstacle);
- 				mScene.attachChild(obstacle);
- 				mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(obstacle, obstacle.getBody()));
+ 				tempXPos = CAMERA_WIDTH * randomXMultiple;
+ 				tempYPos = CAMERA_HEIGHT * randomYMultiple;
+ 				if (tempYPos < 50) // 50 is just a random buffer size so the obstacles aren't on top of the slappers
+ 					tempYPos = 50;
+ 				else if (tempYPos > CAMERA_HEIGHT - 150)
+ 					tempYPos = CAMERA_HEIGHT - 150;
  				break;
  		}
+ 		
+ 		int tempObstacleWidth = randomNumGen.nextInt(MAX_OBSTACLE_WIDTH - MIN_OBSTACLE_WIDTH + 1) + MIN_OBSTACLE_WIDTH;
+ 		int tempObstacleHeight = randomNumGen.nextInt(MAX_OBSTACLE_HEIGHT - MIN_OBSTACLE_HEIGHT + 1) + MIN_OBSTACLE_HEIGHT;
+		obstacle = new Obstacle(tempXPos, tempYPos, tempObstacleWidth, tempObstacleHeight, obstacleFixtureDef, this.getVertexBufferObjectManager());
+ 		obstacle.setColor(new Color(153.0f/255, 0.0f/255, 255.0f/255)); // purple color
+		obstacles.add(obstacle);
+		mScene.attachChild(obstacle);
+		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(obstacle, obstacle.getBody()));
  	}
  	
  	private void updatePlayerSlapper(int width) {
@@ -1397,7 +1428,7 @@ protected MenuScene createGameOverMenuScene() {
 				
 				++hit;
 				//Log.i("hit", Integer.toString(hit));
-				if (POWERUPS && hit >= 5){
+				if (POWERUPS && hit >= 8){
 					changePowerUp();
 					MainActivity.hit = 0;
 				}
@@ -1417,7 +1448,7 @@ protected MenuScene createGameOverMenuScene() {
 					
 					++hit;
 					//Log.i("hit", Integer.toString(hit));
-					if (POWERUPS && hit >= 5){
+					if (POWERUPS && hit >= 8){
 						changePowerUp();
 						MainActivity.hit = 0;
 					}
