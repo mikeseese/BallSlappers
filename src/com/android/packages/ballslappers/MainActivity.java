@@ -114,13 +114,15 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public static int NUM_LIVES = 1;
 	public static boolean POWERUPS = false; //powerups
 	public static final int START_SPEED = 10;
+	public static final int MAX_X_VEL = 10;
+	public static final int MAX_Y_VEL = 10;
 	public static final float BALL_SPEED_INCREASE_RATE = 1.01f;
 	public static float aiSpeed;
 	public static String difficulty;
 	public static float ballSpeedDifficultyIncrease;
 	
 	//Paddle Constants
-	public static final int PADDLE_WIDTH = 115;
+	public static final int PADDLE_WIDTH = 150;
 	public static final int PADDLE_HEIGHT = 20;
 	
 	//Ball Constants
@@ -231,6 +233,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	public static Vector2 start_position;
 	static Body ballBody;
 	static Sprite ball;
+	
+	private static Vector2 previousBallVelocity = new Vector2(-99, -99); // init to garbage values
 	
 	//PowerUps
 	public static Vector2 vPos;
@@ -1183,7 +1187,9 @@ protected MenuScene createGameOverMenuScene() {
 			showInfo();
 		}
 		
-		if (ballAngle == 360){ ballAngle = 0;}
+		if (ballAngle == 360){ 
+			ballAngle = 0;
+		}
 		ballAngle += ballAngleDiff;
 		
 		if (ballStuck()) {
@@ -1191,14 +1197,15 @@ protected MenuScene createGameOverMenuScene() {
 		 * make it seem like it's accurately bouncing
 		 * this is just temporary because it won't be an issue when the trajectory of the ball is 
 		 * dependent solely on the position it hits the paddle */
-			int tempYVel;
+			Log.i("ballStuck", "is true");
+			float tempYVel = ballBody.getLinearVelocity().y;
 			if (ballBody.getPosition().y > CAMERA_HEIGHT / (2 * PIXEL_TO_METER_RATIO_DEFAULT)) {
 				//Log.i("Ball stuck", "stuck on ground");
-				tempYVel = -1;
+				tempYVel -= 3.0f;
 			}
 			else {
 				//Log.i("Ball stuck", "stuck on roof");
-				tempYVel = 1;
+				tempYVel += 3.0f;
 			}
 		
 			ballBody.setLinearVelocity(new Vector2(ballBody.getLinearVelocity().x, tempYVel));				
@@ -1223,6 +1230,13 @@ protected MenuScene createGameOverMenuScene() {
 	}
 
 	public boolean ballStuck() {
+		//float tempDiffX = Math.abs(ballBody.getLinearVelocity().x + previousBallVelocity.x);
+		//float tempDiffY = Math.abs(ballBody.getLinearVelocity().y + previousBallVelocity.y);
+		//Log.i("ballBody", ballBody.getLinearVelocity().toString());
+		//Log.i("previousBallVelocity", previousBallVelocity.toString());
+		//Log.i("tempDiffX", Float.toString(tempDiffX));
+		//Log.i("tempDiffY", Float.toString(tempDiffY));
+		//return tempDiffX < 0.00001f && tempDiffY < 0.00001f;
 		return ballBody.getLinearVelocity().y == 0;
 	}
 	
@@ -1365,20 +1379,21 @@ protected MenuScene createGameOverMenuScene() {
 	// ===========================================================
 
 	class BallCollisionUpdate implements ContactListener{
-		Vector2 temp = new Vector2(0,0);
-		public void beginContact(Contact contact) {
+		Vector2 temp;
+		float tempDiffX, tempDiffY;
+		public void beginContact(Contact contact) {	
 			Body bodyA = contact.getFixtureA().getBody();
-			Body bodyB = contact.getFixtureB().getBody(); // TODO
+			Body bodyB = contact.getFixtureB().getBody();
 			Object userAData = bodyA.getUserData();
 			Object userBData = bodyB.getUserData();
-					
+			
 			//Rotation / Speed / Hit
 			if(userAData.equals("ballBody") && userBData.equals("paddleBody")
 					|| userAData.equals("paddleBody") && userBData.equals("ballBody")) {
-				//Log.i("Contact Made", "Ball contacted the paddle");
-				temp = paddleCollision(ballBody,paddleBody,temp);
+				//Log.i("Contact Made", "Ball contacted the paddle");				
+				temp = paddleCollision(ballBody,paddleBody);
 				ballBody.setLinearVelocity(temp.x * MainActivity.BALL_SPEED_INCREASE_RATE,
-										  (ballBody.getLinearVelocity().y + temp.y) * MainActivity.BALL_SPEED_INCREASE_RATE);
+										   temp.y * MainActivity.BALL_SPEED_INCREASE_RATE);
 				
 				++hit;
 				//Log.i("hit", Integer.toString(hit));
@@ -1391,14 +1406,13 @@ protected MenuScene createGameOverMenuScene() {
 			for (int j = 0; j<NUM_SLAPPERS-1; j++) {
 				if(userAData.equals("ballBody") && userBData.equals(aiBody[j])
 						|| userAData.equals(aiBody[j]) && userBData.equals("ballBody")) {
-					//Log.i("Contact Made", "Ball contacted the paddle");
-
+					//Log.i("Contact Made", "Ball contacted the paddle");				
 					aiSlapper[j].setHit(true);	// what's the point of this?
-					temp = paddleCollision(ballBody,aiBody[j],temp);
+					temp = paddleCollision(ballBody,aiBody[j]);
 					
 					//Log.i("ballVelocity", "before: " + ballBody.getLinearVelocity().x + ", " + ballBody.getLinearVelocity().y);
 					ballBody.setLinearVelocity(temp.x * MainActivity.BALL_SPEED_INCREASE_RATE,
-											   (temp.y+ballBody.getLinearVelocity().y) * MainActivity.BALL_SPEED_INCREASE_RATE);
+											   temp.y * MainActivity.BALL_SPEED_INCREASE_RATE);
 					//Log.i("ballVelocity", "after: " + ballBody.getLinearVelocity().x + ", " + ballBody.getLinearVelocity().y);
 					
 					++hit;
@@ -1414,21 +1428,98 @@ protected MenuScene createGameOverMenuScene() {
 			powerUpCollision(userAData, userBData);
 		}
 		
-		public Vector2 paddleCollision(Body ballB, Body slapperB, Vector2 t) {
-			// if the slapper is at an angle then this function doesn't take into consideration the y distance at all?
-			Vector2 e = new Vector2();
-			e = t;
-			float c = 0, d = 0;
+		public Vector2 paddleCollision(Body ballB, Body slapperB) {
+			Vector2 newBallVelocity = new Vector2();
+			float tempXVelocity, tempYVelocity, centerDifference;
+			float oldSpeed = ballB.getLinearVelocity().len2();
 			
-			c = (slapperB.getPosition().x - ballB.getPosition().x)*-10;
-			//Log.i("paddleCollision(): temp.x",""+ c);
-				
-			d =  1; // What is the point of this and e.y = d?
+			if (slapperB.getUserData() == "paddleBody") {
+				centerDifference = (slapperB.getPosition().x - ballB.getPosition().x) / (0.5f*playerSlapperShape.getSlapperWidth()/PIXEL_TO_METER_RATIO_DEFAULT);
+				tempXVelocity = -centerDifference * MAX_X_VEL;
+				tempYVelocity = Math.abs(centerDifference) * (0.25f*MAX_Y_VEL) - MAX_Y_VEL;
+				while (tempXVelocity*tempXVelocity + tempYVelocity*tempYVelocity < oldSpeed) {
+					tempXVelocity = (tempXVelocity > 0) ? tempXVelocity + 0.5f : tempXVelocity - 0.5f;
+					tempYVelocity -= 0.5f;
+				}
+				newBallVelocity.set(tempXVelocity, tempYVelocity);
+				//Log.i("centerDifference", Float.toString(centerDifference));
+				//Log.i("newBallVelocity", newBallVelocity.toString());
+			}
+			else if ((NUM_SLAPPERS == 2 || NUM_SLAPPERS == 4) && slapperB.getUserData() == aiBody[0]) {
+				centerDifference = (slapperB.getPosition().x - ballB.getPosition().x) / (0.5f*PADDLE_WIDTH/PIXEL_TO_METER_RATIO_DEFAULT);
+				tempXVelocity = -centerDifference * MAX_X_VEL;
+				tempYVelocity = -(Math.abs(centerDifference) * (0.25f*MAX_Y_VEL) - MAX_Y_VEL);
+				while (tempXVelocity*tempXVelocity + tempYVelocity*tempYVelocity < oldSpeed) {
+					tempXVelocity = (tempXVelocity > 0) ? tempXVelocity + 0.5f : tempXVelocity - 0.5f;
+					tempYVelocity += 0.5f;
+				}
+				newBallVelocity.set(tempXVelocity, tempYVelocity);
+			}
+			else if (NUM_SLAPPERS == 4 && slapperB.getUserData() == aiBody[1]) { // left AI
+				centerDifference = (slapperB.getPosition().y - ballB.getPosition().y) / (0.5f*PADDLE_WIDTH/PIXEL_TO_METER_RATIO_DEFAULT);
+				tempYVelocity = -centerDifference * MAX_Y_VEL;
+				tempXVelocity = -(Math.abs(centerDifference) * (0.25f*MAX_X_VEL) - MAX_X_VEL);
+				while (tempXVelocity*tempXVelocity + tempYVelocity*tempYVelocity < oldSpeed) {
+					tempYVelocity = (tempYVelocity > 0) ? tempYVelocity + 0.5f : tempYVelocity - 0.5f;
+					tempXVelocity += 0.5f;
+				}
+				newBallVelocity.set(tempXVelocity, tempYVelocity);
+			}
+			else if (NUM_SLAPPERS == 4 && slapperB.getUserData() == aiBody[2]) { // right AI
+				centerDifference = (slapperB.getPosition().y - ballB.getPosition().y) / (0.5f*PADDLE_WIDTH/PIXEL_TO_METER_RATIO_DEFAULT);
+				tempYVelocity = -centerDifference * MAX_Y_VEL;
+				tempXVelocity = Math.abs(centerDifference) * (0.25f*MAX_X_VEL) - MAX_X_VEL;
+				while (tempXVelocity*tempXVelocity + tempYVelocity*tempYVelocity < oldSpeed) {
+					tempYVelocity = (tempYVelocity > 0) ? tempYVelocity + 0.5f : tempYVelocity - 0.5f;
+					tempXVelocity -= 0.5f;
+				}
+				newBallVelocity.set(tempXVelocity, tempYVelocity);
+			}
+			else if (NUM_SLAPPERS == 3 && slapperB.getUserData() == aiBody[1]) { // right AI
+				centerDifference = (float) ((slapperB.getPosition().y - ballB.getPosition().y)/Math.cos(Math.PI/6)) / (0.5f*PADDLE_WIDTH/PIXEL_TO_METER_RATIO_DEFAULT);
+				//Log.i("centerDifference", Float.toString(centerDifference));
+				tempYVelocity = -centerDifference * MAX_Y_VEL;
+				tempXVelocity = Math.abs(centerDifference) * (0.25f*MAX_X_VEL) - MAX_X_VEL;
+				float rotatedYVelocity = (float) (tempXVelocity*Math.sin(11*Math.PI/6) + tempYVelocity*Math.cos(11*Math.PI/6));
+				float rotatedXVelocity = (float) (tempXVelocity*Math.cos(11*Math.PI/6) - tempYVelocity*Math.sin(11*Math.PI/6));
+				while (rotatedXVelocity*rotatedXVelocity + rotatedYVelocity*rotatedYVelocity < oldSpeed) {
+					rotatedXVelocity = (rotatedXVelocity > 0) ? rotatedXVelocity + 0.5f : rotatedXVelocity - 0.5f;
+					rotatedYVelocity = (rotatedYVelocity > 0) ? rotatedYVelocity + 0.5f : rotatedYVelocity - 0.5f;
+				}
+				newBallVelocity.set(rotatedXVelocity, rotatedYVelocity);
+			}
+			else if (NUM_SLAPPERS == 3 && slapperB.getUserData() == aiBody[0]) { // left AI
+				centerDifference = (float) ((slapperB.getPosition().y - ballB.getPosition().y)/Math.cos(Math.PI/6)) / (0.5f*PADDLE_WIDTH/PIXEL_TO_METER_RATIO_DEFAULT);
+				//Log.i("centerDifference", Float.toString(centerDifference));
+				tempYVelocity = -centerDifference * MAX_Y_VEL;
+				tempXVelocity = -(Math.abs(centerDifference) * (0.25f*MAX_X_VEL) - MAX_X_VEL);
+				float rotatedYVelocity = (float) (tempXVelocity*Math.sin(Math.PI/6) + tempYVelocity*Math.cos(Math.PI/6));
+				float rotatedXVelocity = (float) (tempXVelocity*Math.cos(Math.PI/6) - tempYVelocity*Math.sin(Math.PI/6));
+				while (rotatedXVelocity*rotatedXVelocity + rotatedYVelocity*rotatedYVelocity < oldSpeed) {
+					rotatedXVelocity = (rotatedXVelocity > 0) ? rotatedXVelocity + 0.5f : rotatedXVelocity - 0.5f;
+					rotatedYVelocity = (rotatedYVelocity > 0) ? rotatedYVelocity + 0.5f : rotatedYVelocity - 0.5f;
+				}
+				newBallVelocity.set(rotatedXVelocity, rotatedYVelocity);
+			}
+			else {	// for now
+				centerDifference = slapperB.getPosition().x - ballB.getPosition().x;
+				newBallVelocity.set(centerDifference*-MAX_X_VEL, ballB.getLinearVelocity().y);
+			}
+		
+			tempDiffX = Math.abs(newBallVelocity.x + previousBallVelocity.x*BALL_SPEED_INCREASE_RATE);
+			tempDiffY = Math.abs(newBallVelocity.y + previousBallVelocity.y*BALL_SPEED_INCREASE_RATE);
+			Log.i("tempDiffX", Float.toString(tempDiffX));
+			Log.i("tempDiffY", Float.toString(tempDiffY));
+			if (tempDiffX < 4.0f && tempDiffY < 4.0f) { // found 4.0f experimentally
+				Log.i("alert", "might be getting stuck...");
+				if (ballBody.getPosition().y > CAMERA_HEIGHT / (2 * PIXEL_TO_METER_RATIO_DEFAULT))
+					newBallVelocity.y -= 3.0f;
+				else 
+					newBallVelocity.y += 3.0f;
+			}
+			previousBallVelocity = newBallVelocity.cpy();
 			
-			e.x = c;
-			e.y = d;
-			
-			return e;
+			return newBallVelocity;
 		}
 		
 		public void powerUpCollision(Object userAData, Object userBData) {
