@@ -1501,17 +1501,16 @@ protected MenuScene createGameOverMenuScene() {
 				}
 				newBallVelocity.set(rotatedXVelocity, rotatedYVelocity);
 			}
-			else {	// for now
-				centerDifference = slapperB.getPosition().x - ballB.getPosition().x;
-				newBallVelocity.set(centerDifference*-MAX_X_VEL, ballB.getLinearVelocity().y);
-			}
-		
+	
+			/* checking to make sure the ball doesn't get stuck in a 'loop' where the AI's keep going
+			 * back and forth in a corner
+			 */
 			tempDiffX = Math.abs(newBallVelocity.x + previousBallVelocity.x*BALL_SPEED_INCREASE_RATE);
 			tempDiffY = Math.abs(newBallVelocity.y + previousBallVelocity.y*BALL_SPEED_INCREASE_RATE);
-			Log.i("tempDiffX", Float.toString(tempDiffX));
-			Log.i("tempDiffY", Float.toString(tempDiffY));
+//			Log.i("tempDiffX", Float.toString(tempDiffX));
+//			Log.i("tempDiffY", Float.toString(tempDiffY));
 			if (tempDiffX < 4.0f && tempDiffY < 4.0f) { // found 4.0f experimentally
-				Log.i("alert", "might be getting stuck...");
+//				Log.i("alert", "might be getting stuck...");
 				if (ballBody.getPosition().y > CAMERA_HEIGHT / (2 * PIXEL_TO_METER_RATIO_DEFAULT))
 					newBallVelocity.y -= 3.0f;
 				else 
