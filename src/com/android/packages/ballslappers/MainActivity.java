@@ -1329,6 +1329,7 @@ protected MenuScene createGameOverMenuScene() {
 	protected void resetGame() {
 		this.ballReset();
 		this.clearBooleans();
+		this.resetAISlappers();
 		this.numPlayerLives = NUM_LIVES;
 		current_score = 0;
 		if (POWERUPS) {
@@ -1337,6 +1338,10 @@ protected MenuScene createGameOverMenuScene() {
 			updatePlayerSlapper(PADDLE_WIDTH);
 		}
 		showInfo();
+	}
+	
+	private void resetAISlappers() {
+		// nothing right now
 	}
 
 	private void startTimer() {
@@ -1372,6 +1377,7 @@ protected MenuScene createGameOverMenuScene() {
     			}
     			else { // Coming back from someone losing a life but game still going
     				ballReset();
+    				resetAISlappers();
     				if (POWERUPS) {
     					removeObstacles();
     					updatePlayerSlapper(PADDLE_WIDTH);
