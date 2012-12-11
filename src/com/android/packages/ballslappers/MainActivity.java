@@ -603,15 +603,11 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		showInfo();
 		
 		if (POWERUPS) {
-			/* TODO: figure out where to place this
-			 *     --- in center
-			 *     --- two powerBalls to the sides
-			 *     --- etc?
-			 */
 			final FixtureDef pDef = PhysicsFactory.createFixtureDef(0, 0.0f, 0.0f);
  	        powerBall = new TiledSprite(start_position.x*PIXEL_TO_METER_RATIO_DEFAULT - mPowerTextureRegion.getWidth()/2, start_position.y*PIXEL_TO_METER_RATIO_DEFAULT - mPowerTextureRegion.getHeight()/2, this.mPowerTextureRegion, this.getVertexBufferObjectManager());
  	 		powerBody = PhysicsFactory.createBoxBody(MainActivity.mPhysicsWorld, powerBall, BodyType.KinematicBody, pDef);
  	        powerBody.setUserData("powerBody");
+ 	        powerBody.setActive(false);
  			MainActivity.mScene.attachChild(powerBall);
  	 		powerBallBodyConnector = new PhysicsConnector(powerBall, powerBody);
  			mPhysicsWorld.registerPhysicsConnector(powerBallBodyConnector);
@@ -1094,6 +1090,10 @@ protected MenuScene createGameOverMenuScene() {
  		if (currentPowerUp != PowerUp.DOUBLE_XP)
  			doubleXPFlag = false;
         powerBall.setCurrentTileIndex(currentPowerUp.ordinal());
+        if (currentPowerUp == PowerUp.NONE) 
+        	powerBody.setActive(false);
+        else 
+        	powerBody.setActive(true);
         //Log.i("changePowerUp()", Integer.toString(currentPowerUp.ordinal()));
  	}
  	
