@@ -1099,6 +1099,7 @@ protected MenuScene createGameOverMenuScene() {
  	
  	private void resetPowerUp() {
  		currentPowerUp = PowerUp.NONE;
+ 		powerBody.setActive(false);
  		MainActivity.hit = 0;
  		MainActivity.numObstacles = 0;
  		doubleXPFlag = false;
