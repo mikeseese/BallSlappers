@@ -325,7 +325,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		numPlayerLives = NUM_LIVES;
 		POWERUPS = bundle.getBoolean("powerups");
 		difficulty = bundle.getString("difficulty");
-		easterEgg = bundle.getString("Bermudez");
+		easterEgg = bundle.getString("userName");
 		
 		if(difficulty.equalsIgnoreCase("Easy")) {
 			MainActivity.aiSpeed = 7f; 
@@ -415,9 +415,12 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
         
         //Ball Textures
 		texChoice = "ball.png";
-        if (easterEgg == "Bermudez") { 
-        texChoice = "Bermudez.png";
+		
+		//easter egg?
+        if (easterEgg.equals("Seese")){ 
+        	texChoice = "ball.png";
         }
+        
         this.mBallBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 44, 44, 		// 68 x 68 is the size of the image
         													  TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
@@ -603,7 +606,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		showInfo();
 		
 		if (POWERUPS) {
-			final FixtureDef pDef = PhysicsFactory.createFixtureDef(0, 0.0f, 0.0f);
+			final FixtureDef pDef = PhysicsFactory.createFixtureDef(0, 0.0f, 0.0f, true);
  	        powerBall = new TiledSprite(start_position.x*PIXEL_TO_METER_RATIO_DEFAULT - mPowerTextureRegion.getWidth()/2, start_position.y*PIXEL_TO_METER_RATIO_DEFAULT - mPowerTextureRegion.getHeight()/2, this.mPowerTextureRegion, this.getVertexBufferObjectManager());
  	 		powerBody = PhysicsFactory.createBoxBody(MainActivity.mPhysicsWorld, powerBall, BodyType.KinematicBody, pDef);
  	        powerBody.setUserData("powerBody");
