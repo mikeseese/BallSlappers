@@ -1,0 +1,96 @@
+<LinearLayout xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/LinearLayout"
+    android:layout_width="match_parent"
+    android:layout_height="fill_parent"
+    android:layout_gravity="center"
+    android:background="#434343"
+    android:orientation="vertical" >
+    
+    <RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/top_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="25dp"
+        android:gravity="center" >
+    
+          <TextView
+	          android:layout_width="wrap_content"
+	          android:layout_height="60dp"
+	          android:layout_gravity="center"
+	          android:gravity="center"
+	          android:text="Select Difficulty to View High Scores"
+	          android:textSize="20sp"
+	          android:textColor="#feff10" />
+          
+    </RelativeLayout>
+       	  
+	<LinearLayout
+	    xmlns:tools="http://schemas.android.com/tools"
+	    xmlns:android="http://schemas.android.com/apk/res/android"
+	    android:id="@+id/Menu_Layout"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_gravity="center_horizontal"
+	    android:layout_marginTop="10dp"
+	    android:gravity="center_horizontal"
+	    android:orientation="vertical" >
+	
+	    <Button
+	        style="@color/TransparentColor"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_margin="@dimen/Dim10"
+	        android:layout_marginBottom="49dp"
+	        android:layout_marginRight="40dp"
+	        android:background="@drawable/easy"
+	        android:onClick="viewEasy" />
+	    
+	    <Button
+	        style="@color/TransparentColor"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_margin="@dimen/Dim10"
+	        android:layout_marginBottom="49dp"
+	        android:layout_marginRight="40dp"
+	        android:background="@drawable/medium"
+	        android:onClick="viewMedium" />
+	    
+	    <Button
+	        style="@color/TransparentColor"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_margin="@dimen/Dim10"
+	        android:layout_marginBottom="49dp"
+	        android:layout_marginRight="40dp"
+	        android:background="@drawable/hard"
+	        android:onClick="viewHard" />
+	    
+	</LinearLayout>
+		
+    <RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/Sound_Layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp" >
+	
+        <ToggleButton
+            android:id="@+id/toggleSound"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="5dp"
+            android:textOff=""
+            android:textOn=""
+            android:background="@drawable/toggle_sound_background"
+        	android:onClick="toggleMusic" />
+
+    </RelativeLayout>
+
+</LinearLayout>

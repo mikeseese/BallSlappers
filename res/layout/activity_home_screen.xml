@@ -36,29 +36,40 @@
 	        android:layout_marginRight="40dp"
 	        android:background="@drawable/home_single_player_button"
 	        android:onClick="SinglePlayerCreate" />
-	
-	   		</LinearLayout>
-		
-	    <RelativeLayout
-	        xmlns:android="http://schemas.android.com/apk/res/android"
-	        xmlns:tools="http://schemas.android.com/tools"
-	        android:id="@+id/Sound_Layout"
-	        android:layout_width="match_parent"
+	    
+	    <Button
+	        android:id="@+id/viewHighScoresButton"
+	        style="@color/TransparentColor"
+	        android:layout_width="wrap_content"
 	        android:layout_height="wrap_content"
-	        android:layout_marginBottom="5dp" >
-		
-	        <ToggleButton
-	            android:id="@+id/toggleSound"
-	            android:layout_width="40dp"
-	            android:layout_height="40dp"
-	            android:layout_alignParentBottom="true"
-	            android:layout_alignParentRight="true"
-	            android:layout_marginRight="5dp"
-	            android:textOff=""
-	            android:textOn=""
-	            android:background="@drawable/toggle_sound_background"
-	        	android:onClick="toggleMusic" />
+	        android:layout_margin="@dimen/Dim10"
+	        android:layout_marginBottom="49dp"
+	        android:layout_marginRight="40dp"
+	        android:background="@drawable/home_high_scores"
+	        android:onClick="ViewHighScores" />
 	
-	    </RelativeLayout>
+	</LinearLayout>
+		
+    <RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/Sound_Layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp" >
+	
+        <ToggleButton
+            android:id="@+id/toggleSound"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="5dp"
+            android:textOff=""
+            android:textOn=""
+            android:background="@drawable/toggle_sound_background"
+        	android:onClick="toggleMusic" />
+
+    </RelativeLayout>
 
 </LinearLayout>

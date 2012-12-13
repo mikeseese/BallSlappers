@@ -1,4 +1,4 @@
-package com.android.packages.ballslappers;
+package com.cen3031.android.packages.ballslappers;
 
 import java.io.IOException;
 
@@ -142,5 +142,10 @@ public class HomeScreenActivity extends Activity {
     	HomeScreenActivity.mediaPlayer.release();
     	
     	super.onDestroy();
+    }
+    
+    public void ViewHighScores(View v) {
+		Intent intent = new Intent(this, ViewHighScores.class);
+		startActivity(intent);
     }
 }

@@ -1,4 +1,4 @@
-package com.android.packages.ballslappers;
+package com.cen3031.android.packages.ballslappers;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,6 +15,7 @@ import android.view.Menu;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.ToggleButton;
 
 public class HighScoresActivity extends Activity {
@@ -71,9 +72,21 @@ public class HighScoresActivity extends Activity {
         
         if(!bundle.isEmpty())
         {
-        	score = bundle.getInt("score");
+        	if(bundle.getBoolean("view"))
+        	{
+            	difficulty = bundle.getString("difficulty");
+                score = -1;
+        	}
+        	else
+        	{
+            	score = bundle.getInt("score");
+        	}
+        	
         	difficulty = bundle.getString("difficulty");
         }
+        
+        TextView title = (TextView) findViewById(R.id.high_title);
+        title.setText(difficulty.toUpperCase() + " HIGH SCORES");
 
         ArrayList<String> highScoreNames = loadNames("highscore_names_" + difficulty, getApplicationContext());
         ArrayList<Integer> highScoreScores = loadScores("highscore_scores_" + difficulty, getApplicationContext());
@@ -117,7 +130,7 @@ public class HighScoresActivity extends Activity {
         saveScores(highScoreScores, "highscore_scores_" + difficulty, getApplicationContext());
     }
     
-    public void option(View v) {
+    public void back(View v) {
     	finish();
     }
     
@@ -125,5 +138,19 @@ public class HighScoresActivity extends Activity {
     	super.onResume();
     	//ToggleButton tb = (ToggleButton) findViewById(R.id.toggleSound);
         //tb.setChecked(HomeScreenActivity.SOUND_ENABLED);
+    }
+    
+    public void toggleMusic(View view){
+    	if(HomeScreenActivity.SOUND_ENABLED)
+    		HomeScreenActivity.mediaPlayer.pause();
+    	else
+    	{
+       		HomeScreenActivity.mediaPlayer.start();
+    	}
+    	
+    	HomeScreenActivity.SOUND_ENABLED = !HomeScreenActivity.SOUND_ENABLED;
+    	SharedPreferences.Editor e = HomeScreenActivity.settings.edit();
+    	e.putBoolean("sound_enabled", HomeScreenActivity.SOUND_ENABLED);
+    	e.commit();
     }
 }

@@ -1,4 +1,4 @@
-package com.android.packages.ballslappers;
+package com.cen3031.android.packages.ballslappers;
 
 import android.os.Bundle;
 import android.app.Activity;

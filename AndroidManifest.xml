@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.packages.ballslappers"
+    package="com.cen3031.android.packages.ballslappers"
     android:versionCode="1"
     android:versionName="1.0">
 
@@ -49,6 +49,7 @@
             
         </activity>
         <activity android:name="HighScoresActivity"></activity>
+        <activity android:name="ViewHighScores"></activity>
 
     </application>
 

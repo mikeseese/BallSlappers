@@ -1,4 +1,4 @@
-package com.android.packages.ballslappers;
+package com.cen3031.android.packages.ballslappers;
 
 import org.andengine.entity.primitive.Rectangle;
 import org.andengine.extension.physics.box2d.PhysicsFactory;

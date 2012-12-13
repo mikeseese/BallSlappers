@@ -1,8 +1,6 @@
-package com.android.packages.ballslappers;
+package com.cen3031.android.packages.ballslappers;
 
 import java.io.IOException;
-
-import com.android.packages.ballslappers.R;
 
 import android.media.MediaPlayer;
 import android.os.Bundle;
